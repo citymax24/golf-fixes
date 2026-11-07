@@ -163,3 +163,5 @@ html.nowelcome .welcome{display:none}
 .lab.st-useful{color:var(--acc)}.lab.st-critical{color:#c0392b}.lab.st-cites,.lab.st-praise,.lab.st-joke{color:var(--mut)}
 .cmf .lab+.lab{margin-left:8px}
 .morecm{margin-top:10px}.morecm summary{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 0}
+
+.brand{display:flex;align-items:center;gap:8px}.brand img{display:block;border-radius:6px}
