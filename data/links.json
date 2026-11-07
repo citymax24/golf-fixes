@@ -1,0 +1,5 @@
+{
+  "_comment": "Monetization switches. 'go': slug -> target URL (rendered as /go/<slug>/ redirect, rel=sponsored). 'problem_aids': problem key -> [{slug, name}] shown in a labeled Ad box. Empty = nothing shown.",
+  "go": {},
+  "problem_aids": {}
+}

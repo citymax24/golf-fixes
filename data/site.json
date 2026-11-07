@@ -1,0 +1,16 @@
+{
+  "name": "GolfVotes",
+  "tagline": "The golf fixes golfers actually recommend.",
+  "description": "Golf lessons ranked by how often golfers independently recommended them to each other, sorted by problem: slice, shanks, early extension, chipping and more.",
+  "base_url": "https://citymax24.github.io/golf-fixes",
+  "base_path": "/golf-fixes",
+  "cname": "",
+  "newsletter_url": "",
+  "min_recs_per_problem": 2,
+  "max_videos_per_problem": 30,
+  "min_recs_per_coach": 10,
+  "stats": {"comments_scanned": "1.5 million", "yt_comments": "29,600", "period": "2014–2026"},
+  "hosting_note": "This site is hosted on GitHub Pages (GitHub Inc., USA). GitHub may log your IP address for security purposes.",
+  "privacy_contact": "",
+  "imprint_html": "<p>Imprint will be added before launch.</p>"
+}
