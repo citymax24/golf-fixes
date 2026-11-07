@@ -17,7 +17,7 @@
   }
   function toggleOff(k, vid) { save(k, load(k).filter(function (x) { return x.v !== vid; })); }
   var settings = load("settings", {});
-  var TH = settings.frames ? "mq2" : "mqdefault";
+  var TH = settings.frames === false ? "mqdefault" : "mq2";
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
@@ -31,7 +31,7 @@
     r.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("gv_theme", r.dataset.theme); } catch (e) {}
   };
-  if (settings.frames) $$("img[src*='i.ytimg.com']").forEach(function (i) { i.src = i.src.replace("/mqdefault.jpg", "/mq2.jpg").replace("/hqdefault.jpg", "/hq2.jpg"); });
+  if (settings.frames === false) $$("img[src*='i.ytimg.com']").forEach(function (i) { i.src = i.src.replace("/mq2.jpg", "/mqdefault.jpg").replace("/hq2.jpg", "/hqdefault.jpg"); });
   document.addEventListener("error", function (ev) {
     var t = ev.target; if (t.tagName === "IMG" && /\/(mq2|hq2)\.jpg$/.test(t.src)) t.src = t.src.replace(/(mq2|hq2)\.jpg$/, "mqdefault.jpg");
   }, true);
@@ -100,7 +100,7 @@
 
   // ---------- settings page ----------
   if ($("#s-frames")) {
-    $("#s-frames").checked = !!settings.frames; $("#s-hidedis").checked = settings.hidedis !== false;
+    $("#s-frames").checked = settings.frames !== false; $("#s-hidedis").checked = settings.hidedis !== false;
     $("#s-frames").onchange = function () { settings.frames = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-hidedis").onchange = function () { settings.hidedis = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-clear-h").onclick = function () { save("history", []); flash("Watch history cleared"); };

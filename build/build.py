@@ -150,7 +150,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
         SITEMAP.append(full)
 
 
-def thumb(vid, q="mqdefault"):
+def thumb(vid, q="mq2"):
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
 
 
@@ -171,7 +171,9 @@ def card(v, n=None, ok=None, rank=None):
 
 
 def chips(active=None):
-    tops = sorted([p for p in PROBLEMS if p["video_count"]], key=lambda p: -p["total_recs"])[:14]
+    order = ["slice", "shank", "early_extension", "over_the_top", "hook", "fat_thin", "driver_distance", "iron_contact", "chipping",
+             "putting", "casting_lag", "bunker", "wedges_pitching", "rotation_hips", "takeaway_backswing", "setup_posture", "grip"]
+    tops = [PNAME[k] for k in order if k in PNAME and PNAME[k]["video_count"]][:14]
     c = f'<a class="chip{" on" if not active else ""}" href="{BASE}/">All</a>'
     c += "".join(f'<a class="chip{" on" if active == p["key"] else ""}" href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>' for p in tops)
     return f'<div class="chips">{c}<a class="chip" href="{BASE}/categories/">All problems →</a></div>'
@@ -242,7 +244,7 @@ def build_watch(v):
     yrs = v.get("years") or []
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     body = f"""<div class="watch"><div class="wl">
-<button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hqdefault')}" alt=""><span class="pb"></span></button>
+<button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(v['title'])}</h1>
 <p class="vch">{ch}</p>
 <p class="vst"><b>{v['recs']}</b> golfers recommended it{f' · <span class="ok">✓ {v["success"]} said it fixed their problem</span>' if v.get('success') else ''}{f' · {yrs[0]}–{yrs[1]}' if yrs and yrs[0] != yrs[1] else ''}</p>
@@ -309,7 +311,7 @@ def build_client_pages():
     page("/browse/", f"Browse all lessons | {SITE['name']}", "Browse and filter every golf lesson golfers recommended.",
          f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<p class="dim" id="count"></p><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
     page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
-<label class="set"><input type="checkbox" id="s-frames"> Show video frames instead of thumbnails</label>
+<label class="set"><input type="checkbox" id="s-frames"> Show a frame from the video instead of the uploaded thumbnail (less clickbait)</label>
 <label class="set"><input type="checkbox" id="s-hidedis"> Hide disliked videos everywhere</label>
 <p><button class="pill inl" id="s-clear-h">Clear watch history</button> <button class="pill inl" id="s-clear-all">Reset everything</button></p>
 <p class="dim">Everything is stored only in this browser. Keyboard shortcuts: press <kbd>?</kbd>.</p></div>""", nav="settings", canonical=False)
