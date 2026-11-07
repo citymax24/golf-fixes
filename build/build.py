@@ -17,6 +17,7 @@ COMMENTS = _opt("comments.json", {})
 META = {m["vid"]: m for m in _opt("video_meta.json", [])}
 PLANS = _opt("plans.json", [])
 SEO = _opt("seo.json", {})
+CARDS = _opt("cards.json", {})
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
          "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
 LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced", "all": "All levels"}
@@ -272,7 +273,7 @@ def build_watch(v):
 <div class="desc">{f'<p class="dim">{TYPES.get(v["type"], "")}{" · " + LEVELS[v["level"]] if v.get("level") in LEVELS else ""}</p>' if v.get("type") else ''}
 {f'<p>{e(v["summary"])}</p>' if v.get("summary") else ''}
 {''.join(plan_box(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
-{f'<p><b>Why golfers recommend it</b></p><ul>' + ''.join(f'<li>{e(x)}</li>' for x in notes) + '</ul>' if notes else ''}
+{card_desc(v, notes)}
 <p class="dim">Summaries are written by AI from what golfers said about the video.</p>
 <div class="tags">{tags}</div></div>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
@@ -290,7 +291,50 @@ def build_watch(v):
              "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}"})
 
 
+def card_desc(v, notes):
+    c = CARDS.get(v["vid"]) or {}
+    out = ""
+    if c.get("why"):
+        out += f'<p><b>Why golfers recommend it:</b> {e(c["why"])}</p>'
+    if c.get("takeaways"):
+        out += '<p class="tkh"><b>What golfers took away</b></p><ul class="tk">' + "".join(f"<li>{e(t)}</li>" for t in c["takeaways"]) + "</ul>"
+    elif not c and notes:
+        out += '<p><b>Why golfers recommend it</b></p><ul>' + "".join(f"<li>{e(x)}</li>" for x in notes) + "</ul>"
+    return out
+
+
+STANCE = {"useful": ("Useful", 0), "critical": ("Critical", 1), "cites": ("Cites it", 2), "praise": ("Praise", 3), "joke": ("Joke", 4)}
+
+
 def comments_html(v):
+    cs = COMMENTS.get(v["vid"]) or []
+    if not cs:
+        return ""
+    card = (CARDS.get(v["vid"]) or {}).get("comments", {})
+    for c in cs:
+        cid = c["u"].rstrip("/").rsplit("/", 1)[-1]
+        st = (card.get(cid) or {}).get("stance")
+        c["st"], c["q"] = st, (card.get(cid) or {}).get("quote", "")
+    if card:
+        cs = sorted(cs, key=lambda c: (STANCE.get(c["st"], ("", 5))[1], 0 if c["l"] == "Says it fixed it" else 1))
+    def one(c):
+        body = e(c["b"]).replace("▶ this video", '<span class="vl">[this video]</span>')
+        if c.get("q") and len(c["q"]) > 12 and e(c["q"]) in body:
+            body = body.replace(e(c["q"]), f'<mark>{e(c["q"])}</mark>', 1)
+        st = STANCE.get(c.get("st"), (None, 0))[0]
+        tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st else ""
+        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · in “{e(c["pt"])}”' if c.get('pt') else ''}</p>
+<p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
+    main = [c for c in cs if c.get("st") not in ("praise", "joke")]
+    rest = [c for c in cs if c.get("st") in ("praise", "joke")]
+    nu = sum(1 for c in cs if c.get("st") == "useful"); ncrit = sum(1 for c in cs if c.get("st") == "critical")
+    summary = f'<p class="dim">{nu} useful · {ncrit} critical · {len(rest)} just praise</p>' if card else ""
+    rows = "".join(one(c) for c in main) + (f'<details class="morecm"><summary>{len(rest)} more comments with just praise</summary>{"".join(one(c) for c in rest)}</details>' if rest else "")
+    more = v["recs"] - len(cs)
+    return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{summary}{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
+
+
+def _old_comments_html(v):
     cs = COMMENTS.get(v["vid"]) or []
     if not cs:
         return ""
