@@ -1,5 +1,5 @@
 // Share images (1200x630) for link previews (WhatsApp, Reddit, X, Slack). Run: node build/og.js
-// Writes static/og2/*.png. Needs Playwright + network access to i.ytimg.com for video frames.
+// Writes static/og3/*.png. Needs Playwright + network access to i.ytimg.com for video frames.
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.join(__dirname, '..');
@@ -39,7 +39,7 @@ h1{margin-top:12px;font:800 ${title.length > 48 ? 52 : 60}px/1.08 "Inter Display
 </div></body></html>`;
 
 (async () => {
-  const out = path.join(root, 'static/og2'); fs.mkdirSync(out, { recursive: true });
+  const out = path.join(root, 'static/og3'); fs.mkdirSync(out, { recursive: true });
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
   const shot = async (name, html) => { await p.setContent(html, { waitUntil: 'networkidle' }); await p.screenshot({ path: path.join(out, name + '.png') }); };
   const top = [...videos].sort((a, b) => (b.recs + 0.75 * (b.success || 0)) - (a.recs + 0.75 * (a.success || 0)));
@@ -60,5 +60,5 @@ h1{margin-top:12px;font:800 ${title.length > 48 ? 52 : 60}px/1.08 "Inter Display
     await shot('plan-' + pr.slug, tpl('Fix plan · ' + pr.name, pl.title, `${items.length} videos${mins ? ` · ${mins} min` : ''} · in the order that makes sense`,
       items.map((v, i) => ({ v, m: `Step ${i + 1} · ${(v.topic_counts || {})[pl.key] || v.recs} golfers recommend` }))));
   }
-  await b.close(); console.log('og images written to static/og2');
+  await b.close(); console.log('og images written to static/og3');
 })();
