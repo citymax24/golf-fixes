@@ -263,7 +263,7 @@ def build_watch(v):
 <a class="pill" href="https://www.youtube.com/watch?v={e(v['vid'])}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>YouTube</span></a></div>
 <div class="desc">{f'<p class="dim">{TYPES.get(v["type"], "")}{" · " + LEVELS[v["level"]] if v.get("level") in LEVELS else ""}</p>' if v.get("type") else ''}
 {f'<p>{e(v["summary"])}</p>' if v.get("summary") else ''}
-{''.join(f'<p class="inplan">Part of <a href="{BASE}/plan/{pl["slug"]}/">{e(pl["title"])}</a> · step {[i["vid"] for i in pl["items"]].index(v["vid"]) + 1} of {len(pl["items"])}</p>' for pl in PLANS if v["vid"] in [i["vid"] for i in pl["items"]])}
+{''.join(plan_box(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
 {f'<p><b>Why golfers recommend it</b></p><ul>' + ''.join(f'<li>{e(x)}</li>' for x in notes) + '</ul>' if notes else ''}
 <p class="dim">Summaries are written by AI from what golfers said about the video.</p>
 <div class="tags">{tags}</div></div>
@@ -292,6 +292,16 @@ def comments_html(v):
     return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
 
 
+def plan_box(pl, v):
+    ids = [i["vid"] for i in pl["items"]]
+    k = ids.index(v["vid"])
+    nxt = ids[k + 1] if k + 1 < len(ids) else None
+    note = pl["items"][k].get("note", "")
+    return (f'<div class="inplan" data-plan="{pl["slug"]}"><p>Step {k + 1} of {len(ids)} in <a href="{BASE}/plan/{pl["slug"]}/">{e(pl["title"])}</a></p>'
+            f'{f"<p class=dim>{e(note)}</p>" if note else ""}<p><button class="pill inl done" data-plan="{pl["slug"]}" data-vid="{v["vid"]}">{svg("check")}<span>Mark as done</span></button> '
+            + (f'<a class="pill inl" href="{BASE}/watch/{nxt}/?plan={pl["slug"]}">Next step →</a>' if nxt else f'<a class="pill inl" href="{BASE}/plan/{pl["slug"]}/">Back to plan</a>') + '</p></div>')
+
+
 def build_plans():
     vmap = {v["vid"]: v for v in VIDEOS}
     cards = ""
@@ -301,12 +311,16 @@ def build_plans():
             continue
         pl["slug"] = pl.get("slug") or PNAME[pl["key"]]["slug"]
         first = vmap[items[0]["vid"]]
-        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos</span></span><b>{e(pl["title"])}</b><i>{e(PNAME[pl["key"]]["name"])}</i></a>'
-        steps = "".join(f"""<li class="pli"><a class="th" href="{BASE}/watch/{i['vid']}/"><img loading="lazy" src="{thumb(i['vid'])}" alt=""></a>
-<div><h3><a href="{BASE}/watch/{i['vid']}/">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} recommend it for {e(PNAME[pl['key']]['name'].lower())} · {vmap[i['vid']]['recs']} overall</p><p>{e(i['note'])}</p></div></li>""" for n, i in enumerate(items, 1))
+        mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
+        pl["mins"] = mins
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>{e(PNAME[pl["key"]]["name"])}<span class="pprog"></span></i></a>'
+        steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
+<div><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} recommend it for {e(PNAME[pl['key']]['name'].lower())} · {vmap[i['vid']]['recs']} overall</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
         body = f"""<div class="plan"><p class="kick">Fix plan · <a href="{BASE}/fix/{PNAME[pl['key']]['slug']}/">{e(PNAME[pl['key']]['name'])}</a></p><h1 class="ptitle">{e(pl['title'])}</h1>
-<p class="lead">{e(pl['intro'])}</p><p><a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
+<p class="lead">{e(pl['intro'])}</p>
+<div class="planbar" data-plan="{pl['slug']}" data-n="{len(items)}"><b>{len(items)} videos{f" · {mins} min total" if mins else ""}</b><span class="prog"><span></span></span><span class="progt">0 of {len(items)} done</span></div>
+<p><a class="pill inl start" id="startplan" href="{BASE}/watch/{items[0]['vid']}/?plan={pl['slug']}">▶ <span>Start step 1</span></a> <a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
         page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans")
     page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",

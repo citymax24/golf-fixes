@@ -104,8 +104,33 @@
     $("#s-frames").onchange = function () { settings.frames = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-hidedis").onchange = function () { settings.hidedis = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-clear-h").onclick = function () { save("history", []); flash("Watch history cleared"); };
-    $("#s-clear-all").onclick = function () { ["history", "liked", "disliked", "later", "settings"].forEach(function (k) { save(k, k === "settings" ? {} : []); }); flash("Everything reset"); };
+    $("#s-clear-all").onclick = function () { ["history", "liked", "disliked", "later", "settings", "plans"].forEach(function (k) { save(k, k === "settings" || k === "plans" ? {} : []); }); flash("Everything reset"); };
   }
+
+  // ---------- fix plan progress ----------
+  var plans = load("plans", {});
+  function planSync() {
+    $$("button.done[data-plan]").forEach(function (b) {
+      var on = (plans[b.dataset.plan] || []).indexOf(b.dataset.vid) >= 0;
+      b.classList.toggle("on", on); $("span", b).textContent = on ? "Done" : "Mark as done";
+      var li = b.closest(".pli"); if (li) li.classList.toggle("isdone", on);
+    });
+    $$(".planbar").forEach(function (bar) {
+      var n = +bar.dataset.n, d = (plans[bar.dataset.plan] || []).length;
+      $(".prog span", bar).style.width = Math.min(100, 100 * d / n) + "%"; $(".progt", bar).textContent = d + " of " + n + " done";
+      var st = $("#startplan"), lis = $$(".pli");
+      if (st && d && d < n) { var nx = lis.filter(function (li) { return !li.classList.contains("isdone"); })[0]; if (nx) { st.href = $("a.th", nx).href; $("span", st).textContent = "Continue: step " + (lis.indexOf(nx) + 1); } }
+      if (st && d >= n) $("span", st).textContent = "Watch again";
+    });
+    $$(".plc[data-plan]").forEach(function (c) { var d = (plans[c.dataset.plan] || []).length; $(".pprog", c).textContent = d ? " · " + d + "/" + c.dataset.n + " done" : ""; });
+  }
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button.done[data-plan]"); if (!b) return;
+    var l = plans[b.dataset.plan] || [], i = l.indexOf(b.dataset.vid);
+    if (i >= 0) l.splice(i, 1); else l.push(b.dataset.vid);
+    plans[b.dataset.plan] = l; save("plans", plans); planSync(); flash(i >= 0 ? "Marked as not done" : "Nice, step done");
+  });
+  planSync();
 
   // ---------- index-driven views ----------
   var list = $("#list"), feed = $("#feed");
