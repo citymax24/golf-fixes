@@ -198,3 +198,21 @@ body.open .side{visibility:visible;transition:transform .2s}
 .intro a.plancta,.intro a.plancta b,.intro a.plancta span{color:#fff;text-decoration:none}
 :root[data-theme=dark] .intro a.plancta,:root[data-theme=dark] .intro a.plancta b,:root[data-theme=dark] .intro a.plancta span{color:#0f0f0f}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .intro a.plancta,:root:not([data-theme=light]) .intro a.plancta b,:root:not([data-theme=light]) .intro a.plancta span{color:#0f0f0f}}
+.welcome h1{font-size:30px}
+.welcome .lede{color:var(--mut);font-size:15px}.welcome .lede b{color:var(--fg)}.welcome .lede a{color:var(--acc);text-decoration:underline;text-underline-offset:2px}
+.ptiles{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:4px}
+.ptile{display:flex;flex-direction:column;gap:6px;padding:0;overflow:hidden;border:0;background:var(--bg)}
+.pth{position:relative;display:block;aspect-ratio:16/9;background:var(--ph);overflow:hidden}
+.pth img{width:100%;height:100%;object-fit:cover;display:block}
+.pth::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.72))}
+.pnm{position:absolute;left:12px;bottom:8px;z-index:1;color:#fff;font-weight:800;font-size:19px;letter-spacing:-.2px}
+.ptop{padding:0 12px;font-size:14px;line-height:1.3;color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ptop i{font-style:normal;font-weight:700;color:var(--acc)}
+.pok{padding:0 12px 12px;font-size:13px;color:var(--ok);font-weight:600}
+.ptile.more{justify-content:center;padding:16px;border:1px dashed var(--chip2);background:transparent}
+.ptile.more b{color:var(--acc);font-size:16px}.ptile.more span{color:var(--mut);font-size:13px}
+.ptile b{display:block}
+.plc i{display:block;font-style:normal;color:var(--mut);font-size:13px;line-height:1.35;margin-top:2px}
+@media (max-width:600px){.ptiles{grid-template-columns:repeat(2,1fr);gap:8px}.pnm{font-size:16px;left:8px;bottom:6px}.ptop{padding:0 8px;font-size:13px}.pok{padding:0 8px 10px;font-size:12px}.welcome h1{font-size:24px}}
+.pth::after{background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.85))}
+.pnm{text-shadow:0 1px 3px rgba(0,0,0,.6)}
