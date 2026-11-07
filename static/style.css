@@ -157,3 +157,9 @@ html.nowelcome .welcome{display:none}
 @media (max-width:600px){.welcome{padding:16px}.welcome h1{font-size:22px}}
 .how{margin-top:16px}
 @media (max-width:600px){.ptiles{grid-template-columns:repeat(2,1fr);gap:8px}.ptile{padding:10px 12px}.ptile b{font-size:15px}.how li{padding:8px 10px;font-size:13px}}
+.tk{margin:4px 0 10px;padding-left:20px}.tk li{margin:3px 0}
+.vl{color:var(--mut);font-size:12px}
+.cm mark{background:color-mix(in srgb,var(--acc) 18%,transparent);color:inherit;border-radius:3px;padding:0 2px}
+.lab.st-useful{color:var(--acc)}.lab.st-critical{color:#c0392b}.lab.st-cites,.lab.st-praise,.lab.st-joke{color:var(--mut)}
+.cmf .lab+.lab{margin-left:8px}
+.morecm{margin-top:10px}.morecm summary{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 0}
