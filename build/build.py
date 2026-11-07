@@ -134,7 +134,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <link rel="icon" href="{BASE}/static/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={e(VDATA['generated'])}2">
-<script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
+<script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <header class="top">
@@ -191,9 +191,17 @@ def chips(active=None):
 # ---------- pages ----------
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
-    body = f"""{chips()}
-<section class="intro"><h1>The golf fixes golfers <em>actually</em> recommend.</h1>
-<p>{TOTAL_RECS:,} times, golfers answered another golfer's swing question with a YouTube lesson. We counted them. Pick your problem or browse the most recommended lessons.</p></section>
+    pick = [PNAME[k] for k in ["slice", "shank", "hook", "fat_thin", "topping", "early_extension", "over_the_top", "driver_distance",
+                               "iron_contact", "chipping", "putting", "bunker"] if k in PNAME and PNAME[k]["video_count"] >= 4]
+    tiles = "".join(f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><b>{e(p["name"])}</b><span>{p["video_count"]} lessons</span></a>' for p in pick)
+    n_golfers = SITE["stats"].get("golfers", "thousands of")
+    body = f"""<section class="welcome" id="welcome">
+<h1>Which golf video actually helps? Ask the golfers who tried them.</h1>
+<p class="lede">Not a golf school. We counted which YouTube lessons golfers recommend to each other for each problem.</p>
+<h2>What's your problem?</h2><div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All problems →</b><span>{len([p for p in PROBLEMS if p["video_count"]])} in total</span></a></div>
+<ol class="how"><li><b>1</b><span>Golfers asked for help with a problem, like a slice</span></li><li><b>2</b><span>Others answered with the lesson that worked for them: {TOTAL_RECS:,} times</span></li><li><b>3</b><span>We ranked lessons by how many different golfers recommended them</span></li></ol>
+<button class="wclose" id="wclose" aria-label="Hide intro">Got it, hide this</button></section>
+{chips()}
 {('<h2 class="row">Start here: fix plans</h2><div class="pgrid row1">' + PLAN_CARDS + '</div><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
 <div class="grid" id="feed">{''.join(card(v) for v in top)}</div>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
