@@ -165,7 +165,9 @@
         if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + "</a>"; }).join("") + "</div></div>";
         if (cs.length) extra += '<div class="sres"><h2>Coaches</h2><div class="tags">' + cs.slice(0, 12).map(function (c) { return '<a class="tag" href="' + B + "/coach/" + c[0] + '/">' + esc(c[1]) + "</a>"; }).join("") + "</div></div>";
         var sl = ps.map(function (p) { return p[0]; });
-        arr = ix.v.filter(ok).filter(function (v) { return hit(v[1] + " " + v[2] + " " + v[6]) || v[7].some(function (p) { return sl.indexOf(p) >= 0; }); });
+        var pscore = function (v) { return sl.reduce(function (a, p) { return a + ((v[14] || {})[p] || 0); }, 0); };
+        arr = ix.v.filter(ok).filter(function (v) { return pscore(v) > 0 || hit(v[1] + " " + v[2] + " " + v[6]); });
+        arr.sort(function (x, y) { return pscore(y) - pscore(x) || (hit(y[1]) - hit(x[1])) || y[4] - x[4]; });
         if (extra) list.insertAdjacentHTML("beforebegin", extra + '<h2 class="row">Lessons</h2>');
       }
     } else if (kind === "browse") {
