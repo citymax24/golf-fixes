@@ -66,7 +66,7 @@ for p in PROBLEMS:
     p["total_recs"], p["video_count"] = sum(r[1] for r in rows), len(rows)
 
 channels = defaultdict(lambda: {"recs": 0, "success": 0, "videos": [], "topics": Counter(), "url": None, "name": None})
-for v in VIDEOS:
+for v in WATCH.values():
     c = channels[v["cs"]]
     c["name"], c["url"] = v.get("channel"), v.get("channel_url")
     c["recs"] += v["recs"]; c["success"] += v.get("success", 0); c["videos"].append(v)
@@ -110,9 +110,8 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
     full = URL + path
     side = "".join(f'<a href="{BASE}{h}"{" class=on" if nav == n else ""}>{svg(ic)}<span>{lbl}</span></a>' for n, h, ic, lbl in [
         ("home", "/", "home", "Home"), ("cat", "/categories/", "cat", "Problems"), ("plans", "/plans/", "list", "Fix plans"),
-        ("browse", "/browse/", "browse", "Browse"), ("coaches", "/coaches/", "coach", "Coaches"),
-        ("liked", "/liked/", "like", "Liked"), ("history", "/history/", "hist", "History"), ("later", "/later/", "later", "Watch later"),
-        ("stats", "/report/", "stats", "Stats"), ("data", "/data/", "data", "Data"), ("settings", "/settings/", "gear", "Settings")])
+        ("coaches", "/coaches/", "coach", "Coaches"), ("browse", "/browse/", "browse", "Browse"),
+        ("liked", "/liked/", "like", "Liked"), ("later", "/later/", "later", "Watch later"), ("history", "/history/", "hist", "History")])
     nl = SITE.get("newsletter_url")
     doc = f"""<!doctype html>
 <html lang="en"><head>
@@ -132,12 +131,13 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <header class="top">
   <div class="left"><button class="icon" id="menu" aria-label="Menu">{svg('menu')}</button>
   <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home">Golf<b>Votes</b></a></div>
-  <form class="search" action="{BASE}/search/" role="search"><input name="q" id="q" type="search" placeholder="Search a problem, coach or video" autocomplete="off" aria-label="Search"><button aria-label="Search">{svg('search')}</button></form>
+  <form class="search" action="{BASE}/search/" role="search"><input name="q" id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search"><button aria-label="Search">{svg('search')}</button></form>
   <div class="right"><a class="icon" href="{BASE}/about/" aria-label="About" title="About">{svg('help')}</a><button class="icon" id="theme" aria-label="Toggle theme">{svg('moon')}</button></div>
 </header>
 <nav class="side" id="side">{side}
   <div class="sidefoot">{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
-  <a href="{BASE}/about/">About</a> · <a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</div>
+  <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
+  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</div>
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main">{body}</main>
@@ -154,7 +154,7 @@ def thumb(vid, q="mq2"):
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
 
 
-def card(v, n=None, ok=None, rank=None):
+def card(v, n=None, ok=None, rank=None, pname=None):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
     href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"https://www.youtube.com/watch?v={v['vid']}"
@@ -166,7 +166,7 @@ def card(v, n=None, ok=None, rank=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(v['title'])}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><b>{n}</b> golfer{'s' if n != 1 else ''} recommend{'s' if n == 1 else ''}{f' · <span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f' · {sub}' if sub else ''}</p></div>
+<p class="st">{f'<b>{n}</b> recommend it for {e(pname.lower())}' + (f' · {v["recs"]} overall' if v["recs"] != n else '') if pname else f'<b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}'}{f' · <span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}</p></div>
 </article>"""
 
 
@@ -204,7 +204,7 @@ def build_problem(p):
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
 <p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{aid_html}</section>
-<div class="grid">{''.join(card(v, n, ok, i + 1) for i, (s, n, ok, v) in enumerate(rows))}</div>
+<div class="grid">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
          f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
@@ -288,7 +288,7 @@ def build_plans():
         first = vmap[items[0]["vid"]]
         cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos</span></span><b>{e(pl["title"])}</b><i>{e(PNAME[pl["key"]]["name"])}</i></a>'
         steps = "".join(f"""<li class="pli"><a class="th" href="{BASE}/watch/{i['vid']}/"><img loading="lazy" src="{thumb(i['vid'])}" alt=""></a>
-<div><h3><a href="{BASE}/watch/{i['vid']}/">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {vmap[i['vid']]['recs']} golfers recommend</p><p>{e(i['note'])}</p></div></li>""" for n, i in enumerate(items, 1))
+<div><h3><a href="{BASE}/watch/{i['vid']}/">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} recommend it for {e(PNAME[pl['key']]['name'].lower())} · {vmap[i['vid']]['recs']} overall</p><p>{e(i['note'])}</p></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
         body = f"""<div class="plan"><p class="kick">Fix plan · <a href="{BASE}/fix/{PNAME[pl['key']]['slug']}/">{e(PNAME[pl['key']]['name'])}</a></p><h1 class="ptitle">{e(pl['title'])}</h1>
 <p class="lead">{e(pl['intro'])}</p><p><a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
@@ -377,8 +377,8 @@ def build_coach(s, c):
     body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
 <h1>{e(c['name'])}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
-{f'<section class="badges"><b>Ranked #1 on {e(SITE["name"])}</b> · embed code for your site{badges}</section>' if badges else ''}
-<div class="grid">{''.join(card(v) for v in vids)}</div>"""
+<div class="grid">{''.join(card(v) for v in vids)}</div>
+{f'<details class="badges"><summary>Are you {e(c["name"])}? Badge for your site</summary>{badges}</details>' if badges else ''}"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
          f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} independent recommendations.", body, nav="coaches")
 
@@ -430,7 +430,8 @@ def build_index():
     """Compact client-side index for search, liked, history, later."""
     idx = [[v["vid"], v["title"], v["channel"], v["cs"] if v["cs"] in COACH_SET else "", v["recs"], v.get("success", 0),
             PNAME[v["top"]]["name"] if v["top"] in PNAME else "", [PNAME[t]["slug"] for t in (v.get("topic_counts") or {}) if t in PNAME],
-            v.get("type") or "", v.get("level") or "", (v.get("years") or [0, 0])[1], (v.get("years") or [0, 0])[0], v.get("duration_s") or 0, v.get("views") or 0]
+            v.get("type") or "", v.get("level") or "", (v.get("years") or [0, 0])[1], (v.get("years") or [0, 0])[0], v.get("duration_s") or 0, v.get("views") or 0,
+            {PNAME[t]["slug"]: n for t, n in (v.get("topic_counts") or {}).items() if t in PNAME}]
            for v in sorted(WATCH.values(), key=lambda x: -x["recs"])]
     probs = [[p["slug"], p["name"], p["q"], p["total_recs"]] for p in PROBLEMS if p["video_count"]]
     coaches = [[s, c["name"], c["recs"]] for s, c in COACHES]

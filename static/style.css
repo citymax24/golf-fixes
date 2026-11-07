@@ -131,3 +131,5 @@ kbd{background:var(--chip);border:1px solid var(--chip2);border-radius:4px;paddi
 .sentinel{height:1px}
 
 .seo{margin:40px 0 0;border-top:1px solid var(--line);padding-top:8px}
+
+details.badges{margin:28px 0 0;font-size:13px;color:var(--mut)}details.badges summary{cursor:pointer}
