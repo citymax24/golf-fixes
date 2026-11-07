@@ -28,6 +28,11 @@ PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
 
 
+def trunc(s, n):
+    s = re.sub(r"\s+", " ", str(s or "")).strip()
+    return s if len(s) <= n else s[: n - 1].rsplit(" ", 1)[0].rstrip(" ,.;:–-|") + "…"
+
+
 def slugify(s):
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-") or "unknown"
 
@@ -52,6 +57,8 @@ for v in VIDEOS:
     m = META.get(v["vid"], {})
     v["type"], v["level"], v["summary"] = m.get("type"), m.get("level"), m.get("summary")
 WATCH = {v["vid"]: v for v in VIDEOS if v["page"]}
+TITLE_COUNT = Counter(v["title"].lower() for v in WATCH.values())
+USED = Counter()
 
 by_problem = {}
 for p in PROBLEMS:
@@ -108,6 +115,8 @@ svg = lambda k: f'<svg viewBox="0 0 24 24" aria-hidden="true">{I[k]}</svg>'
 # ---------- layout ----------
 def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=""):
     full = URL + path
+    title = title if len(title) <= 70 else trunc(title.rsplit(" | ", 1)[0], 57) + " | " + SITE["name"]
+    desc = trunc(desc, 158)
     side = "".join(f'<a href="{BASE}{h}"{" class=on" if nav == n else ""}>{svg(ic)}<span>{lbl}</span></a>' for n, h, ic, lbl in [
         ("home", "/", "home", "Home"), ("cat", "/categories/", "cat", "Problems"), ("plans", "/plans/", "list", "Fix plans"),
         ("coaches", "/coaches/", "coach", "Coaches"), ("browse", "/browse/", "browse", "Browse"),
@@ -259,8 +268,14 @@ def build_watch(v):
 <p class="dim">Summaries are written by AI from what golfers said about the video.</p>
 <div class="tags">{tags}</div></div>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
-    page(f"/watch/{v['vid']}/", f"{v['title']} | {SITE['name']}",
-         f"{v['recs']} golfers recommended this {v['channel']} lesson" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + ".",
+    base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
+    rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
+    tt = trunc(base, 53)
+    USED[tt] += 1
+    if USED[tt] > 1:
+        tt = f"{tt} ({USED[tt]})"
+    page(f"/watch/{v['vid']}/", f"{tt} | {SITE['name']}",
+         (f"{v['summary']} {rec}" if v.get("summary") and len(v["summary"]) + len(rec) < 158 else (v.get("summary") or f"{v['channel']} lesson. {rec}")) if v.get("summary") else f"{v['channel']} lesson. {rec}",
          body, cls="wpage",
          ld={"@context": "https://schema.org", "@type": "VideoObject", "name": v["title"], "thumbnailUrl": thumb(v["vid"], "hqdefault"),
              "uploadDate": v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01", "description": f"{v['recs']} golfers recommended this lesson.",
@@ -415,11 +430,11 @@ def build_text():
 <h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, always linked to the original. If you wrote one and want it removed, open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a> with the link and it will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
-    page("/privacy/", f"Privacy | {SITE['name']}", "Privacy.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
+    page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
 <p>No cookies, no analytics, no tracking. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
 <p><b>YouTube:</b> Video thumbnails are loaded from YouTube's image servers (i.ytimg.com), which receive your IP address. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
 <p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p><p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
-    page("/imprint/", f"Imprint | {SITE['name']}", "Imprint.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
+    page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
     for slug, nav, title, empty in [("liked", "liked", "Liked", "Videos you like show up here."), ("history", "history", "History", "Videos you open show up here."),
                                     ("later", "later", "Watch later", "Save videos to watch later."), ("search", "", "Search", "")]:
         page(f"/{slug}/", f"{title} | {SITE['name']}", title, f'<h1 class="ptitle" id="ltitle">{title}</h1><div class="grid" id="list" data-list="{slug}"></div><p class="dim" id="empty">{empty}</p>',
