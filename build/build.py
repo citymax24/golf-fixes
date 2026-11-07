@@ -194,15 +194,20 @@ def chips(active=None):
 # ---------- pages ----------
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
-    pick = [PNAME[k] for k in ["slice", "shank", "hook", "fat_thin", "topping", "early_extension", "over_the_top", "driver_distance",
-                               "iron_contact", "chipping", "putting", "bunker"] if k in PNAME and PNAME[k]["video_count"] >= 4]
-    tiles = "".join(f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><b>{e(p["name"])}</b><span>{p["video_count"]} lessons</span></a>' for p in pick)
-    n_golfers = SITE["stats"].get("golfers", "thousands of")
+    pick = [PNAME[k] for k in ["slice", "shank", "early_extension", "over_the_top", "driver_distance", "iron_contact", "chipping", "putting"]
+            if k in PNAME and by_problem.get(k)]
+
+    def tile(p):
+        sc, n, ok, v = by_problem[p["key"]][0]
+        proof = f'✓ {ok} said it fixed their {e(p["name"].lower())}' if ok else f'{n} golfers recommend it'
+        return (f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><span class="pth"><img loading="lazy" src="{thumb(v["vid"])}" alt="">'
+                f'<span class="pnm">{e(p["name"])}</span></span><span class="ptop"><i>#1</i> {e(trunc(v["title"], 48))}</span>'
+                f'<span class="pok">{proof}</span></a>')
+    tiles = "".join(tile(p) for p in pick)
     body = f"""<section class="welcome" id="welcome">
-<h1>Which golf video actually helps? Ask the golfers who tried them.</h1>
-<p class="lede">Not a golf school. We counted which YouTube lessons golfers recommend to each other for each problem.</p>
-<h2>What's your problem?</h2><div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All problems →</b><span>{len([p for p in PROBLEMS if p["video_count"]])} in total</span></a></div>
-<ol class="how"><li><b>1</b><span>Golfers asked for help with a problem, like a slice</span></li><li><b>2</b><span>Others answered with the lesson that worked for them: {TOTAL_RECS:,} times</span></li><li><b>3</b><span>We ranked lessons by how many different golfers recommended them</span></li></ol>
+<h1>Which golf video actually helps?</h1>
+<p class="lede">Ranked by <b>{TOTAL_RECS:,}</b> recommendations golfers gave each other on r/GolfSwing and r/golftips, {SITE["stats"]["period"]}. <a href="{BASE}/about/">How we count</a></p>
+<div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>Hook, topping, bunker, mental game and more</span></a></div>
 <button class="wclose" id="wclose">Got it, hide this</button></section>
 {chips()}
 {('<h2 class="row">Start here: fix plans</h2><div class="pgrid row1">' + PLAN_CARDS + '</div><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
@@ -392,7 +397,7 @@ def build_plans():
         first = vmap[items[0]["vid"]]
         mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
         pl["mins"] = mins
-        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>{e(PNAME[pl["key"]]["name"])}<span class="pprog"></span></i></a>'
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>Backed by {sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfer recommendations{(" · ✓ " + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + " fixed it") if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
         steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
 <div><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} recommend it for {e(PNAME[pl['key']]['name'].lower())} · {vmap[i['vid']]['recs']} overall</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
