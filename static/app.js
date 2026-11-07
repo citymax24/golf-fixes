@@ -107,6 +107,10 @@
     $("#s-clear-all").onclick = function () { ["history", "liked", "disliked", "later", "settings", "plans"].forEach(function (k) { save(k, k === "settings" || k === "plans" ? {} : []); }); flash("Everything reset"); };
   }
 
+  // ---------- welcome box ----------
+  var wc = $("#wclose");
+  if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
+
   // ---------- fix plan progress ----------
   var plans = load("plans", {});
   function planSync() {
