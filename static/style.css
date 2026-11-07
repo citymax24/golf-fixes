@@ -133,3 +133,12 @@ kbd{background:var(--chip);border:1px solid var(--chip2);border-radius:4px;paddi
 .seo{margin:40px 0 0;border-top:1px solid var(--line);padding-top:8px}
 
 details.badges{margin:28px 0 0;font-size:13px;color:var(--mut)}details.badges summary{cursor:pointer}
+.planbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--chip);border-radius:12px;padding:10px 14px;margin:0 0 12px}
+.prog{flex:1;min-width:120px;height:8px;border-radius:4px;background:var(--chip2);overflow:hidden}.prog span{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.progt{color:var(--mut);font-size:13px}
+.pill.start{background:var(--acc);color:#fff}.pill.start:hover{background:var(--acc2)}
+.pill.done.on{background:var(--ok);color:#fff}
+.pli.isdone h3 a{text-decoration:line-through;color:var(--mut)}
+.pli .th{position:relative;display:block}
+.pprog{color:var(--ok)}
+.inplan p{margin:0 0 6px}
