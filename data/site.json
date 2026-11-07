@@ -7,7 +7,7 @@
   "cname": "",
   "newsletter_url": "",
   "min_recs_per_problem": 2,
-  "max_videos_per_problem": 30,
+  "max_videos_per_problem": 60,
   "min_recs_per_coach": 10,
   "stats": {"comments_scanned": "1.5 million", "yt_comments": "29,600", "period": "2014–2026"},
   "hosting_note": "This site is hosted on GitHub Pages (GitHub Inc., USA). GitHub may log your IP address for security purposes.",
