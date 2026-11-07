@@ -16,6 +16,7 @@ _opt = lambda f, d: D(f) if os.path.exists(os.path.join(ROOT, "data", f)) else d
 COMMENTS = _opt("comments.json", {})
 META = {m["vid"]: m for m in _opt("video_meta.json", [])}
 PLANS = _opt("plans.json", [])
+SEO = _opt("seo.json", {})
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
          "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
 LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced", "all": "All levels"}
@@ -122,7 +123,8 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og/default.png')}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="{BASE}/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{BASE}/static/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png">
+{f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={e(VDATA['generated'])}2">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
@@ -200,7 +202,8 @@ def build_problem(p):
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
 <p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{aid_html}</section>
-<div class="grid">{''.join(card(v, n, ok, i + 1) for i, (s, n, ok, v) in enumerate(rows))}</div>"""
+<div class="grid">{''.join(card(v, n, ok, i + 1) for i, (s, n, ok, v) in enumerate(rows))}</div>
+{f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
          f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
          og=f"{URL}/static/og/{p['slug']}.png",
@@ -331,6 +334,17 @@ def build_client_pages():
                                            for p in PROBLEMS if p["video_count"]]}, open(os.path.join(OUT, "static", "data", "golfvotes-problems.json"), "w"), ensure_ascii=False, indent=0)
 
 
+def build_guides():
+    for key, slug in (("guide_coaches", "best-golf-youtube-channels"), ("guide_drills", "best-golf-drills")):
+        g = SEO.get(key)
+        if not g:
+            continue
+        page(f"/guides/{slug}/", f"{g['title']} | {SITE['name']}", g["description"],
+             f'<article class="prose"><p class="kick">Guide · data from {VDATA["generated"]}</p><h1 class="ptitle">{e(g["title"])}</h1>{g["html"]}'
+             f'<p><a href="{BASE}/coaches/">All coaches</a> · <a href="{BASE}/browse/?type=drill">All drills</a> · <a href="{BASE}/about/">How we count</a></p></article>', nav="stats",
+             ld={"@context": "https://schema.org", "@type": "Article", "headline": g["title"], "dateModified": VDATA["generated"], "author": {"@type": "Organization", "name": SITE["name"]}})
+
+
 def build_coaches():
     rows = "".join(f'<a class="crow" href="{BASE}/coach/{s}/"><span class="n">{i}</span><b>{e(c["name"])}</b>'
                    f'<span>{c["recs"]:,} recommendations · {len(c["videos"])} videos</span>'
@@ -377,6 +391,7 @@ def build_report():
     body = f"""<div class="prose"><h1 class="ptitle">What golfers recommend to each other</h1>
 <div class="kpis"><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{st['yt_comments']}</b>with a YouTube link</div><div><b>{TOTAL_RECS:,}</b>lesson recommendations</div><div><b>{len(WATCH):,}</b>lessons ranked</div></div>
 <h2>Problems golfers ask about most</h2><div class="bars">{bars}</div><h2>Most recommended coaches</h2><div class="bars">{cb}</div>
+<p>Guides: <a href="{BASE}/guides/best-golf-youtube-channels/">Best golf instruction channels on YouTube</a> · <a href="{BASE}/guides/best-golf-drills/">Most recommended golf drills</a></p>
 <p class="dim">Free to cite with a link to {e(SITE['name'])}. Method: <a href="{BASE}/about/">About</a>.</p></div>"""
     page("/report/", f"What golfers recommend to each other: the data | {SITE['name']}",
          f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og/report.png")
@@ -427,7 +442,7 @@ def build_misc():
     open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /go/\nSitemap: {URL}/sitemap.xml\n")
     page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">Not found</h1><p><a href="{BASE}/">Find your golf fix</a></p>', canonical=False)
     open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-                                                     "".join(f"<url><loc>{e(u)}</loc></url>" for u in SITEMAP) + "</urlset>")
+                                                     "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
     if SITE.get("cname"):
         open(os.path.join(OUT, "CNAME"), "w").write(SITE["cname"] + "\n")
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
@@ -445,5 +460,5 @@ if __name__ == "__main__":
     build_coaches()
     for s, c in COACHES:
         build_coach(s, c)
-    build_report(); build_text(); build_index(); build_misc()
+    build_report(); build_text(); build_guides(); build_index(); build_misc()
     print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches -> {OUT}")
