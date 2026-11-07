@@ -12,6 +12,13 @@ D = lambda f: json.load(open(os.path.join(ROOT, "data", f)))
 SITE, PROBLEMS, VDATA = D("site.json"), D("problems.json"), D("videos.json")
 LINKS = D("links.json") if os.path.exists(os.path.join(ROOT, "data", "links.json")) else {}
 VIDEOS = VDATA["videos"]
+_opt = lambda f, d: D(f) if os.path.exists(os.path.join(ROOT, "data", f)) else d
+COMMENTS = _opt("comments.json", {})
+META = {m["vid"]: m for m in _opt("video_meta.json", [])}
+PLANS = _opt("plans.json", [])
+TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
+         "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
+LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced", "all": "All levels"}
 BASE = SITE["base_path"].rstrip("/")
 URL = SITE["base_url"].rstrip("/")
 MIN = SITE.get("min_recs_per_problem", 2)
@@ -41,6 +48,8 @@ for v in VIDEOS:
     tc = v.get("topic_counts") or {}
     v["top"] = max(tc, key=tc.get) if tc else None
     v["page"] = v["recs"] >= MIN          # gets its own watch page
+    m = META.get(v["vid"], {})
+    v["type"], v["level"], v["summary"] = m.get("type"), m.get("level"), m.get("summary")
 WATCH = {v["vid"]: v for v in VIDEOS if v["page"]}
 
 by_problem = {}
@@ -85,6 +94,11 @@ I = {
     "later": '<path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>',
     "stats": '<path d="M5 9h3v11H5zm5.5-5h3v16h-3zM16 13h3v7h-3z"/>',
     "ext": '<path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42L17.59 5H14V3zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>',
+    "dislike": '<path d="M5.23 13h4.23l-1.52 4.94C7.62 18.97 8.46 20 9.62 20c.58 0 1.14-.24 1.52-.65L17 13h4V3H6.57c-1.06 0-1.98.67-2.19 1.61l-1.34 6C2.77 11.85 3.82 13 5.23 13zM17 4h3v8h-3V4z"/>',
+    "list": '<path d="M3 6h12v2H3zm0 4h12v2H3zm0 4h8v2H3zm12 0v6l5-3z"/>',
+    "gear": '<path d="M19.14 12.94c.04-.31.06-.62.06-.94s-.02-.63-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.02 7.02 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.31-.09.63-.09.94s.02.63.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.48.48 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 15.6 12 3.6 3.6 0 0 1 12 15.6z"/>',
+    "browse": '<path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>',
+    "data": '<path d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.59 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm6 14c0 .5-2.13 2-6 2s-6-1.5-6-2v-2.23c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V17zm0-4.55c-1.3.95-3.58 1.55-6 1.55s-4.7-.6-6-1.55V9.64c1.47.83 3.61 1.36 6 1.36s4.53-.53 6-1.36v2.81zM12 9C8.13 9 6 7.5 6 7s2.13-2 6-2 6 1.5 6 2-2.13 2-6 2z"/>',
     "check": '<path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>',
 }
 svg = lambda k: f'<svg viewBox="0 0 24 24" aria-hidden="true">{I[k]}</svg>'
@@ -94,9 +108,10 @@ svg = lambda k: f'<svg viewBox="0 0 24 24" aria-hidden="true">{I[k]}</svg>'
 def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=""):
     full = URL + path
     side = "".join(f'<a href="{BASE}{h}"{" class=on" if nav == n else ""}>{svg(ic)}<span>{lbl}</span></a>' for n, h, ic, lbl in [
-        ("home", "/", "home", "Home"), ("cat", "/categories/", "cat", "Problems"), ("coaches", "/coaches/", "coach", "Coaches"),
+        ("home", "/", "home", "Home"), ("cat", "/categories/", "cat", "Problems"), ("plans", "/plans/", "list", "Fix plans"),
+        ("browse", "/browse/", "browse", "Browse"), ("coaches", "/coaches/", "coach", "Coaches"),
         ("liked", "/liked/", "like", "Liked"), ("history", "/history/", "hist", "History"), ("later", "/later/", "later", "Watch later"),
-        ("stats", "/report/", "stats", "Stats")])
+        ("stats", "/report/", "stats", "Stats"), ("data", "/data/", "data", "Data"), ("settings", "/settings/", "gear", "Settings")])
     nl = SITE.get("newsletter_url")
     doc = f"""<!doctype html>
 <html lang="en"><head>
@@ -145,10 +160,10 @@ def card(v, n=None, ok=None, rank=None):
     yrs = v.get("years") or []
     sub = f"{fmt_n(v['views'])} views" if v.get("views") else (f"recommended {yrs[0]}–{yrs[1]}" if yrs and yrs[0] != yrs[1] else (f"recommended {yrs[0]}" if yrs else ""))
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
-    return f"""<article class="vc">
-<a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a>
+    return f"""<article class="vc" data-vid="{e(v['vid'])}">
+<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(v['title'])}</a></h3>
-<p class="ch">{ch}</p>
+<p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
 <p class="st"><b>{n}</b> golfer{'s' if n != 1 else ''} recommend{'s' if n == 1 else ''}{f' · <span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f' · {sub}' if sub else ''}</p></div>
 </article>"""
 
@@ -166,7 +181,8 @@ def build_home():
     body = f"""{chips()}
 <section class="intro"><h1>The golf fixes golfers <em>actually</em> recommend.</h1>
 <p>{TOTAL_RECS:,} times, golfers answered another golfer's swing question with a YouTube lesson. We counted them. Pick your problem or browse the most recommended lessons.</p></section>
-<div class="grid">{''.join(card(v) for v in top)}</div>"""
+{('<h2 class="row">Start here: fix plans</h2><div class="pgrid row1">' + PLAN_CARDS + '</div><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
+<div class="grid" id="feed">{''.join(card(v) for v in top)}</div>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
@@ -228,19 +244,91 @@ def build_watch(v):
 <p class="vch">{ch}</p>
 <p class="vst"><b>{v['recs']}</b> golfers recommended it{f' · <span class="ok">✓ {v["success"]} said it fixed their problem</span>' if v.get('success') else ''}{f' · {yrs[0]}–{yrs[1]}' if yrs and yrs[0] != yrs[1] else ''}</p>
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
-<button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>
+<span class="seg"><button class="pill" data-act="liked">{svg('like')}<span>Like</span></button><button class="pill" data-act="disliked" aria-label="Dislike">{svg('dislike')}</button></span>
 <button class="pill" data-act="later">{svg('later')}<span>Watch later</span></button>
 <a class="pill" href="https://www.youtube.com/watch?v={e(v['vid'])}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>YouTube</span></a></div>
-<div class="desc">{f'<p><b>Why golfers recommend it</b></p><ul>' + ''.join(f'<li>{e(x)}</li>' for x in notes) + '</ul>' if notes else ''}
+<div class="desc">{f'<p class="dim">{TYPES.get(v["type"], "")}{" · " + LEVELS[v["level"]] if v.get("level") in LEVELS else ""}</p>' if v.get("type") else ''}
+{f'<p>{e(v["summary"])}</p>' if v.get("summary") else ''}
+{''.join(f'<p class="inplan">Part of <a href="{BASE}/plan/{pl["slug"]}/">{e(pl["title"])}</a> · step {[i["vid"] for i in pl["items"]].index(v["vid"]) + 1} of {len(pl["items"])}</p>' for pl in PLANS if v["vid"] in [i["vid"] for i in pl["items"]])}
+{f'<p><b>Why golfers recommend it</b></p><ul>' + ''.join(f'<li>{e(x)}</li>' for x in notes) + '</ul>' if notes else ''}
 <p class="dim">Summaries are written by AI from what golfers said about the video.</p>
 <div class="tags">{tags}</div></div>
-</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
+{comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     page(f"/watch/{v['vid']}/", f"{v['title']} | {SITE['name']}",
          f"{v['recs']} golfers recommended this {v['channel']} lesson" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + ".",
          body, cls="wpage",
          ld={"@context": "https://schema.org", "@type": "VideoObject", "name": v["title"], "thumbnailUrl": thumb(v["vid"], "hqdefault"),
              "uploadDate": v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01", "description": f"{v['recs']} golfers recommended this lesson.",
              "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}"})
+
+
+def comments_html(v):
+    cs = COMMENTS.get(v["vid"]) or []
+    if not cs:
+        return ""
+    rows = "".join(f"""<div class="cm"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · in “{e(c["pt"])}”' if c.get('pt') else ''}</p>
+<p>{e(c['b'])}</p><p class="cmf"><span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""" for c in cs)
+    more = v["recs"] - len(cs)
+    return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
+
+
+def build_plans():
+    vmap = {v["vid"]: v for v in VIDEOS}
+    cards = ""
+    for pl in PLANS:
+        items = [i for i in pl["items"] if i["vid"] in vmap]
+        if not items:
+            continue
+        pl["slug"] = pl.get("slug") or PNAME[pl["key"]]["slug"]
+        first = vmap[items[0]["vid"]]
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos</span></span><b>{e(pl["title"])}</b><i>{e(PNAME[pl["key"]]["name"])}</i></a>'
+        steps = "".join(f"""<li class="pli"><a class="th" href="{BASE}/watch/{i['vid']}/"><img loading="lazy" src="{thumb(i['vid'])}" alt=""></a>
+<div><h3><a href="{BASE}/watch/{i['vid']}/">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {vmap[i['vid']]['recs']} golfers recommend</p><p>{e(i['note'])}</p></div></li>""" for n, i in enumerate(items, 1))
+        ids = ",".join(i["vid"] for i in items)
+        body = f"""<div class="plan"><p class="kick">Fix plan · <a href="{BASE}/fix/{PNAME[pl['key']]['slug']}/">{e(PNAME[pl['key']]['name'])}</a></p><h1 class="ptitle">{e(pl['title'])}</h1>
+<p class="lead">{e(pl['intro'])}</p><p><a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
+<ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
+        page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans")
+    page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
+         f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short learning paths: understand the cause, learn the fix, groove it with a drill. Built from the lessons golfers recommend most.</p><div class="pgrid">{cards}</div>', nav="plans")
+    return cards
+
+
+def build_client_pages():
+    opt = lambda d: "".join(f'<option value="{k}">{e(x)}</option>' for k, x in d)
+    probs = opt(sorted(((p["slug"], p["name"]) for p in PROBLEMS if p["video_count"]), key=lambda x: x[1]))
+    filters = f"""<form class="filters" id="filters">
+<label>Sort <select name="sort"><option value="recs">Most recommended</option><option value="fixed">Most “fixed it”</option><option value="recent">Recently recommended</option><option value="oldest">Oldest first</option>{'<option value="views">View count</option><option value="hidden">Hidden gems</option>' if any(v.get("views") for v in VIDEOS) else ''}</select></label>
+<label>Problem <select name="p"><option value="">Any</option>{probs}</select></label>
+<label>Type <select name="type"><option value="">Any</option>{opt((k, x) for k, x in TYPES.items() if k != "other")}</select></label>
+<label>Level <select name="level"><option value="">Any</option>{opt(LEVELS.items())}</select></label>
+<label class="cb"><input type="checkbox" name="new" value="1"> Recommended in the past year</label></form>"""
+    page("/browse/", f"Browse all lessons | {SITE['name']}", "Browse and filter every golf lesson golfers recommended.",
+         f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<p class="dim" id="count"></p><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
+    page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
+<label class="set"><input type="checkbox" id="s-frames"> Show video frames instead of thumbnails</label>
+<label class="set"><input type="checkbox" id="s-hidedis"> Hide disliked videos everywhere</label>
+<p><button class="pill inl" id="s-clear-h">Clear watch history</button> <button class="pill inl" id="s-clear-all">Reset everything</button></p>
+<p class="dim">Everything is stored only in this browser. Keyboard shortcuts: press <kbd>?</kbd>.</p></div>""", nav="settings", canonical=False)
+    st = SITE["stats"]
+    prompt = (f"Use the open dataset at {URL}/static/data/golfvotes-lessons.json. Each entry is a golf lesson on YouTube with how many golfers "
+              f"independently recommended it, how many said it fixed their problem, its problems, type and level. My problem is: <describe your swing problem>. "
+              f"Pick the 3 best lessons for me, in the order I should watch them, and explain why.")
+    page("/data/", f"The data | {SITE['name']}", "Download the GolfVotes dataset of golf lessons ranked by golfers.", f"""<div class="prose"><h1 class="ptitle">The data</h1>
+<p class="lead">Everything behind {e(SITE['name'])} is open. Use it, cite it, build on it. Please link back.</p>
+<div class="kpis"><div><b>{len(WATCH):,}</b>lessons</div><div><b>{TOTAL_RECS:,}</b>recommendations</div><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{VDATA['generated']}</b>last update</div></div>
+<h2>Files</h2><table class="files"><tr><td><a href="{BASE}/static/data/golfvotes-lessons.json" download>golfvotes-lessons.json</a></td><td>All ranked lessons: video id, title, coach, recommendations, “fixed it” count, problems, type, level, summary</td></tr>
+<tr><td><a href="{BASE}/static/data/golfvotes-problems.json" download>golfvotes-problems.json</a></td><td>Problems with their top lessons in order</td></tr></table>
+<h2>Give it to your agent</h2><p>Paste this into ChatGPT, Claude or any assistant:</p><pre id="prompt">{e(prompt)}</pre><p><button class="pill inl" id="copyprompt">Copy this prompt</button></p>
+<h2>License</h2><p>Data: free to use with attribution to {e(SITE['name'])} ({e(URL)}). Video titles and thumbnails belong to their creators.</p></div>""", nav="data")
+    os.makedirs(os.path.join(OUT, "static", "data"), exist_ok=True)
+    lessons = [{"id": v["vid"], "url": f"https://www.youtube.com/watch?v={v['vid']}", "title": v["title"], "coach": v["channel"], "recommendations": v["recs"],
+                "fixed_it": v.get("success", 0), "problems": {PNAME[t]["name"]: n for t, n in (v.get("topic_counts") or {}).items() if t in PNAME},
+                "type": TYPES.get(v.get("type")), "level": LEVELS.get(v.get("level")), "summary": v.get("summary"), "page": f"{URL}/watch/{v['vid']}/"}
+               for v in sorted(WATCH.values(), key=lambda x: -x["recs"])]
+    json.dump({"source": URL, "generated": VDATA["generated"], "lessons": lessons}, open(os.path.join(OUT, "static", "data", "golfvotes-lessons.json"), "w"), ensure_ascii=False, indent=0)
+    json.dump({"source": URL, "problems": [{"problem": p["name"], "question": p["q"], "page": f"{URL}/fix/{p['slug']}/", "top": [r[3]["vid"] for r in by_problem[p["key"]][:10]]}
+                                           for p in PROBLEMS if p["video_count"]]}, open(os.path.join(OUT, "static", "data", "golfvotes-problems.json"), "w"), ensure_ascii=False, indent=0)
 
 
 def build_coaches():
@@ -303,9 +391,12 @@ def build_text():
 <li><b>Read the threads.</b> {st['comments_scanned']} public comments from golf-instruction communities ({st['period']}) were scanned for YouTube links: {st['yt_comments']} comments.</li>
 <li><b>Read each comment with an AI model.</b> Is it a real lesson recommendation, not a meme, highlight or gear review? Which problem is it about? Does the golfer say it fixed it?</li>
 <li><b>Count independent golfers.</b> Each golfer counts once per video. A lesson needs at least {MIN} different golfers recommending it for a problem.</li>
+<li><b>Add context.</b> An AI model labels each lesson's type (drill, explainer, live lesson, pro swing …), level and a one-line summary, and builds short fix plans from the top lessons.</li>
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. We don't republish anyone's comments or usernames.</p>
-<h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p></div>"""
+<h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
+<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, always linked to the original. If you wrote one and want it removed, open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a> with the link and it will be removed in the next update.</p>
+<h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "Privacy.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
 <p>No cookies, no analytics, no tracking. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
@@ -321,7 +412,9 @@ def build_text():
 def build_index():
     """Compact client-side index for search, liked, history, later."""
     idx = [[v["vid"], v["title"], v["channel"], v["cs"] if v["cs"] in COACH_SET else "", v["recs"], v.get("success", 0),
-            PNAME[v["top"]]["name"] if v["top"] in PNAME else ""] for v in sorted(WATCH.values(), key=lambda x: -x["recs"])]
+            PNAME[v["top"]]["name"] if v["top"] in PNAME else "", [PNAME[t]["slug"] for t in (v.get("topic_counts") or {}) if t in PNAME],
+            v.get("type") or "", v.get("level") or "", (v.get("years") or [0, 0])[1], (v.get("years") or [0, 0])[0], v.get("duration_s") or 0, v.get("views") or 0]
+           for v in sorted(WATCH.values(), key=lambda x: -x["recs"])]
     probs = [[p["slug"], p["name"], p["q"], p["total_recs"]] for p in PROBLEMS if p["video_count"]]
     coaches = [[s, c["name"], c["recs"]] for s, c in COACHES]
     json.dump({"v": idx, "p": probs, "c": coaches}, open(os.path.join(OUT, "static", "index.json"), "w"), separators=(",", ":"), ensure_ascii=False)
@@ -343,7 +436,8 @@ def build_misc():
 if __name__ == "__main__":
     shutil.rmtree(OUT, ignore_errors=True)
     shutil.copytree(os.path.join(ROOT, "static"), os.path.join(OUT, "static"))
-    build_home(); build_categories()
+    PLAN_CARDS = build_plans()
+    build_home(); build_categories(); build_client_pages()
     for p in PROBLEMS:
         build_problem(p)
     for v in WATCH.values():
