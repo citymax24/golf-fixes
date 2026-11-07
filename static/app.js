@@ -21,16 +21,30 @@
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
+  function closeMenu(focusBack) {
+    if (!document.body.classList.contains("open")) return;
+    document.body.classList.remove("open"); $("#menu").setAttribute("aria-expanded", "false");
+    if (focusBack) $("#menu").focus();
+  }
   $("#menu").onclick = function () {
-    if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) document.body.classList.toggle("mini");
-    else document.body.classList.toggle("open");
+    if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) {
+      document.body.classList.toggle("mini"); $("#menu").setAttribute("aria-expanded", String(!document.body.classList.contains("mini")));
+    } else if (document.body.classList.contains("open")) closeMenu(true);
+    else { document.body.classList.add("open"); $("#menu").setAttribute("aria-expanded", "true"); var f = $("#side a"); if (f) setTimeout(function () { f.focus(); }, 50); }
   };
-  $("#scrim").onclick = function () { document.body.classList.remove("open"); };
+  if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) $("#menu").setAttribute("aria-expanded", "true");
+  $("#scrim").onclick = function () { closeMenu(true); };
   $("#theme").onclick = function () {
     var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     r.dataset.theme = dark ? "light" : "dark";
     try { localStorage.setItem("gv_theme", r.dataset.theme); } catch (e) {}
+    themeState();
   };
+  function themeState() {
+    var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    $("#theme").setAttribute("aria-pressed", String(dark));
+  }
+  themeState();
   if (settings.frames === false) $$("img[src*='i.ytimg.com']").forEach(function (i) { i.src = i.src.replace("/mq2.jpg", "/mqdefault.jpg").replace("/hq2.jpg", "/hqdefault.jpg"); });
   document.addEventListener("error", function (ev) {
     var t = ev.target; if (t.tagName === "IMG" && /\/(mq2|hq2)\.jpg$/.test(t.src)) t.src = t.src.replace(/(mq2|hq2)\.jpg$/, "mqdefault.jpg");
@@ -43,8 +57,9 @@
     f.className = "player";
     f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.vid + "?autoplay=1&rel=0&modestbranding=1";
     f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen"; f.allowFullscreen = true;
-    f.referrerPolicy = "strict-origin-when-cross-origin"; f.title = "YouTube video";
-    b.replaceWith(f);
+    f.referrerPolicy = "strict-origin-when-cross-origin";
+    var h1 = $("h1"); f.title = "Video: " + (h1 ? h1.textContent : "YouTube");
+    b.replaceWith(f); f.setAttribute("tabindex", "0"); f.focus();
   }
   document.addEventListener("click", function (ev) {
     if (ev.target.closest("button.player[data-vid]")) { play(); return; }
@@ -53,13 +68,14 @@
       ev.preventDefault();
       var art = lb.closest("[data-vid]"), vid = art.dataset.vid;
       var on = toggle("later", { v: vid });
-      lb.classList.toggle("on", on); flash(on ? "Saved to Watch later" : "Removed from Watch later");
+      lb.classList.toggle("on", on); lb.setAttribute("aria-pressed", String(on)); flash(on ? "Saved to Watch later" : "Removed from Watch later");
     }
   });
-  function markLater() { $$(".thw").forEach(function (w) { var b = $(".lb", w); if (b) b.classList.toggle("on", has("later", w.dataset.vid)); }); }
+  function markLater() { $$(".thw").forEach(function (w) { var b = $(".lb", w); if (b) { var on = has("later", w.dataset.vid); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); } }); }
   markLater();
   function flash(t) {
     var d = $("#toast") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "toast" }));
+    d.setAttribute("role", "status"); d.setAttribute("aria-live", "polite");
     d.textContent = t; d.className = "show"; clearTimeout(d._t); d._t = setTimeout(function () { d.className = ""; }, 1600);
   }
 
@@ -68,7 +84,7 @@
   if (acts) {
     var item = { v: acts.dataset.vid, t: acts.dataset.t, c: acts.dataset.c };
     var h = load("history").filter(function (x) { return x.v !== item.v; }); h.unshift(item); save("history", h.slice(0, 300));
-    var sync = function () { $$("[data-act]", acts).forEach(function (b) { b.classList.toggle("on", has(b.dataset.act, item.v)); }); };
+    var sync = function () { $$("[data-act]", acts).forEach(function (b) { var on = has(b.dataset.act, item.v); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); };
     $$("[data-act]", acts).forEach(function (b) {
       b.onclick = function () { var on = toggle(b.dataset.act, item); sync(); flash(on ? ({ liked: "Liked", disliked: "We'll show you less like this", later: "Saved to Watch later" })[b.dataset.act] : "Removed"); };
     });
@@ -79,9 +95,10 @@
   var keys = [["/", "Search"], ["h", "Home"], ["k", "Play (on a video page)"], ["l", "Like (on a video page)"], ["w", "Watch later (on a video page)"], ["?", "Show these shortcuts"], ["Esc", "Close / leave the search box"]];
   document.addEventListener("keydown", function (ev) {
     var tag = (ev.target.tagName || "").toLowerCase();
-    if (ev.key === "Escape") { var m = $("#keys"); if (m) m.remove(); document.body.classList.remove("open"); if (tag === "input") ev.target.blur(); return; }
+    if (ev.key === "Escape") { var m = $("#keys"); if (m) m.remove(); closeMenu(true); if (tag === "input") ev.target.blur(); return; }
     if (tag === "input" || tag === "textarea" || tag === "select" || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     if (ev.key === "/") { ev.preventDefault(); $("#q").focus(); }
+    else if (settings.keys === false && /^[hklw]$/.test(ev.key)) return;
     else if (ev.key === "h") location.href = B + "/";
     else if (ev.key === "k") play();
     else if (ev.key === "l" && acts) $("[data-act=liked]", acts).click();
@@ -103,6 +120,8 @@
     $("#s-frames").checked = settings.frames !== false; $("#s-hidedis").checked = settings.hidedis !== false;
     $("#s-frames").onchange = function () { settings.frames = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-hidedis").onchange = function () { settings.hidedis = this.checked; save("settings", settings); flash("Saved"); };
+    $("#s-keys").checked = settings.keys !== false;
+    $("#s-keys").onchange = function () { settings.keys = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-clear-h").onclick = function () { save("history", []); flash("Watch history cleared"); };
     $("#s-clear-all").onclick = function () { ["history", "liked", "disliked", "later", "settings", "plans"].forEach(function (k) { save(k, k === "settings" || k === "plans" ? {} : []); }); flash("Everything reset"); };
   }
@@ -116,7 +135,7 @@
   function planSync() {
     $$("button.done[data-plan]").forEach(function (b) {
       var on = (plans[b.dataset.plan] || []).indexOf(b.dataset.vid) >= 0;
-      b.classList.toggle("on", on); $("span", b).textContent = on ? "Done" : "Mark as done";
+      b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); $("span", b).textContent = on ? "Done" : "Mark as done";
       var li = b.closest(".pli"); if (li) li.classList.toggle("isdone", on);
     });
     $$(".planbar").forEach(function (bar) {
@@ -191,7 +210,7 @@
       if (q) {
         var words = q.split(/\s+/), hit = function (s) { s = s.toLowerCase(); return words.every(function (x) { return s.indexOf(x) >= 0; }); };
         var ps = ix.p.filter(function (p) { return hit(p[1] + " " + p[2]); }), cs = ix.c.filter(function (c) { return hit(c[1]); });
-        if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + "</a>"; }).join("") + "</div></div>";
+        if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + " recs</a>"; }).join("") + "</div></div>";
         if (cs.length) extra += '<div class="sres"><h2>Coaches</h2><div class="tags">' + cs.slice(0, 12).map(function (c) { return '<a class="tag" href="' + B + "/coach/" + c[0] + '/">' + esc(c[1]) + "</a>"; }).join("") + "</div></div>";
         var sl = ps.map(function (p) { return p[0]; });
         var pscore = function (v) { return sl.reduce(function (a, p) { return a + ((v[14] || {})[p] || 0); }, 0); };
