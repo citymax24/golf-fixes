@@ -130,9 +130,9 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<link rel="canonical" href="{e(full)}">' if canonical else ''}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
-<meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og2/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og3/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="{BASE}/static/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png">
+<link rel="icon" href="{BASE}/static/favicon.svg?v=a" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=a">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={e(VDATA['generated'])}2">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
@@ -140,7 +140,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 </head><body class="{cls}" data-base="{BASE}">
 <header class="top">
   <div class="left"><button class="icon" id="menu" aria-label="Menu">{svg('menu')}</button>
-  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg" alt="" width="28" height="28"><span>Golf<b>Votes</b></span></a></div>
+  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg?v=a" alt="" width="28" height="28"><span>Golf<b>Votes</b></span></a></div>
   <form class="search" action="{BASE}/search/" role="search"><input name="q" id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search"><button aria-label="Search">{svg('search')}</button></form>
   <div class="right"><a class="icon" href="{BASE}/about/" aria-label="About" title="About">{svg('help')}</a><button class="icon" id="theme" aria-label="Toggle theme">{svg('moon')}</button></div>
 </header>
@@ -226,7 +226,7 @@ def build_problem(p):
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
          f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
-         og=f"{URL}/static/og2/{p['slug']}.png",
+         og=f"{URL}/static/og3/{p['slug']}.png",
          ld={"@context": "https://schema.org", "@type": "ItemList", "name": p["q"], "itemListElement": [
              {"@type": "ListItem", "position": i + 1, "url": f"{URL}/watch/{r[3]['vid']}/", "name": r[3]["title"]} for i, r in enumerate(rows[:10])]})
 
@@ -374,7 +374,7 @@ def build_plans():
 <div class="planbar" data-plan="{pl['slug']}" data-n="{len(items)}"><b>{len(items)} videos{f" · {mins} min total" if mins else ""}</b><span class="prog"><span></span></span><span class="progt">0 of {len(items)} done</span></div>
 <p><a class="pill inl start" id="startplan" href="{BASE}/watch/{items[0]['vid']}/?plan={pl['slug']}">▶ <span>Start step 1</span></a> <a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
-        page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og2/plan-{PNAME[pl['key']]['slug']}.png")
+        page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og3/plan-{PNAME[pl['key']]['slug']}.png")
     page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
          f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short learning paths: understand the cause, learn the fix, groove it with a drill. Built from the lessons golfers recommend most.</p><div class="pgrid">{cards}</div>', nav="plans")
     return cards
@@ -477,7 +477,7 @@ def build_report():
 <p>Guides: <a href="{BASE}/guides/best-golf-youtube-channels/">Best golf instruction channels on YouTube</a> · <a href="{BASE}/guides/best-golf-drills/">Most recommended golf drills</a></p>
 <p class="dim">Free to cite with a link to {e(SITE['name'])}. Method: <a href="{BASE}/about/">About</a>.</p></div>"""
     page("/report/", f"What golfers recommend to each other: the data | {SITE['name']}",
-         f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og2/report.png")
+         f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og3/report.png")
 
 
 def build_text():
