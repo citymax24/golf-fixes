@@ -138,19 +138,21 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
-  <div class="left"><button class="icon" id="menu" aria-label="Menu">{svg('menu')}</button>
+  <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
   <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg?v=a" alt="" width="28" height="28"><span>Golf<b>Votes</b></span></a></div>
   <form class="search" action="{BASE}/search/" role="search"><input name="q" id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search"><button aria-label="Search">{svg('search')}</button></form>
-  <div class="right"><a class="icon" href="{BASE}/about/" aria-label="About" title="About">{svg('help')}</a><button class="icon" id="theme" aria-label="Toggle theme">{svg('moon')}</button></div>
+  <div class="right"><a class="icon" href="{BASE}/about/" aria-label="About" title="About">{svg('help')}</a><button class="icon" id="theme" aria-label="Dark mode" aria-pressed="false">{svg('moon')}</button></div>
 </header>
 <nav class="side" id="side">{side}
-  <div class="sidefoot">{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
-  <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
-  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</div>
 </nav>
 <div class="scrim" id="scrim"></div>
-<main class="main">{body}</main>
+<main class="main" id="main" tabindex="-1">{body}
+  <footer class="foot">{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
+  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
+</main>
 <script src="{BASE}/static/app.js?v={e(VDATA['generated'])}2" defer></script>
 </body></html>"""
     dest = os.path.join(OUT, path.strip("/"), "index.html") if not path.endswith(".html") else os.path.join(OUT, path.strip("/"))
@@ -201,13 +203,22 @@ def build_home():
 <p class="lede">Not a golf school. We counted which YouTube lessons golfers recommend to each other for each problem.</p>
 <h2>What's your problem?</h2><div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All problems →</b><span>{len([p for p in PROBLEMS if p["video_count"]])} in total</span></a></div>
 <ol class="how"><li><b>1</b><span>Golfers asked for help with a problem, like a slice</span></li><li><b>2</b><span>Others answered with the lesson that worked for them: {TOTAL_RECS:,} times</span></li><li><b>3</b><span>We ranked lessons by how many different golfers recommended them</span></li></ol>
-<button class="wclose" id="wclose" aria-label="Hide intro">Got it, hide this</button></section>
+<button class="wclose" id="wclose">Got it, hide this</button></section>
 {chips()}
 {('<h2 class="row">Start here: fix plans</h2><div class="pgrid row1">' + PLAN_CARDS + '</div><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
 <div class="grid" id="feed">{''.join(card(v) for v in top)}</div>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
+
+
+def plan_cta(p):
+    pl = next((x for x in PLANS if x.get("key") == p["key"] and x.get("slug")), None)
+    if not pl:
+        return ""
+    mins = pl.get("mins")
+    return (f'<a class="plancta" href="{BASE}/plan/{pl["slug"]}/"><b>New to this? Follow the {len(pl["items"])}-video fix plan'
+            f'{f" ({mins} min)" if mins else ""}</b><span>Start with the cause, then the fix, then a drill →</span></a>')
 
 
 def build_problem(p):
@@ -221,7 +232,7 @@ def build_problem(p):
     body = f"""{chips(p['key'])}
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
-<p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{aid_html}</section>
+<p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{plan_cta(p)}{aid_html}</section>
 <div class="grid">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
@@ -237,8 +248,8 @@ def build_categories():
         ps = sorted([p for p in PROBLEMS if p["group"] == g and p["video_count"]], key=lambda p: -p["total_recs"])
         if not ps:
             continue
-        boxes += f'<div class="box"><h2>{e(g)}<span>{sum(p["total_recs"] for p in ps):,}</span></h2>' + "".join(
-            f'<a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}<span>{p["total_recs"]:,}</span></a>' for p in ps) + "</div>"
+        boxes += f'<div class="box"><h2>{e(g)}<span>{sum(p["video_count"] for p in ps):,} lessons</span></h2>' + "".join(
+            f'<a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}<span>{p["video_count"]} lessons</span></a>' for p in ps) + "</div>"
     page("/categories/", f"Golf problems | {SITE['name']}", "Every golf problem with the lessons golfers recommend for it.",
          f'<h1 class="ptitle">Problems</h1><div class="boxes">{boxes}</div>', nav="cat")
 
@@ -255,6 +266,14 @@ def build_watch(v):
     notes = notes[:6]
     rel_src = by_problem.get(v["top"], []) if v["top"] else []
     rel = [r[3] for r in rel_src if r[3]["vid"] != v["vid"]][:12]
+    vmap_all = {x["vid"]: x for x in VIDEOS}
+    for pl in PLANS:
+        ids = [i["vid"] for i in pl["items"]]
+        if v["vid"] in ids:
+            nxt = [vmap_all[i] for i in ids[ids.index(v["vid"]) + 1:] if i in vmap_all and vmap_all[i].get("page")]
+            rel = nxt + [x for x in rel if x["vid"] not in {n["vid"] for n in nxt}]
+            rel = rel[:12]
+            break
     if len(rel) < 12:
         rel += [x for x in sorted(channels[v["cs"]]["videos"], key=lambda x: -x["recs"]) if x["vid"] != v["vid"] and x["page"] and x not in rel][: 12 - len(rel)]
     upnext = "".join(f'<a class="un" href="{BASE}/watch/{x["vid"]}/"><span class="th"><img loading="lazy" src="{thumb(x["vid"])}" alt=""></span>'
@@ -303,6 +322,14 @@ def card_desc(v, notes):
     return out
 
 
+BAD = re.compile(r"\b(f+u+c+k+\w*|shit\w*|bullshit|cunt\w*|bitch\w*|asshole\w*|dick\w*|wtf)\b", re.I)
+
+
+def clean_title(t):
+    t = BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t or "")
+    return trunc(t, 70)
+
+
 STANCE = {"useful": ("Useful", 0), "critical": ("Critical", 1), "cites": ("Cites it", 2), "praise": ("Praise", 3), "joke": ("Joke", 4)}
 
 
@@ -323,7 +350,7 @@ def comments_html(v):
             body = body.replace(e(c["q"]), f'<mark>{e(c["q"])}</mark>', 1)
         st = STANCE.get(c.get("st"), (None, 0))[0]
         tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st else ""
-        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · in “{e(c["pt"])}”' if c.get('pt') else ''}</p>
+        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
 <p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
     main = [c for c in cs if c.get("st") not in ("praise", "joke")]
     rest = [c for c in cs if c.get("st") in ("praise", "joke")]
@@ -394,6 +421,7 @@ def build_client_pages():
     page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
 <label class="set"><input type="checkbox" id="s-frames"> Show a frame from the video instead of the uploaded thumbnail (less clickbait)</label>
 <label class="set"><input type="checkbox" id="s-hidedis"> Hide disliked videos everywhere</label>
+<label class="set"><input type="checkbox" id="s-keys"> Single-key keyboard shortcuts (h, k, l, w)</label>
 <p><button class="pill inl" id="s-clear-h">Clear watch history</button> <button class="pill inl" id="s-clear-all">Reset everything</button></p>
 <p class="dim">Everything is stored only in this browser. Keyboard shortcuts: press <kbd>?</kbd>.</p></div>""", nav="settings", canonical=False)
     st = SITE["stats"]
