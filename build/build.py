@@ -3,7 +3,7 @@
 Usage: python3 build/build.py  -> writes _site/
 Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional)
 """
-import html, json, os, re, shutil, urllib.parse
+import hashlib, html, json, os, re, shutil, urllib.parse
 from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +31,8 @@ MIN = SITE.get("min_recs_per_problem", 2)
 e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
 PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
+_h = lambda f: hashlib.md5(open(os.path.join(ROOT, "static", f), "rb").read()).hexdigest()[:8]
+ASSET_V = {"css": _h("style.css"), "js": _h("app.js")}
 
 
 def trunc(s, n):
@@ -148,7 +150,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{BASE}/static/favicon.svg?v=a" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=a">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
-<link rel="stylesheet" href="{BASE}/static/style.css?v={e(VDATA['generated'])}2">
+<link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
@@ -167,7 +169,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
-<script src="{BASE}/static/app.js?v={e(VDATA['generated'])}2" defer></script>
+<script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
 <script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body></html>"""
     dest = os.path.join(OUT, path.strip("/"), "index.html") if not path.endswith(".html") else os.path.join(OUT, path.strip("/"))

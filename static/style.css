@@ -330,3 +330,6 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appeara
 @media (max-width:760px){.sugg{left:12px;right:12px}}
 .ptile .pnm2{font-size:17px;font-weight:650;color:var(--fg)}
 @media (min-width:1001px){.ptiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* never allow sideways scrolling on phones */
+html,body{max-width:100%;overflow-x:clip}
