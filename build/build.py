@@ -3,7 +3,7 @@
 Usage: python3 build/build.py  -> writes _site/
 Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional)
 """
-import html, json, os, re, shutil
+import html, json, os, re, shutil, urllib.parse
 from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +18,10 @@ META = {m["vid"]: m for m in _opt("video_meta.json", [])}
 PLANS = _opt("plans.json", [])
 SEO = _opt("seo.json", {})
 CARDS = _opt("cards.json", {})
+RECENCY = _opt("recency.json", {})
+REDDIT = _opt("reddit.json", {})
+MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+lastrec = lambda vid: (MON[int(RECENCY[vid][5:7]) - 1] + " " + RECENCY[vid][:4]) if RECENCY.get(vid) else ""
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
          "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
 LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced", "all": "All levels"}
@@ -189,7 +193,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' · <span class="ok">✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}</p></div>
+<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' · <span class="ok">✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}{f' · last recommended {lastrec(v["vid"])}' if pname and lastrec(v["vid"]) else ''}</p></div>
 </article>"""
 
 
@@ -234,6 +238,27 @@ def build_home():
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
 
 
+def reddit_block(p):
+    r = REDDIT.get(p["key"]) or {}
+    vmap = {v["vid"]: v for v in VIDEOS}
+    sl = [clean_title(t) for t in r.get("sounds_like", [])][:4]
+    ins = [i for i in r.get("insights", []) if i.get("vid") in vmap][:3]
+    if not sl and not ins:
+        return ""
+    left = ('<div class="rb"><h2>Sounds like you?</h2><p class="dim">How golfers described it when they asked for help:</p><ul class="sl">'
+            + "".join(f"<li>“{e(t)}”</li>" for t in sl) + "</ul></div>") if sl else ""
+    right = ('<div class="rb"><h2>What golfers say fixed it</h2><ol class="ins">'
+             + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></div>") if ins else ""
+    return f'<section class="rblock">{left}{right}</section>'
+
+
+def ask_cta(p):
+    t = urllib.parse.quote(f"Help with my {p['name'].lower()}")
+    return (f'<section class="ask"><h2>None of these fixed it?</h2><p>Post a swing video on r/GolfSwing. Golfers there answer fast. '
+            f'Film down-the-line and face-on, and say what the ball does.</p>'
+            f'<a class="pill inl" href="https://www.reddit.com/r/GolfSwing/submit?title={t}" target="_blank" rel="noopener nofollow">{svg("ext")}<span>Ask r/GolfSwing</span></a></section>')
+
+
 def plan_cta(p):
     pl = next((x for x in PLANS if x.get("key") == p["key"] and x.get("slug")), None)
     if not pl:
@@ -255,7 +280,9 @@ def build_problem(p):
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
 <p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{plan_cta(p)}{aid_html}</section>
+{reddit_block(p)}
 <div class="grid">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
+{ask_cta(p)}
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
          f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
@@ -306,7 +333,7 @@ def build_watch(v):
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-<p class="vst">{rank_ctx(v)}<b>{v['recs']}</b> golfers recommend{f' · <span class="ok">✓ {v["success"]} say{"s" if v["success"] == 1 else ""} it fixed it</span>' if v.get('success') else ''}{f' · {yrs[0]}–{yrs[1]}' if yrs and yrs[0] != yrs[1] else ''}</p>
+<p class="vst">{rank_ctx(v)}<b>{v['recs']}</b> golfers recommend{f' · <span class="ok">✓ {v["success"]} say{"s" if v["success"] == 1 else ""} it fixed it</span>' if v.get('success') else ''}{f' · last recommended {lastrec(v["vid"])}' if lastrec(v["vid"]) else ''}</p>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <span class="seg"><button class="pill" data-act="liked">{svg('like')}<span>Like</span></button><button class="pill" data-act="disliked" aria-label="Dislike">{svg('dislike')}</button></span>
@@ -373,7 +400,7 @@ def comments_html(v):
             body = body.replace(e(c["q"]), f'<mark>{e(c["q"])}</mark>', 1)
         st = STANCE.get(c.get("st"), (None, 0))[0]
         tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st else ""
-        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
+        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · <span class="up">▲ {c["s"]}</span>' if c.get("s", 0) >= 5 else ''}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
 <p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
     main = [c for c in cs if c.get("st") not in ("praise", "joke")]
     rest = [c for c in cs if c.get("st") in ("praise", "joke")]
@@ -411,12 +438,12 @@ def top_quote(v):
         cid = c["u"].rstrip("/").rsplit("/", 1)[-1]
         cc = card.get(cid) or {}
         if cc.get("stance") == "useful" and len(cc.get("quote", "")) > 20:
-            score = 2 if c["l"] == "Says it fixed it" else 1
+            score = (2 if c["l"] == "Says it fixed it" else 1) + min(c.get("s", 0), 50) / 25
             if not best or score > best[0]:
                 best = (score, cc["quote"], c)
     if not best:
         return ""
-    return f'<blockquote class="tq">“{e(best[1])}”<cite>{("u/" + e(best[2]["a"])) if best[2]["a"] else "Reddit"} · r/{e(best[2]["sub"])}</cite></blockquote>'
+    return f'<blockquote class="tq">“{e(best[1])}”<cite>{("u/" + e(best[2]["a"])) if best[2]["a"] else "Reddit"} · r/{e(best[2]["sub"])}{f" · ▲ {best[2]['s']}" if best[2].get("s", 0) >= 5 else ""}</cite></blockquote>'
 
 
 def plan_box(pl, v):
