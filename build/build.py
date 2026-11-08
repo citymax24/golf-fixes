@@ -165,7 +165,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot"><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:fassia@gmail.com?subject=GolfVotes%20feedback">Tell us</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
@@ -368,6 +368,9 @@ def build_watch(v):
 {card_desc(v, notes)}
 <p class="dim">AI summary of what golfers said.</p>
 <div class="tags">{tags}</div></div>
+<section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
+<p class="vbtns"><button class="pill inl" data-vote="yes">👍 <span>Yes, it helped</span></button><button class="pill inl" data-vote="no">👎 <span>Not for me</span></button></p>
+<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:fassia@gmail.com?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
@@ -635,7 +638,7 @@ def build_text():
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
 <p>No cookies and no tracking across sites. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
-<p><b>Visitor statistics:</b> We count page views with GoatCounter (goatcounter.com), a privacy-friendly service without cookies. It records the page, the referring site, browser type, screen size and country, but no personal data and no IP addresses are stored. This lets us see how many people use the site and where they come from.</p>
+<p><b>Visitor statistics:</b> We count page views with GoatCounter (goatcounter.com), a privacy-friendly service without cookies. It records the page, the referring site, browser type, screen size and country, but no personal data and no IP addresses are stored. This lets us see how many people use the site and where they come from. When you answer “Did this video fix it for you?”, that answer is counted the same way, without any personal data; your own vote is remembered only in your browser.</p>
 <p><b>YouTube:</b> Video thumbnails are loaded from YouTube's image servers (i.ytimg.com), which receive your IP address. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
 <p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p><p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
