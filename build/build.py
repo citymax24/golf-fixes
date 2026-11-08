@@ -165,7 +165,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:fassia@gmail.com?subject=GolfVotes%20feedback">Tell us</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
@@ -370,7 +370,7 @@ def build_watch(v):
 <div class="tags">{tags}</div></div>
 <section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
 <p class="vbtns"><button class="pill inl" data-vote="yes">👍 <span>Yes, it helped</span></button><button class="pill inl" data-vote="no">👎 <span>Not for me</span></button></p>
-<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:fassia@gmail.com?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
+<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
