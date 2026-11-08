@@ -584,10 +584,10 @@ def award_info(slug, k, y):
     """(file stem, short label, big, line, sub, proof link) for an award."""
     if k == "top10":
         return (f"{slug}--top10-{y}", f"Top 10 most recommended golf instruction {y}", "TOP 10", "GOLF INSTRUCTION",
-                "MOST RECOMMENDED CHANNELS", f"{BASE}/coaches/")
+                "MOST RECOMMENDED", f"{BASE}/coaches/")
     p = PNAME[k]
     return (f"{slug}--{p['slug']}-{y}", f"#1 most recommended lesson for {p['name']} {y}", "#1", p["name"].upper(),
-            "MOST RECOMMENDED LESSON", f"{BASE}/fix/{p['slug']}/")
+            "MOST RECOMMENDED", f"{BASE}/fix/{p['slug']}/")
 
 
 LIVE_MIN = 25  # live count badge for channels with at least this many recommendations
@@ -652,7 +652,8 @@ def badge_card(s, title, stem, label, w, h, note=""):
     dw = round(w * 120 / h)
     for th, suf in (("light", ""), ("dark", "-dark")):
         f = stem + suf
-        code = f'<a href="{URL}/coach/{s}/?ref=badge"><img src="{URL}/badge/{f}.svg" alt="{e(label)}" width="{dw}" height="120"></a>'
+        code = (f'<a href="{URL}/coach/{s}/?ref=badge" target="_blank" rel="noopener"><img src="{URL}/badge/{f}.svg" alt="{e(label)}" '
+                f'width="{dw}" height="120" style="max-width:100%;height:auto;border:0"></a>')
         png = f'<a href="{BASE}/badge/{f}.png" download>PNG</a>' if os.path.exists(os.path.join(ROOT, "static", "badge", f + ".png")) else ""
         col += (f'<div class="bv {th}"><img src="{BASE}/badge/{f}.svg" alt="" width="{dw}" height="120" loading="lazy">'
                 f'<div class="bact">{copy_btn(code)}{png}<a href="{BASE}/badge/{f}.svg" download>SVG</a></div>'
@@ -675,7 +676,9 @@ def badge_kit(s, c):
     if not cards and not txt:
         return ""
     return f"""<details class="bkit" id="badges"><summary>Are you {e(c['name'])}? Use your GolfVotes badges</summary>
-<p class="dim">Free to use on your website, channel or socials. Every badge links back to this page. <a href="{BASE}/badges/">How badges work</a></p>{cards}
+<p class="dim">Free to use on your website, channel or socials. Every badge links back to this page. <a href="{BASE}/badges/">How badges work</a></p>
+<ul class="bhow"><li><b>Website with HTML:</b> “Copy code” and paste it where the badge should go. It shows at 240 × 120 px and shrinks on small screens.</li>
+<li><b>Wix, Squarespace, Linktree, socials:</b> download the PNG, add it as an image and link it to {copy_btn(f"{URL}/coach/{s}/?ref=badge", "Copy link")}</li></ul>{cards}
 {f'<section class="btxt"><h3>For your YouTube descriptions</h3><p class="dim">Paste one line under the video it belongs to.</p><ul>{txt}</ul></section>' if txt else ''}</details>"""
 
 

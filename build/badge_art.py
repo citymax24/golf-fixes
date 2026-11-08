@@ -95,65 +95,73 @@ def laurel(cx, cy, R, a0, a1, n, size):
     return stem, "".join(leaves)
 
 
+# One fixed canvas for every badge, so several badges line up and drop into any layout the same way.
+W, H = 280, 140
+R, CY, LEAF = 60, 72, 20
+D = W / 2 - 4 - LEAF * 1.15 - R  # centre -> branch circle centre
+
+
+def _room(y, size):
+    """Half-width available for a text line with baseline y between the two branches."""
+    dy = min(abs(y - size * .35 - CY), R - 1)
+    return D - 10 - LEAF * .55 + math.sqrt(R * R - dy * dy)
+
+
+def _sized(t, font, smax, smin, track, y):
+    """Largest font size (<= smax) at which t fits between the branches, or None below smin."""
+    sz = smax
+    while sz >= smin:
+        if text_width(t, font, sz, track) / 2 <= _room(y, sz):
+            return sz
+        sz -= .25
+    return None
+
+
+def _wrap(t):
+    w = t.split(" ")
+    if "&" in w:
+        i = w.index("&") + 1
+        return " ".join(w[:i]), " ".join(w[i:])
+    best = min(range(1, len(w)), key=lambda i: abs(len(" ".join(w[:i])) - len(" ".join(w[i:]))))
+    return " ".join(w[:best]), " ".join(w[best:])
+
+
+def _render(kick, big, line, sub, theme, label):
+    th = THEMES[theme]
+    B, X, S = "InterDisplay-Black.otf", "Inter-ExtraBold.otf", "Inter-Bold.otf"
+    rows = [(kick, S, 10.5, 1.8, 36, th["kick"])]
+    one = _sized(line, X, 15, 11.5, 1, 102)
+    if one:
+        rows += [(big, B, _sized(big, B, 40, 20, 0, 80), 0, 80, th["big"]), (line, X, one, 1, 102, th["line"])]
+    else:
+        l1, l2 = _wrap(line)
+        sz = min(_sized(l1, X, 13, 9, .8, 94) or 9, _sized(l2, X, 13, 9, .8, 109) or 9)
+        rows += [(big, B, _sized(big, B, 34, 18, 0, 73), 0, 73, th["big"]), (l1, X, sz, .8, 94, th["line"]), (l2, X, sz, .8, 109, th["line"])]
+    rows.append((sub, S, _sized(sub, S, 10, 8, 1.3, 125) or 8, 1.3, 125, th["kick"]))
+    mid = W / 2
+    stemL, leavesL = laurel(mid - D, CY, R, 112, 240, 9, LEAF)
+    stemR, leavesR = laurel(mid + D, CY, R, 68, -60, 9, LEAF)
+    parts = [f'<path d="{stemL}{stemR}" fill="none" stroke="{th["stem"]}" stroke-width="1.8" stroke-linecap="round"/>',
+             f'<path d="{leavesL}{leavesR}" fill="{th["leaf"]}"/>']
+    parts += [f'<path d="{text_path(t, f, sz, mid, y, tr)}" fill="{c}"/>' for t, f, sz, tr, y, c in rows]
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img">'
+            f'<title>{label}</title>{"".join(parts)}</svg>'), W, H
+
+
 THEMES = {
-    "light": {"leaf": "#B8892B", "stem": "#B8892B", "kick": "#0B7A4B", "big": "#0B3D2C", "line": "#0B3D2C", "rule": "#D9C08A"},
-    "dark": {"leaf": "#E3C16F", "stem": "#E3C16F", "kick": "#3ECF8E", "big": "#FFFFFF", "line": "#FFFFFF", "rule": "#6E5E35"},
+    "light": {"leaf": "#B8892B", "stem": "#B8892B", "kick": "#0B7A4B", "big": "#0B3D2C", "line": "#0B3D2C"},
+    "dark": {"leaf": "#E3C16F", "stem": "#E3C16F", "kick": "#3ECF8E", "big": "#FFFFFF", "line": "#FFFFFF"},
 }
 
 
-def _fit(lines, R, cy, LEAF, dmin):
-    """Distance from badge centre to each branch's circle centre so that no text line touches the inner leaves."""
-    d = dmin
-    for t, f, sz, tr, y, _ in lines:
-        dy = min(abs(y - sz * .35 - cy), R - 1)
-        d = max(d, text_width(t, f, sz, tr) / 2 + 10 + LEAF * .55 - math.sqrt(R * R - dy * dy))
-    return d
-
-
-def badge(big, line, year, theme="light", label="", sub="MOST RECOMMENDED LESSON"):
-    """big: '#1' or 'TOP 10'; line: e.g. 'EARLY EXTENSION'. Returns (svg, width, height)."""
-    th = THEMES[theme]
-    kick = f"GOLFVOTES {year}"
-    H, R, cy, LEAF, n = 150, 64, 76, 21, 9
-    fs_line = 15 if len(line) <= 18 else 13.5
-    lines = [  # (text, font, size, track, baseline, fill)
-        (kick, "Inter-Bold.otf", 10.5, 1.8, 38, th["kick"]),
-        (big, "InterDisplay-Black.otf", 44, 0, 84, th["big"]),
-        (line, "Inter-ExtraBold.otf", fs_line, 1.1, 106, th["line"]),
-        (sub, "Inter-SemiBold.otf", 9, 1.4, 129, th["kick"]),
-    ]
-    d = _fit(lines, R, cy, LEAF, 30)
-    mid = d + R + LEAF * 1.15 + 4
-    W = round(2 * mid)
-    stemL, leavesL = laurel(mid - d, cy, R, 112, 240, n, LEAF)
-    stemR, leavesR = laurel(mid + d, cy, R, 68, -60, n, LEAF)
-    parts = [f'<path d="{stemL}{stemR}" fill="none" stroke="{th["stem"]}" stroke-width="1.8" stroke-linecap="round"/>',
-             f'<path d="{leavesL}{leavesR}" fill="{th["leaf"]}"/>',
-             f'<rect x="{mid - 16:.1f}" y="114" width="32" height="1.5" rx=".75" fill="{th["rule"]}"/>']
-    parts += [f'<path d="{text_path(t, f, sz, mid, y, tr)}" fill="{c}"/>' for t, f, sz, tr, y, c in lines]
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img">'
-           f'<title>{label}</title>{"".join(parts)}</svg>')
-    return svg, W, H
+def badge(big, line, year, theme="light", label="", sub="MOST RECOMMENDED"):
+    """Award badge: 'GOLFVOTES 2026 / #1 / EARLY EXTENSION / MOST RECOMMENDED'."""
+    return _render(f"GOLFVOTES {year}", big, line, sub, theme, label)
 
 
 def live_badge(n, theme="light", label=""):
-    """Live count badge: 'GOLFVOTES · 1,408 · GOLFER RECOMMENDATIONS' with a single laurel sprig on each side."""
-    th = THEMES[theme]
-    num = f"{n:,}"
-    lines = [("GOLFVOTES", "Inter-Bold.otf", 10.5, 2.2, 30, th["kick"]),
-             (num, "InterDisplay-Black.otf", 38, 0, 70, th["big"]),
-             ("GOLFER RECOMMENDATIONS", "Inter-ExtraBold.otf", 11, 1.1, 90, th["line"])]
-    H, R, cy, LEAF = 112, 46, 58, 17
-    d = _fit(lines, R, cy, LEAF, 24)
-    mid = d + R + LEAF * 1.1 + 4
-    W = round(2 * mid)
-    stemL, leavesL = laurel(mid - d, cy, R, 115, 235, 7, LEAF)
-    stemR, leavesR = laurel(mid + d, cy, R, 65, -55, 7, LEAF)
-    parts = [f'<path d="{stemL}{stemR}" fill="none" stroke="{th["stem"]}" stroke-width="1.6" stroke-linecap="round"/>',
-             f'<path d="{leavesL}{leavesR}" fill="{th["leaf"]}"/>']
-    parts += [f'<path d="{text_path(t, f, sz, mid, y, tr)}" fill="{c}"/>' for t, f, sz, tr, y, c in lines]
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img">'
-            f'<title>{label}</title>{"".join(parts)}</svg>'), W, H
+    """Live count badge: 'GOLFVOTES / 1,408 / RECOMMENDATIONS / FROM GOLFERS'."""
+    return _render("GOLFVOTES", f"{n:,}", "RECOMMENDATIONS", "FROM GOLFERS", theme, label)
 
 
 if __name__ == "__main__":
