@@ -292,8 +292,7 @@ def build_home():
     tiles = "".join(tile(p) for p in pick)
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">What’s your miss?<span>Other golfers already picked the lesson.</span></h1>
-<p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and counted which YouTube lessons golfers recommend for each problem.</p>
-<p class="proof"><span><svg viewBox="18 12 28 39" width="9" height="12" aria-hidden="true"><path d="M32 12 46 30H38v12l-6 9-6-9V30H18z"/></svg><b>{TOTAL_RECS:,}</b> recommendations</span><span><i aria-hidden="true">✓</i><b>{sum(v.get("success", 0) for v in VIDEOS):,}</b> say it fixed it</span><span>Free, no login</span><a href="{BASE}/about/">How we count</a></p>
+<p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and <a href="{BASE}/about/">counted</a> which YouTube lessons golfers recommend for each problem.</p>
 <h2 class="pick">Pick your miss</h2>
 <div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
 </section>

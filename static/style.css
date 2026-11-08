@@ -410,3 +410,4 @@ html,body{max-width:100%;overflow-x:clip}
 @media (min-width:1001px){.welcome h1.hq{font-size:52px;letter-spacing:-1.8px}.welcome h1.hq span{font-size:26px}}
 @media (max-width:600px){.welcome h1.hq{font-size:38px}.welcome h1.hq span{font-size:20px}.proof{gap:4px 12px;font-size:13px;margin-bottom:20px}}
 .proof svg{width:9px;height:12px;flex:none}
+.welcome .lede{margin-bottom:24px}.welcome .lede a{color:inherit;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
