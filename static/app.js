@@ -186,8 +186,17 @@
 
   // ---------- badges page: find your channel, select-all on focus ----------
   var bf = $("#bfind");
-  if (bf) bf.addEventListener("input", function () { var v = bf.value.trim().toLowerCase(); $$(".bset").forEach(function (s) { s.hidden = v && s.dataset.name.indexOf(v) < 0; }); });
-  $$(".bdg textarea").forEach(function (t) { t.addEventListener("focus", function () { t.select(); }); });
+  if (bf) bf.addEventListener("input", function () {
+    var v = bf.value.trim().toLowerCase(), n = 0;
+    $$(".brow").forEach(function (r) { r.hidden = !!v && r.dataset.name.indexOf(v) < 0; if (!r.hidden) n++; });
+    var no = $("#bnone"); if (no) no.hidden = n > 0;
+  });
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-copy]"); if (!b) return;
+    var t = b.dataset.copy, done = function () { flash("Copied"); var o = b.textContent; b.textContent = "Copied ✓"; setTimeout(function () { b.textContent = o; }, 1400); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { window.prompt("Copy:", t); });
+    else window.prompt("Copy:", t);
+  });
 
   // ---------- welcome box ----------
   var wc = $("#wclose");
