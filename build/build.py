@@ -207,10 +207,11 @@ def _digits(label, cap_h, cx=32.0, cy=34.6):
     y0, y1 = min(p[1] for p in pts), max(p[1] for p in pts)
     mid = (x0 + x1) / 2
     if label.startswith("1"):
-        foot = [p[0] for p in pts if p[1] > y1 - 0.12 * (y1 - y0) and p[0] < (x0 + (x1 - x0) * (0.6 if len(label) == 1 else 0.35))]
+        w1 = (x1 - x0) if len(label) == 1 else (x1 - x0) * 0.45  # first glyph only for "10"
+        foot = [p[0] for p in pts if p[1] > y1 - 0.04 * (y1 - y0) and p[0] <= x0 + w1]
         if foot:
             stem = (min(foot) + max(foot)) / 2
-            mid = mid + 0.75 * (stem - mid)
+            mid = mid + 0.8 * (stem - mid)
     k = cap_h / (y1 - y0)
     return f'<path class="mst" transform="translate({cx - mid * k:.2f} {cy - (y0 + y1) / 2 * k:.2f}) scale({k:.4f})" d="{d}"/>'
 
