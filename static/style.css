@@ -337,3 +337,14 @@ html,body{max-width:100%;overflow-x:clip}
 .vote h2{font-size:16px;margin:0 0 8px}.vbtns{display:flex;gap:8px;flex-wrap:wrap;margin:0}
 .vbtns .pill:disabled{opacity:.55;cursor:default}.vbtns .pill.on{opacity:1;background:var(--fg);color:var(--bg)}
 .vthanks{margin:8px 0 0}.vthanks a{color:var(--acc)}
+.prose.wide{max-width:900px}
+.bfind{display:flex;flex-direction:column;gap:6px;margin:16px 0;font-weight:600}.bfind input{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--fg);padding:0 14px;font:inherit;max-width:420px}
+.bsets{display:grid;gap:16px;max-width:900px}
+.bset{border:1px solid var(--line);border-radius:14px;padding:16px}.bset h2{font-size:18px;margin:0 0 10px}.bset h2 a{color:var(--fg)}
+.bset[hidden]{display:none}
+.bdg{display:grid;gap:8px;padding:10px 0;border-top:1px solid var(--line)}.bdg:first-of-type{border-top:0}
+.bdg img{display:block}.bdg img.dk{display:none}
+:root[data-theme=dark] .bdg img{display:none}:root[data-theme=dark] .bdg img.dk{display:block}
+.bdg label{display:grid;gap:4px;font-size:13px;color:var(--mut)}
+.bdg textarea{width:100%;font:12px ui-monospace,monospace;background:var(--chip);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+.bnote{margin:24px 0 0;font-size:14px;color:var(--mut)}.bnote a{color:var(--acc);text-decoration:underline}
