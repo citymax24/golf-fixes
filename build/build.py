@@ -165,7 +165,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a> · Coaches: <a href="{BASE}/badges/">get your badges</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
@@ -577,12 +577,73 @@ def build_coaches():
          f'<h1 class="ptitle">Most recommended coaches</h1><p class="lead">Ranked by how often golfers recommended their lessons to other golfers.</p><div class="clist">{rows}</div>', nav="coaches")
 
 
+MARK = '<rect width="64" height="64" rx="15" fill="#0B3D2C"/><path d="M32 12 46 30H38v12l-6 9-6-9V30H18z" fill="#3ECF8E"/>'
+
+
+def badge2(top, bottom, dark=False):
+    """Two-line badge: logo mark + 'top' line + 'bottom' line. Width estimated from text length."""
+    w = 64 + int(max(len(top) * 7.4, len(bottom) * 6.2)) + 18
+    bg, fg, mu, br = ("#0f0f0f", "#ffffff", "#a8b3ad", "#2a2a2a") if dark else ("#ffffff", "#0f0f0f", "#5b6670", "#d9dfdb")
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="56" viewBox="0 0 {w} 56" role="img" aria-label="{e(top)} — {e(bottom)}">'
+            f'<rect x=".5" y=".5" width="{w - 1}" height="55" rx="12" fill="{bg}" stroke="{br}"/>'
+            f'<svg x="12" y="12" width="32" height="32" viewBox="0 0 64 64">{MARK}</svg>'
+            f'<g font-family="Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif"><text x="56" y="25" font-size="13.5" font-weight="700" fill="{fg}">{e(top)}</text>'
+            f'<text x="56" y="42" font-size="11.5" font-weight="500" fill="{mu}">{e(bottom)}</text></g></svg>')
+
+
 def badge_svg(a, b):
-    w1 = 10 + 7 * len(a); w = w1 + 12 + 7 * len(b)
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="28" role="img" aria-label="{e(a)}: {e(b)}"><rect width="{w}" height="28" rx="6" fill="#0b3d2c"/>'
-            f'<rect x="{w1}" width="{w - w1}" height="28" rx="6" fill="#e8f5ee"/><rect x="{w1}" width="8" height="28" fill="#e8f5ee"/>'
-            f'<g font-family="system-ui,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600"><text x="8" y="18" fill="#fff">{e(a)}</text>'
-            f'<text x="{w1 + 6}" y="18" fill="#0b3d2c">{e(b)}</text></g></svg>')
+    return badge2(b, a)
+
+
+BADGES = {}  # coach slug -> list of (file stem, top, bottom, link)
+
+
+def make_badges():
+    yr = VDATA["generated"][:4]
+    os.makedirs(os.path.join(OUT, "badge"), exist_ok=True)
+    top10 = {s: i for i, (s, c) in enumerate(COACHES[:10], 1)}
+    for s, c in COACHES:
+        items = []
+        for p in coach_wins.get(s, []):
+            items.append((f"{s}--{p['slug']}", f"#1 for {p['name']}", f"GolfVotes {yr} · most recommended lesson", f"{URL}/fix/{p['slug']}/"))
+        if s in top10:
+            items.append((f"{s}--top10", "Top 10 most recommended", f"GolfVotes {yr} · golf instruction on YouTube", f"{URL}/coach/{s}/"))
+        for stem, top, bottom, link in items:
+            for dark in (False, True):
+                open(os.path.join(OUT, "badge", stem + ("-dark" if dark else "") + ".svg"), "w").write(badge2(top, bottom, dark))
+        if items:
+            BADGES[s] = items
+
+
+def build_badges_page():
+    blocks = ""
+    for s, c in COACHES:
+        items = BADGES.get(s, [])
+        vids = [v for v in sorted(c["videos"], key=lambda v: -v["recs"]) if v["recs"] >= 10][:8]
+        if not items and not vids:
+            continue
+        b = ""
+        for stem, top, bottom, link in items:
+            img = f"{URL}/badge/{stem}.svg"
+            html_code = f'<a href="{link}?ref=badge"><img src="{img}" alt="{e(top)} on GolfVotes" height="56"></a>'
+            md = f"[![{top} on GolfVotes]({img})]({link}?ref=badge)"
+            b += (f'<div class="bdg"><img src="{BASE}/badge/{stem}.svg" alt="{e(top)}" height="56"><img class="dk" src="{BASE}/badge/{stem}-dark.svg" alt="" height="56">'
+                  f'<label>HTML (website)<textarea readonly rows="2">{e(html_code)}</textarea></label>'
+                  f'<label>Markdown<textarea readonly rows="2">{e(md)}</textarea></label>'
+                  f'<p class="dim small">Image: <a href="{BASE}/badge/{stem}.svg" download>SVG light</a> · <a href="{BASE}/badge/{stem}-dark.svg" download>SVG dark</a>{f" · <a href={chr(34)}{BASE}/static/badge-png/{stem}.png{chr(34)} download>PNG</a>" if os.path.exists(os.path.join(ROOT, "static", "badge-png", stem + ".png")) else ""}</p></div>')
+        if vids:
+            b += '<div class="bdg"><b>Text badge for YouTube descriptions</b><p class="dim small">Paste under the video on YouTube:</p>' + "".join(
+                f'<label>{e(trunc(nice(v["title"]), 70))}<textarea readonly rows="2">✓ Recommended by {v["recs"]} golfers on GolfVotes: {URL}/watch/{v["vid"]}/?ref=yt</textarea></label>' for v in vids) + "</div>"
+        blocks += f'<section class="bset" id="{s}" data-name="{e((c["name"] or "").lower())}"><h2><a href="{BASE}/coach/{s}/">{e(c["name"])}</a></h2>{b}</section>'
+    body = f"""<div class="prose wide"><h1 class="ptitle">Badges for coaches</h1>
+<p class="lead">Your lessons were recommended by golfers on Reddit. Show it. Every badge links back to the ranking so your viewers can check it.</p>
+<h2>How badges are earned</h2><ul><li><b>#1 for a problem:</b> your lesson has the most independent recommendations for that problem at a GolfVotes update.</li>
+<li><b>Top 10 most recommended:</b> your channel is among the 10 with the most recommendations across all problems.</li>
+<li><b>Text badge:</b> any lesson with at least 10 recommendations.</li></ul>
+<p>Badges are earned, never sold. Rankings change as golfers keep recommending; a badge stays valid for the year it shows.</p>
+<label class="bfind">Find your channel <input id="bfind" type="search" placeholder="e.g. Paul Wilson" autocomplete="off"></label></div>
+<div class="bsets">{blocks}</div>"""
+    page("/badges/", f"Badges for coaches | {SITE['name']}", "Badges for golf coaches whose YouTube lessons golfers recommend most on GolfVotes.", body)
 
 
 def build_coach(s, c):
@@ -590,7 +651,7 @@ def build_coach(s, c):
     tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME)
     badges = ""
     os.makedirs(os.path.join(OUT, "badge"), exist_ok=True)
-    for p in coach_wins.get(s, [])[:3]:
+    for p in []:
         fn = f"{s}--{p['slug']}.svg"
         open(os.path.join(OUT, "badge", fn), "w").write(badge_svg(SITE["name"], f"#1 recommended for {p['name'].lower()}"))
         code = f'<a href="{URL}/fix/{p["slug"]}/"><img src="{URL}/badge/{fn}" alt="#1 recommended for {e(p["name"].lower())} on {e(SITE["name"])}"></a>'
@@ -599,7 +660,7 @@ def build_coach(s, c):
 <h1>{e(c['name'])}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
 <div class="grid">{''.join(card(v) for v in vids)}</div>
-{f'<details class="badges"><summary>Are you {e(c["name"])}? Badge for your site</summary>{badges}</details>' if badges else ''}"""
+{f'<p class="bnote">Are you {e(c["name"])}? <a href="{BASE}/badges/#{s}">Get your GolfVotes badges</a></p>' if s in BADGES or any(v['recs'] >= 10 for v in c['videos']) else ''}"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
          f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} independent recommendations.", body, nav="coaches")
 
@@ -683,8 +744,9 @@ if __name__ == "__main__":
         build_problem(p)
     for v in WATCH.values():
         build_watch(v)
+    make_badges()
     build_coaches()
     for s, c in COACHES:
         build_coach(s, c)
-    build_report(); build_text(); build_guides(); build_index(); build_misc()
+    build_report(); build_text(); build_guides(); build_badges_page(); build_index(); build_misc()
     print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches -> {OUT}")
