@@ -138,6 +138,15 @@
   var wc = $("#wclose");
   if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
 
+  // ---------- review 3: plan bar, show all, saved menu, search page ----------
+  var pp = new URLSearchParams(location.search).get("plan");
+  $$(".pbar[data-plan]").forEach(function (b) { if (b.dataset.plan === pp) b.hidden = false; });
+  var sa = $("#showall"); if (sa) sa.onclick = function () { $("#ranked").classList.add("showall"); sa.parentNode.remove(); };
+  [["liked", "/liked/"], ["later", "/later/"], ["history", "/history/"]].forEach(function (x) {
+    var a = $('#side a[href="' + B + x[1] + '"]'); if (a && !load(x[0]).length && location.pathname !== B + x[1]) a.hidden = true;
+  });
+  if (location.pathname === B + "/search/" && window.innerWidth <= 760) document.body.classList.add("searching");
+
   // ---------- plan box only when following a plan ----------
   var planParam = new URLSearchParams(location.search).get("plan");
   $$(".inplan[data-plan]").forEach(function (b) { if (b.dataset.plan !== planParam && !(load("plans", {})[b.dataset.plan] || []).length) b.style.display = "none"; });
