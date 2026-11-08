@@ -164,6 +164,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
 <script src="{BASE}/static/app.js?v={e(VDATA['generated'])}2" defer></script>
+<script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body></html>"""
     dest = os.path.join(OUT, path.strip("/"), "index.html") if not path.endswith(".html") else os.path.join(OUT, path.strip("/"))
     os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -572,7 +573,8 @@ def build_text():
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
-<p>No cookies, no analytics, no tracking. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
+<p>No cookies and no tracking across sites. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
+<p><b>Visitor statistics:</b> We count page views with GoatCounter (goatcounter.com), a privacy-friendly service without cookies. It records the page, the referring site, browser type, screen size and country, but no personal data and no IP addresses are stored. This lets us see how many people use the site and where they come from.</p>
 <p><b>YouTube:</b> Video thumbnails are loaded from YouTube's image servers (i.ytimg.com), which receive your IP address. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
 <p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p><p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
