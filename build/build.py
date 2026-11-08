@@ -193,6 +193,7 @@ def thumb(vid, q="mq2"):
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
 
 
+MULTI = 0.6
 _MW = json.load(open(os.path.join(os.path.dirname(__file__), "mini_wreath.json")))
 
 
@@ -209,9 +210,11 @@ def _digits(label, cap_h, cx=32.0, cy=34.6):
     if label.startswith("1"):
         w1 = (x1 - x0) if len(label) == 1 else (x1 - x0) * 0.45  # first glyph only for "10"
         foot = [p[0] for p in pts if p[1] > y1 - 0.04 * (y1 - y0) and p[0] <= x0 + w1]
-        if foot:
+        if foot and len(label) == 1:
             stem = (min(foot) + max(foot)) / 2
             mid = mid + 0.8 * (stem - mid)
+        elif foot:  # "10": let the flag of the 1 hang out; centre between the stem's left edge and the right edge
+            mid = mid + MULTI * ((min(foot) + x1) / 2 - mid)
     k = cap_h / (y1 - y0)
     return f'<path class="mst" transform="translate({cx - mid * k:.2f} {cy - (y0 + y1) / 2 * k:.2f}) scale({k:.4f})" d="{d}"/>'
 
