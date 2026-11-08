@@ -398,3 +398,15 @@ html,body{max-width:100%;overflow-x:clip}
 [data-theme=dark] .crow .awt,[data-theme=dark] .crow .awt span{color:#E3C16F}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .crow .awt,:root:not([data-theme=light]) .crow .awt span{color:#E3C16F}}
 .crow .awt .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* hero v2 */
+.welcome h1.hq{font-size:40px;line-height:1.05;letter-spacing:-1.2px;margin:6px 0 14px}
+.welcome h1.hq span{display:block;margin-top:8px;font-size:22px;line-height:1.25;letter-spacing:-.3px;font-weight:700;color:var(--mut)}
+.welcome .lede{font-size:16px;line-height:1.5;max-width:620px;margin:0 0 14px}
+.proof{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 26px;font-size:14px;color:var(--mut)}
+.proof span{display:inline-flex;align-items:center;gap:6px}.proof b{color:var(--fg);font-weight:700}
+.proof svg path{fill:#3ECF8E}.proof i{font-style:normal;color:var(--ok);font-weight:700}
+.proof a{color:var(--acc);text-decoration:underline;text-underline-offset:2px}
+.welcome h2.pick{font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+@media (min-width:1001px){.welcome h1.hq{font-size:52px;letter-spacing:-1.8px}.welcome h1.hq span{font-size:26px}}
+@media (max-width:600px){.welcome h1.hq{font-size:38px}.welcome h1.hq span{font-size:20px}.proof{gap:4px 12px;font-size:13px;margin-bottom:20px}}
+.proof svg{width:9px;height:12px;flex:none}
