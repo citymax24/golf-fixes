@@ -34,6 +34,16 @@ def trunc(s, n):
     return s if len(s) <= n else s[: n - 1].rsplit(" ", 1)[0].rstrip(" ,.;:–-|") + "…"
 
 
+def nice(t):
+    t = t or ""
+    letters = [c for c in t if c.isalpha()]
+    if letters and sum(c.isupper() for c in letters) / len(letters) > 0.7:
+        small = {"a", "an", "the", "and", "or", "to", "for", "of", "in", "on", "with", "your", "at", "by"}
+        w = t.lower().split(" ")
+        t = " ".join(x if (i and x in small) else x[:1].upper() + x[1:] for i, x in enumerate(w))
+    return t
+
+
 def slugify(s):
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-") or "unknown"
 
@@ -139,17 +149,17 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
-<header class="top">
+<header class="top" id="top">
   <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
-  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg?v=a" alt="" width="28" height="28"><span>Golf<b>Votes</b></span></a></div>
-  <form class="search" action="{BASE}/search/" role="search"><input name="q" id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search"><button aria-label="Search">{svg('search')}</button></form>
-  <div class="right"><a class="icon" href="{BASE}/about/" aria-label="About" title="About">{svg('help')}</a><button class="icon" id="theme" aria-label="Dark mode" aria-pressed="false">{svg('moon')}</button></div>
+  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg?v=a" alt="" width="24" height="24"><span>GolfVotes</span></a></div>
+  <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson"><kbd class="kh" aria-hidden="true">/</kbd></form>
+  <div class="right"><a class="hlink" href="{BASE}/about/">How we rank</a><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
 </header>
 <nav class="side" id="side">{side}
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot">{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <footer class="foot"><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
   <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
 </main>
@@ -176,9 +186,9 @@ def card(v, n=None, ok=None, rank=None, pname=None):
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     return f"""<article class="vc" data-vid="{e(v['vid'])}">
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
-<div class="vm"><h3><a href="{href}">{e(v['title'])}</a></h3>
+<div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st">{f'<b>{n}</b> recommend it for {e(pname.lower())}' + (f' · {v["recs"]} overall' if v["recs"] != n else '') if pname else f'<b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}'}{f' · <span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}</p></div>
+<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' · <span class="ok">✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}</p></div>
 </article>"""
 
 
@@ -194,24 +204,30 @@ def chips(active=None):
 # ---------- pages ----------
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
-    pick = [PNAME[k] for k in ["slice", "shank", "early_extension", "over_the_top", "driver_distance", "iron_contact", "chipping", "putting"]
-            if k in PNAME and by_problem.get(k)]
+    def best(k):
+        for sc, n, ok, v in by_problem.get(k, []):
+            if v.get("top") == k and n >= 3:
+                return sc, n, ok, v
+        return None
+    pick = [PNAME[k] for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "driver_distance", "iron_contact", "chipping",
+                               "putting", "casting_lag", "fat_thin", "bunker"] if k in PNAME and best(k)][:8]
 
     def tile(p):
-        sc, n, ok, v = by_problem[p["key"]][0]
-        proof = f'✓ {ok} said it fixed their {e(p["name"].lower())}' if ok else f'{n} golfers recommend it'
+        sc, n, ok, v = best(p["key"])
+        proof = f'✓ {ok} say{"s" if ok == 1 else ""} it fixed it' if ok else f'{n} golfers recommend it'
         return (f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><span class="pth"><img loading="lazy" src="{thumb(v["vid"])}" alt="">'
-                f'<span class="pnm">{e(p["name"])}</span></span><span class="ptop"><i>#1</i> {e(trunc(v["title"], 48))}</span>'
+                f'<span class="pnm">{e(p["name"])}</span></span><span class="ptop"><i>Top pick</i> {e(trunc(nice(v["title"]), 48))}</span>'
                 f'<span class="pok">{proof}</span></a>')
     tiles = "".join(tile(p) for p in pick)
     body = f"""<section class="welcome" id="welcome">
-<h1>Which golf video actually helps?</h1>
-<p class="lede">Ranked by <b>{TOTAL_RECS:,}</b> recommendations golfers gave each other on r/GolfSwing and r/golftips, {SITE["stats"]["period"]}. <a href="{BASE}/about/">How we count</a></p>
+<h1>The golf lessons Reddit golfers say actually fixed their swing.</h1>
+<p class="lede"><b>{TOTAL_RECS:,}</b> golfer recommendations from r/GolfSwing and r/golftips, ranked by problem. <a href="{BASE}/about/">How we rank</a></p>
 <div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>Hook, topping, bunker, mental game and more</span></a></div>
-<button class="wclose" id="wclose">Got it, hide this</button></section>
+<button class="wclose" id="wclose">Hide intro</button></section>
 {chips()}
-{('<h2 class="row">Start here: fix plans</h2><div class="pgrid row1">' + PLAN_CARDS + '</div><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
-<div class="grid" id="feed">{''.join(card(v) for v in top)}</div>"""
+{('<h2 class="row">Not sure where to start? Follow a 5-video plan</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
+<div class="grid" id="feed">{''.join(card(v) for v in top[:24])}</div>
+<p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
@@ -222,8 +238,8 @@ def plan_cta(p):
     if not pl:
         return ""
     mins = pl.get("mins")
-    return (f'<a class="plancta" href="{BASE}/plan/{pl["slug"]}/"><b>New to this? Follow the {len(pl["items"])}-video fix plan'
-            f'{f" ({mins} min)" if mins else ""}</b><span>Start with the cause, then the fix, then a drill →</span></a>')
+    return (f'<a class="plancta" href="{BASE}/plan/{pl["slug"]}/"><b>Fix it step by step: {len(pl["items"])} videos'
+            f'{f" ({mins} min)" if mins else ""}</b><span>From cause to drill, in the order that makes sense →</span></a>')
 
 
 def build_problem(p):
@@ -287,18 +303,19 @@ def build_watch(v):
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     body = f"""<div class="watch"><div class="wl">
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
-<h1 class="vt">{e(v['title'])}</h1>
+<h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-<p class="vst"><b>{v['recs']}</b> golfers recommended it{f' · <span class="ok">✓ {v["success"]} said it fixed their problem</span>' if v.get('success') else ''}{f' · {yrs[0]}–{yrs[1]}' if yrs and yrs[0] != yrs[1] else ''}</p>
+<p class="vst">{rank_ctx(v)}<b>{v['recs']}</b> golfers recommend{f' · <span class="ok">✓ {v["success"]} say{"s" if v["success"] == 1 else ""} it fixed it</span>' if v.get('success') else ''}{f' · {yrs[0]}–{yrs[1]}' if yrs and yrs[0] != yrs[1] else ''}</p>
+{top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <span class="seg"><button class="pill" data-act="liked">{svg('like')}<span>Like</span></button><button class="pill" data-act="disliked" aria-label="Dislike">{svg('dislike')}</button></span>
 <button class="pill" data-act="later">{svg('later')}<span>Watch later</span></button>
 <a class="pill" href="https://www.youtube.com/watch?v={e(v['vid'])}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>YouTube</span></a></div>
 <div class="desc">{f'<p class="dim">{TYPES.get(v["type"], "")}{" · " + LEVELS[v["level"]] if v.get("level") in LEVELS else ""}</p>' if v.get("type") else ''}
-{f'<p>{e(v["summary"])}</p>' if v.get("summary") else ''}
+{f'<p>{e(v["summary"])}</p>' if v.get("summary") and not (CARDS.get(v["vid"]) or {}).get("takeaways") else ''}
 {''.join(plan_box(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
 {card_desc(v, notes)}
-<p class="dim">Summaries are written by AI from what golfers said about the video.</p>
+<p class="dim">AI summary of what golfers said.</p>
 <div class="tags">{tags}</div></div>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
@@ -376,6 +393,31 @@ def _old_comments_html(v):
     return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
 
 
+def rank_ctx(v):
+    k = v.get("top")
+    if k not in PNAME:
+        return ""
+    ids = [r[3]["vid"] for r in by_problem.get(k, [])]
+    if v["vid"] not in ids:
+        return ""
+    return f'<a class="rctx" href="{BASE}/fix/{PNAME[k]["slug"]}/">#{ids.index(v["vid"]) + 1} for {e(PNAME[k]["name"])}</a> · '
+
+
+def top_quote(v):
+    card = (CARDS.get(v["vid"]) or {}).get("comments", {})
+    best = None
+    for c in COMMENTS.get(v["vid"]) or []:
+        cid = c["u"].rstrip("/").rsplit("/", 1)[-1]
+        cc = card.get(cid) or {}
+        if cc.get("stance") == "useful" and len(cc.get("quote", "")) > 20:
+            score = 2 if c["l"] == "Says it fixed it" else 1
+            if not best or score > best[0]:
+                best = (score, cc["quote"], c)
+    if not best:
+        return ""
+    return f'<blockquote class="tq">“{e(best[1])}”<cite>{("u/" + e(best[2]["a"])) if best[2]["a"] else "Reddit"} · r/{e(best[2]["sub"])}</cite></blockquote>'
+
+
 def plan_box(pl, v):
     ids = [i["vid"] for i in pl["items"]]
     k = ids.index(v["vid"])
@@ -397,9 +439,9 @@ def build_plans():
         first = vmap[items[0]["vid"]]
         mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
         pl["mins"] = mins
-        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>Backed by {sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfer recommendations{(" · ✓ " + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + " fixed it") if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these{(" · ✓ " + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + " fixed it") if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
         steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
-<div><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{n}. {e(vmap[i['vid']]['title'])}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} recommend it for {e(PNAME[pl['key']]['name'].lower())} · {vmap[i['vid']]['recs']} overall</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
+<div><p class="steplab">Step {n}{(' · ' + TYPES[vmap[i['vid']]['type']]) if vmap[i['vid']].get('type') in TYPES and vmap[i['vid']]['type'] != 'other' else ''}</p><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{e(nice(vmap[i['vid']]['title']))}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} golfers recommend</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
         body = f"""<div class="plan"><p class="kick">Fix plan · <a href="{BASE}/fix/{PNAME[pl['key']]['slug']}/">{e(PNAME[pl['key']]['name'])}</a></p><h1 class="ptitle">{e(pl['title'])}</h1>
 <p class="lead">{e(pl['intro'])}</p>
@@ -408,7 +450,7 @@ def build_plans():
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
         page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og3/plan-{PNAME[pl['key']]['slug']}.png")
     page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
-         f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short learning paths: understand the cause, learn the fix, groove it with a drill. Built from the lessons golfers recommend most.</p><div class="pgrid">{cards}</div>', nav="plans")
+         f'<h1 class="ptitle">Fix plans</h1><p class="lead">5–6 lessons in order, from cause to drill, picked from the most-recommended videos.</p><div class="plist">{cards}</div>', nav="plans")
     return cards
 
 
@@ -524,7 +566,7 @@ def build_text():
 <li><b>Count independent golfers.</b> Each golfer counts once per video. A lesson needs at least {MIN} different golfers recommending it for a problem.</li>
 <li><b>Add context.</b> An AI model labels each lesson's type (drill, explainer, live lesson, pro swing …), level and a one-line summary, and builds short fix plans from the top lessons.</li>
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
-<h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. We don't republish anyone's comments or usernames.</p>
+<h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
 <h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, always linked to the original. If you wrote one and want it removed, open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a> with the link and it will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
@@ -557,7 +599,7 @@ def build_misc():
         d = os.path.join(OUT, "go", slug); os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w").write(f'<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url={e(target)}"><a href="{e(target)}" rel="sponsored">Continue</a>')
     open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /go/\nSitemap: {URL}/sitemap.xml\n")
-    page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">Not found</h1><p><a href="{BASE}/">Find your golf fix</a></p>', canonical=False)
+    page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">That page moved.</h1><p class="lead">Pick your problem:</p><div class="tags">' + "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[k]["slug"]}/">{e(PNAME[k]["name"])}</a>' for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "chipping", "putting"] if k in PNAME) + '</div>', canonical=False)
     open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
                                                      "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
     if SITE.get("cname"):
@@ -569,6 +611,7 @@ if __name__ == "__main__":
     shutil.rmtree(OUT, ignore_errors=True)
     shutil.copytree(os.path.join(ROOT, "static"), os.path.join(OUT, "static"))
     PLAN_CARDS = build_plans()
+    PLAN_CARDS_TOP = "".join(PLAN_CARDS.split("</a>")[i] + "</a>" for i in range(3))
     build_home(); build_categories(); build_client_pages()
     for p in PROBLEMS:
         build_problem(p)
