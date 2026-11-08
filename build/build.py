@@ -635,8 +635,19 @@ def build_guides():
              ld={"@context": "https://schema.org", "@type": "Article", "headline": g["title"], "dateModified": VDATA["generated"], "author": {"@type": "Organization", "name": SITE["name"]}})
 
 
+def award_line(s):
+    """Quiet gold text for list pages ('4 × #1 · Top 10'); the seal itself stays reserved for single pages."""
+    a = [x for x in AWARDS.get(s, []) if x["k"] != "live"]
+    if not a:
+        return ""
+    n1 = sum(1 for x in a if x["k"] != "top10")
+    parts = ([f"{n1} × #1" if n1 > 1 else "#1"] if n1 else []) + (["Top 10"] if any(x["k"] == "top10" for x in a) else [])
+    t = "GolfVotes awards: " + "; ".join(award_text(x) for x in a)
+    return f'<span class="awt" title="{e(t)}"><span class="sr">{e(t)}</span><span aria-hidden="true">{" · ".join(parts)}</span></span>'
+
+
 def build_coaches():
-    rows = "".join(f'<a class="crow" href="{BASE}/coach/{s}/"><span class="n">{i}</span><b>{e(c["name"])}</b>'
+    rows = "".join(f'<a class="crow" href="{BASE}/coach/{s}/"><span class="n">{i}</span><b>{e(c["name"])}{award_line(s)}</b>'
                    f'<span>{c["recs"]:,} recommendations · {len(c["videos"])} videos</span>'
                    f'<i>{e(", ".join(PNAME[t]["name"] for t, _ in c["topics"].most_common(3) if t in PNAME))}</i></a>' for i, (s, c) in enumerate(COACHES, 1))
     page("/coaches/", f"Most recommended golf coaches on YouTube | {SITE['name']}",
