@@ -381,3 +381,11 @@ html,body{max-width:100%;overflow-x:clip}
 .bkit{scroll-margin-top:72px}.bkit>p a{text-decoration:underline}
 .bhow{margin:8px 0 4px;padding-left:18px;font-size:14px;color:var(--mut)}.bhow li{margin:4px 0}.bhow .cbtn{margin-left:4px;padding:6px 10px;font-size:12px}
 [data-theme=dark] .bv.dark{border-color:#3a3a3a}@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .bv.dark{border-color:#3a3a3a}}
+/* mini seal next to coach names */
+.lau{display:inline-flex;align-items:center;gap:4px;margin-left:5px;vertical-align:-4px;cursor:help}.chead h1 .lau{vertical-align:-2px;margin-left:8px}.chead h1 .lau svg{width:28px;height:28px}
+.lau svg{display:block;flex:none}.lau b{font-size:12px;font-weight:700;color:#8A6A1F}
+.ms .msl{fill:#B08425}.ms .mss{stroke:#B08425}.ms .mst{fill:#0B3D2C}
+[data-theme=dark] .ms .msl{fill:#E3C16F}[data-theme=dark] .ms .mss{stroke:#E3C16F}[data-theme=dark] .ms .mst{fill:#F4EFE2}[data-theme=dark] .lau b{color:#E3C16F}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ms .msl{fill:#E3C16F}:root:not([data-theme=light]) .ms .mss{stroke:#E3C16F}:root:not([data-theme=light]) .ms .mst{fill:#F4EFE2}:root:not([data-theme=light]) .lau b{color:#E3C16F}}
+.rctx.win{font-weight:700;color:#8A6A1F}.rctx.win .lau{margin:0 3px 0 0;cursor:inherit}
+[data-theme=dark] .rctx.win{color:#E3C16F}

@@ -193,6 +193,56 @@ def thumb(vid, q="mq2"):
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
 
 
+_MW = json.load(open(os.path.join(os.path.dirname(__file__), "mini_wreath.json")))
+
+
+def _digits(label, cap_h, cx=32.0, cy=34.6):
+    """Rank number as outlines (no web font needed), scaled to ink height cap_h and centred optically:
+    a '1' is placed between its ink centre and its stem centre, so the flag doesn't pull it off-axis."""
+    sys.path.insert(0, os.path.dirname(__file__)); import badge_art
+    d = badge_art.text_path(label, "InterDisplay-Black.otf", 100, 0, 0, -6 if len(label) > 1 else 0, anchor="start")
+    n = [float(x) for x in re.findall(r"-?\d+\.?\d*", d)]
+    pts = list(zip(n[0::2], n[1::2]))
+    x0, x1 = min(p[0] for p in pts), max(p[0] for p in pts)
+    y0, y1 = min(p[1] for p in pts), max(p[1] for p in pts)
+    mid = (x0 + x1) / 2
+    if label.startswith("1"):
+        foot = [p[0] for p in pts if p[1] > y1 - 0.12 * (y1 - y0) and p[0] < (x0 + (x1 - x0) * (0.6 if len(label) == 1 else 0.35))]
+        if foot:
+            stem = (min(foot) + max(foot)) / 2
+            mid = mid + 0.75 * (stem - mid)
+    k = cap_h / (y1 - y0)
+    return f'<path class="mst" transform="translate({cx - mid * k:.2f} {cy - (y0 + y1) / 2 * k:.2f}) scale({k:.4f})" d="{d}"/>'
+
+
+def mini_seal(label="1", px=20):
+    """Small GolfVotes seal: graded laurel with the rank number in deep green. Golden-ratio proportions:
+    number height = height between the stems / phi (20.8 in the 64 grid); at 24 px and below it optically
+    grows to wreath height / phi (24) so it stays legible. Colours come from CSS (.ms*)."""
+    cap = (24.0 if px <= 24 else 20.8) * (0.86 if len(label) > 1 else 1)
+    return (f'<svg class="ms" viewBox="0 0 64 64" width="{px}" height="{px}" aria-hidden="true">'
+            f'<path class="mss" d="{_MW["stems"]}" fill="none" stroke-width="{3.0 if px < 28 else 2.2}" stroke-linecap="round"/><path class="msl" d="{_MW["leaves"]}"/>'
+            f'{_digits(label, cap)}</svg>')
+
+
+def award_text(a):
+    return f'Top 10 most recommended channel {a["y"]}' if a["k"] == "top10" else f'#1 most recommended for {PNAME[a["k"]]["name"]} {a["y"]}'
+
+
+def coach_mark(s, count=False):
+    """Mini seal next to a coach name when the channel holds GolfVotes awards (details in the tooltip)."""
+    a = [x for x in AWARDS.get(s, []) if x["k"] != "live"]
+    if not a:
+        return ""
+    t = "GolfVotes awards: " + "; ".join(award_text(x) for x in a[:4]) + (f"; and {len(a) - 4} more" if len(a) > 4 else "")
+    lab = "1" if any(x["k"] != "top10" for x in a) else "10"
+    extra = f'<b>{len(a)} award{"s" if len(a) > 1 else ""}</b>' if count else ""
+    return f'<span class="lau" title="{e(t)}" role="img" aria-label="{e(t)}">{mini_seal(lab, 20)}{extra}</span>'
+
+
+PKEY = {p["name"]: p["key"] for p in PROBLEMS}
+
+
 def card(v, n=None, ok=None, rank=None, pname=None):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
@@ -360,7 +410,8 @@ def build_watch(v):
     upnext = "".join(f'<a class="un" href="{BASE}/watch/{x["vid"]}/"><span class="th"><img loading="lazy" src="{thumb(x["vid"])}" alt=""></span>'
                      f'<span><b>{e(x["title"])}</b><i>{e(x["channel"])}</i><i>{x["recs"]} golfers recommend</i></span></a>' for x in rel)
     yrs = v.get("years") or []
-    ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
+    won = 'class="rctx win"' in rank_ctx(v)  # the winning lesson shows its seal in the rank line, not twice
+    ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>{"" if won else coach_mark(v["cs"])}' if v["cs"] in COACH_SET else e(v["channel"])
     body = f"""<div class="watch"><div class="wl">
 {''.join(plan_bar(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
@@ -465,7 +516,12 @@ def rank_ctx(v):
     ids = [r[3]["vid"] for r in by_problem.get(k, [])]
     if v["vid"] not in ids:
         return ""
-    return f'<a class="rctx" href="{BASE}/fix/{PNAME[k]["slug"]}/">#{ids.index(v["vid"]) + 1} for {e(PNAME[k]["name"])}</a> · '
+    i = ids.index(v["vid"])
+    aw = next((x for x in AWARDS.get(v["cs"], []) if x["k"] == k), None) if i == 0 else None
+    if aw:
+        return (f'<a class="rctx win" href="{BASE}/fix/{PNAME[k]["slug"]}/"><span class="lau" aria-hidden="true">{mini_seal("1", 22)}</span>'
+                f'Most recommended for {e(PNAME[k]["name"])} · {aw["y"]}</a> · ')
+    return f'<a class="rctx" href="{BASE}/fix/{PNAME[k]["slug"]}/">#{i + 1} for {e(PNAME[k]["name"])}</a> · '
 
 
 def top_quote(v):
@@ -729,7 +785,7 @@ def build_coach(s, c):
     vids = sorted([v for v in c["videos"]], key=lambda v: -v["recs"])[:48]
     tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME)
     body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
-<h1>{e(c['name'])}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
+<h1>{e(c['name'])}{coach_mark(s)}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
 {awards_strip(s)}{badge_kit(s, c)}<div class="grid">{''.join(card(v) for v in vids)}</div>"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
@@ -808,6 +864,7 @@ def build_misc():
 if __name__ == "__main__":
     shutil.rmtree(OUT, ignore_errors=True)
     shutil.copytree(os.path.join(ROOT, "static"), os.path.join(OUT, "static"), ignore=shutil.ignore_patterns("badge"))
+    make_badges()
     PLAN_CARDS = build_plans()
     PLAN_CARDS_TOP = "".join(PLAN_CARDS.split("</a>")[i] + "</a>" for i in range(3))
     build_home(); build_categories(); build_client_pages()
@@ -815,7 +872,6 @@ if __name__ == "__main__":
         build_problem(p)
     for v in WATCH.values():
         build_watch(v)
-    make_badges()
     build_coaches()
     for s, c in COACHES:
         build_coach(s, c)
