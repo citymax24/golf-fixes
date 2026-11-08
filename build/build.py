@@ -590,40 +590,43 @@ def award_info(slug, k, y):
             "MOST RECOMMENDED LESSON", f"{BASE}/fix/{p['slug']}/")
 
 
+LIVE_MIN = 25  # live count badge for channels with at least this many recommendations
+
+
 def make_badges():
-    """Merge current wins into data/awards.json, (re)draw badge SVGs into static/badge/ when fontTools is available
-    (done locally; CI uses the committed files), copy them to /badge/."""
+    """Merge current wins into data/awards.json (awards are never removed: a badge stays valid for its year),
+    draw award badges into static/badge/ (committed, PNGs made locally by build/badge-png.js) and
+    live count badges straight into /badge/{slug}.svg (redrawn on every build)."""
+    sys.path.insert(0, os.path.dirname(__file__)); import badge_art
     yr = VDATA["generated"][:4]
     fn = os.path.join(ROOT, "data", "awards.json")
     store = json.load(open(fn)) if os.path.exists(fn) else {}
-    cur = {s: [p["key"] for p in coach_wins.get(s, []) if p["key"] in PNAME] + (["top10"] if i < 10 else []) for i, (s, c) in enumerate(COACHES)}
-    for s, ks in cur.items():
+    for i, (s, c) in enumerate(COACHES):
         have = {(x["k"], x["y"]) for x in store.get(s, [])}
-        for k in ks:
+        for k in [p["key"] for p in coach_wins.get(s, []) if p["key"] in PNAME] + (["top10"] if i < 10 else []):
             if (k, yr) not in have:
                 store.setdefault(s, []).append({"k": k, "y": yr})
     json.dump(store, open(fn, "w"), indent=1, sort_keys=True)
-    bdir = os.path.join(ROOT, "static", "badge")
-    os.makedirs(bdir, exist_ok=True)
-    try:
-        sys.path.insert(0, os.path.dirname(__file__)); import badge_art
-    except Exception:
-        badge_art = None
+    bdir = os.path.join(ROOT, "static", "badge"); os.makedirs(bdir, exist_ok=True)
     for s, lst in store.items():
         if s not in COACH_SET:
             continue
-        lst = sorted(lst, key=lambda x: (x["y"], x["k"] != "top10", x["k"]), reverse=False)
         for x in lst:
             stem, label, big, line, sub, proof = award_info(s, x["k"], x["y"])
-            for th in ("light", "dark"):
-                f = os.path.join(bdir, stem + ("-dark" if th == "dark" else "") + ".svg")
-                if badge_art and not os.path.exists(f):
-                    open(f, "w").write(badge_art.badge(big, line, x["y"], th, e(label), sub)[0])
-            if os.path.exists(os.path.join(bdir, stem + ".svg")):
-                m = re.search(r'width="(\d+)" height="(\d+)"', open(os.path.join(bdir, stem + ".svg")).read())
-                AWARDS.setdefault(s, []).append(dict(x, stem=stem, label=label, proof=proof, w=int(m[1]), h=int(m[2])))
+            for th, suf in (("light", ""), ("dark", "-dark")):
+                svg, w, h = badge_art.badge(big, line, x["y"], th, e(label), sub)
+                f = os.path.join(bdir, stem + suf + ".svg")
+                if not os.path.exists(f) or open(f).read() != svg:
+                    open(f, "w").write(svg)
+            AWARDS.setdefault(s, []).append(dict(x, stem=stem, label=label, proof=proof, w=w, h=h))
         AWARDS.get(s, []).sort(key=lambda x: (-int(x["y"]), x["k"] == "top10"))
     shutil.copytree(bdir, os.path.join(OUT, "badge"), dirs_exist_ok=True)
+    for s, c in COACHES:
+        if c["recs"] >= LIVE_MIN:
+            for th, suf in (("light", ""), ("dark", "-dark")):
+                svg, w, h = badge_art.live_badge(c["recs"], th, f'{c["recs"]:,} golfer recommendations on GolfVotes')
+                open(os.path.join(OUT, "badge", s + suf + ".svg"), "w").write(svg)
+            c["live"] = (w, h)
 
 
 def awards_strip(s):
@@ -632,7 +635,7 @@ def awards_strip(s):
         return ""
     items = "".join(f'<a class="aw" href="{x["proof"]}"><img src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * .64)}" height="96" loading="lazy">'
                     f'<span>{"See the ranking" if x["k"] != "top10" else "See all coaches"} →</span></a>' for x in a)
-    return f'<section class="awards" id="awards" aria-label="GolfVotes awards"><div class="awl">{items}</div></section>'
+    return f'<section class="awards" aria-label="GolfVotes awards"><div class="awl">{items}</div></section>'
 
 
 def yt_vids(c):
@@ -643,51 +646,64 @@ def copy_btn(text, label="Copy code"):
     return f'<button class="cbtn" type="button" data-copy="{e(text)}">{label}</button>'
 
 
+def badge_card(s, title, stem, label, w, h, note=""):
+    """One badge with light + dark variant, copy-code / PNG / SVG actions. Embeds always link to the coach profile."""
+    col = ""
+    dw = round(w * 120 / h)
+    for th, suf in (("light", ""), ("dark", "-dark")):
+        f = stem + suf
+        code = f'<a href="{URL}/coach/{s}/?ref=badge"><img src="{URL}/badge/{f}.svg" alt="{e(label)}" width="{dw}" height="120"></a>'
+        png = f'<a href="{BASE}/badge/{f}.png" download>PNG</a>' if os.path.exists(os.path.join(ROOT, "static", "badge", f + ".png")) else ""
+        col += (f'<div class="bv {th}"><img src="{BASE}/badge/{f}.svg" alt="" width="{dw}" height="120" loading="lazy">'
+                f'<div class="bact">{copy_btn(code)}{png}<a href="{BASE}/badge/{f}.svg" download>SVG</a></div>'
+                f'<span class="bvl">{"For light backgrounds" if th == "light" else "For dark backgrounds"}</span></div>')
+    return f'<article class="bcard"><h3>{e(title)}</h3>{f"<p class=bnote2>{note}</p>" if note else ""}<div class="bvs">{col}</div></article>'
+
+
+def badge_kit(s, c):
+    """Collapsed 'Are you X?' section on the coach page with everything a coach needs."""
+    cards = "".join(badge_card(s, f'Top 10 golf instruction · {x["y"]}' if x["k"] == "top10" else f'#1 for {PNAME[x["k"]]["name"]} · {x["y"]}',
+                               x["stem"], x["label"] + " on GolfVotes", x["w"], x["h"]) for x in AWARDS.get(s, []))
+    if c.get("live"):
+        cards += badge_card(s, "Live badge", s, f'{c["recs"]:,} golfer recommendations on GolfVotes', *c["live"],
+                            note="Shows your current number of golfer recommendations and updates by itself.")
+    vids = yt_vids(c)
+    def line(v):
+        t = f'✓ Recommended by {v["recs"]} golfers on GolfVotes: {URL}/watch/{v["vid"]}/?ref=yt'
+        return f'<li><span><b>{e(trunc(nice(v["title"]), 64))}</b><code>{e(t)}</code></span>{copy_btn(t, "Copy")}</li>'
+    txt = "".join(line(v) for v in vids)
+    if not cards and not txt:
+        return ""
+    return f"""<details class="bkit" id="badges"><summary>Are you {e(c['name'])}? Use your GolfVotes badges</summary>
+<p class="dim">Free to use on your website, channel or socials. Every badge links back to this page. <a href="{BASE}/badges/">How badges work</a></p>{cards}
+{f'<section class="btxt"><h3>For your YouTube descriptions</h3><p class="dim">Paste one line under the video it belongs to.</p><ul>{txt}</ul></section>' if txt else ''}</details>"""
+
+
 def build_badges_page():
-    elig = [(s, c) for s, c in COACHES if s in AWARDS or yt_vids(c)]
-    rows = "".join(
-        f'<a class="brow" href="{BASE}/badges/{s}/" data-name="{e((c["name"] or "").lower())}"><b>{e(c["name"])}</b>'
-        f'<span>{(str(len(AWARDS[s])) + " award badge" + ("s" if len(AWARDS[s]) > 1 else "")) if s in AWARDS else "Text badges"}</span><i aria-hidden="true">→</i></a>' for s, c in elig)
     ex = [x for s, _ in COACHES for x in AWARDS.get(s, [])]
-    show = ([x for x in ex if x["k"] != "top10"][:1] + [x for x in ex if x["k"] == "top10"][:1])
+    show = [x for x in ex if x["k"] != "top10"][:1] + [x for x in ex if x["k"] == "top10"][:1]
     hero = "".join(f'<img src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * .8)}" height="120">' for x in show)
-    body = f"""<div class="bpage"><section class="bhero"><div><h1 class="ptitle">Badges for coaches</h1>
-<p class="lead">If golfers recommend your lessons on GolfVotes more than anyone else's, you've earned a badge. Put it on your website, your YouTube channel or your socials.</p>
-<ol class="steps"><li>Find your channel</li><li>Copy the code or download the image</li><li>The badge links to your GolfVotes profile</li></ol></div>
-<div class="bshow">{hero}</div></section>
-<label class="bfind" for="bfind">Find your channel</label><input id="bfind" class="bfin" type="search" placeholder="e.g. Paul Wilson" autocomplete="off">
-<div class="blist" id="blist">{rows}</div><p class="dim small" id="bnone" hidden>No badges for that name yet. Badges go to channels with at least {SITE.get("min_recs_per_coach", 10)} recommendations.</p>
-<details class="brules"><summary>How badges are earned</summary><ul>
-<li><b>#1 for a problem:</b> your lesson has the most independent recommendations for that problem at a GolfVotes update.</li>
-<li><b>Top 10:</b> your channel is one of the 10 with the most recommendations across all problems.</li>
-<li><b>Text badge:</b> any lesson with at least 10 recommendations, for your YouTube description.</li></ul>
-<p>Badges are earned, never sold. A badge stays valid for the year printed on it, even if the ranking changes later.</p></details></div>"""
-    page("/badges/", f"Badges for coaches | {SITE['name']}", "Award badges for golf coaches whose YouTube lessons golfers recommend most on GolfVotes.", body)
-    for s, c in elig:
-        cards = ""
-        for x in AWARDS.get(s, []):
-            prof = f"{URL}/coach/{s}/?ref=badge"
-            col = ""
-            for th, suf in (("light", ""), ("dark", "-dark")):
-                img = f"{URL}/badge/{x['stem']}{suf}.svg"
-                code = f'<a href="{prof}"><img src="{img}" alt="{e(x["label"])} on GolfVotes" width="{round(x["w"] * .8)}" height="120"></a>'
-                f = x["stem"] + suf
-                png = f'<a href="{BASE}/badge/{f}.png" download>PNG</a>' if os.path.exists(os.path.join(ROOT, "static", "badge", f + ".png")) else ""
-                col += (f'<div class="bv {th}"><img src="{BASE}/badge/{x["stem"]}{suf}.svg" alt="" width="{round(x["w"] * .8)}" height="120" loading="lazy">'
-                        f'<div class="bact">{copy_btn(code)}{png}'
-                        f'<a href="{BASE}/badge/{x["stem"]}{suf}.svg" download>SVG</a></div><span class="bvl">{"For light backgrounds" if th == "light" else "For dark backgrounds"}</span></div>')
-            short = f'Top 10 golf instruction · {x["y"]}' if x["k"] == "top10" else f'#1 for {PNAME[x["k"]]["name"]} · {x["y"]}'
-            cards += f'<article class="bcard"><h2>{e(short)}</h2><div class="bvs">{col}</div></article>'
-        vids = yt_vids(c)
-        def line(v):
-            t = f'✓ Recommended by {v["recs"]} golfers on GolfVotes: {URL}/watch/{v["vid"]}/?ref=yt'
-            return f'<li><span><b>{e(trunc(nice(v["title"]), 64))}</b><code>{e(t)}</code></span>{copy_btn(t, "Copy")}</li>'
-        txt = "".join(line(v) for v in vids)
-        body = f"""<div class="bpage"><p class="crumb"><a href="{BASE}/badges/">Badges</a></p><h1 class="ptitle">{e(c['name'])}: your badges</h1>
-<p class="lead">Earned with {c['recs']:,} recommendations from golfers. Every badge links to <a href="{BASE}/coach/{s}/">your GolfVotes profile</a>, where viewers can see the rankings behind it.</p>
-{cards}{f'<section class="btxt"><h2>For your YouTube descriptions</h2><p class="dim">Paste one line under the video it belongs to.</p><ul>{txt}</ul></section>' if txt else ''}
-<p class="dim small">Badges are earned, never sold. Questions: <a href="mailto:max@fassia.io?subject=GolfVotes%20badges">max@fassia.io</a></p></div>"""
-        page(f"/badges/{s}/", f"{c['name']}: GolfVotes badges | {SITE['name']}", f"GolfVotes award badges for {c['name']}.", body, canonical=False)
+    live = next(((s, c) for s, c in COACHES if c.get("live")), None)
+    if live:
+        hero += f'<img src="{BASE}/badge/{live[0]}.svg" alt="Live badge example" width="{round(live[1]["live"][0] * 100 / live[1]["live"][1])}" height="100">'
+    body = f"""<div class="bpage"><section class="bhero"><div class="prose"><h1 class="ptitle">Badges for coaches</h1>
+<p class="lead">When golfers recommend your lessons to each other, you earn a badge. Use it on your website, your channel or your socials.</p>
+<h2>Where to find yours</h2><p>On your own coach page: open <a href="{BASE}/coaches/">Coaches</a>, find your channel and click <b>“Are you …? Use your GolfVotes badges”</b>. There you can copy the code or download the image.</p>
+<h2>The badges</h2><ul>
+<li><b>#1 for a problem:</b> your lesson had the most independent recommendations for that problem at a GolfVotes update.</li>
+<li><b>Top 10:</b> your channel was one of the 10 with the most recommendations across all problems.</li>
+<li><b>Live badge:</b> your current number of golfer recommendations (from {LIVE_MIN}). It updates by itself.</li>
+<li><b>Text line for YouTube:</b> for any lesson with at least 10 recommendations.</li></ul>
+<h2>The rules</h2><ul><li>Badges are earned, never sold.</li><li>Award badges carry a year and stay valid for that year, even if the ranking changes later.</li>
+<li>Every badge links to your GolfVotes profile, where viewers can check the rankings behind it.</li>
+<li>Use them as they are: no edits to numbers, years or wording.</li></ul>
+<p class="dim">Questions: <a href="mailto:max@fassia.io?subject=GolfVotes%20badges">max@fassia.io</a></p></div>
+<div class="bshow">{hero}</div></section></div>"""
+    page("/badges/", f"Badges for coaches | {SITE['name']}", "How golf coaches earn GolfVotes badges for the YouTube lessons golfers recommend most.", body)
+    for s, c in COACHES:  # short-lived per-coach kit pages from an earlier version -> coach page
+        d = os.path.join(OUT, "badges", s); os.makedirs(d, exist_ok=True)
+        t = f"{URL}/coach/{s}/#badges"
+        open(os.path.join(d, "index.html"), "w").write(f'<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url={e(t)}"><link rel="canonical" href="{e(t)}"><a href="{e(t)}">Continue</a>')
 
 
 def build_coach(s, c):
@@ -696,8 +712,7 @@ def build_coach(s, c):
     body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
 <h1>{e(c['name'])}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
-{awards_strip(s)}<div class="grid">{''.join(card(v) for v in vids)}</div>
-{f'<p class="bnote">Are you {e(c["name"])}? <a href="{BASE}/badges/{s}/">Get your GolfVotes badges</a></p>' if s in AWARDS or yt_vids(c) else ''}"""
+{awards_strip(s)}{badge_kit(s, c)}<div class="grid">{''.join(card(v) for v in vids)}</div>"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
          f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} independent recommendations.", body, nav="coaches")
 
