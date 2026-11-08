@@ -411,3 +411,6 @@ html,body{max-width:100%;overflow-x:clip}
 @media (max-width:600px){.welcome h1.hq{font-size:38px}.welcome h1.hq span{font-size:20px}.proof{gap:4px 12px;font-size:13px;margin-bottom:20px}}
 .proof svg{width:9px;height:12px;flex:none}
 .welcome .lede{margin-bottom:24px}.welcome .lede a{color:inherit;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
+.morel{margin:8px 0 24px;border-top:1px solid var(--line);padding-top:12px}.morel summary{cursor:pointer;font-weight:600;font-size:15px}
+.morel ul{list-style:none;padding:0;margin:10px 0 0;columns:2 360px;column-gap:28px}.morel li{break-inside:avoid;margin:0 0 8px;font-size:14px;line-height:1.35}
+.morel li span{color:var(--mut);font-size:12.5px}.morel a{color:var(--fg)}span.tag{cursor:default}

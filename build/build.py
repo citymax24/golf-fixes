@@ -354,6 +354,16 @@ def plan_cta(p):
             f'{f" ({mins} min)" if mins else ""}</b><span>Watch them in order, cause first, drill last →</span></a>')
 
 
+def more_lessons(p, rows):
+    """Every other lesson whose main topic is this problem, as plain links (keeps all watch pages reachable for crawlers)."""
+    shown = {r[3]["vid"] for r in rows}
+    rest = sorted([v for v in WATCH.values() if v.get("top") == p["key"] and v["vid"] not in shown], key=lambda v: -v["recs"])
+    if not rest:
+        return ""
+    li = "".join(f'<li><a href="{BASE}/watch/{v["vid"]}/">{e(trunc(nice(v["title"]), 80))}</a> <span>{e(v.get("channel") or "")} · {v["recs"]}</span></li>' for v in rest)
+    return f'<details class="morel"><summary>More lessons for {e(p["name"].lower())} ({len(rest)})</summary><ul>{li}</ul></details>'
+
+
 def build_problem(p):
     rows = by_problem[p["key"]]
     if not rows:
@@ -368,6 +378,7 @@ def build_problem(p):
 <p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{fixes_list(p)}{plan_cta(p)}{aid_html}</section>
 <div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
 {f'<p class="more"><button class="pill inl" id="showall" aria-controls="ranked">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
+{more_lessons(p, rows)}
 {sounds_like(p)}
 {ask_cta(p)}
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
@@ -376,6 +387,15 @@ def build_problem(p):
          og=f"{URL}/static/og3/{p['slug']}.png",
          ld={"@context": "https://schema.org", "@type": "ItemList", "name": p["q"], "itemListElement": [
              {"@type": "ListItem", "position": i + 1, "url": f"{URL}/watch/{r[3]['vid']}/", "name": r[3]["title"]} for i, r in enumerate(rows[:10])]})
+
+
+def other_lessons():
+    """Lessons with no clear main problem, so they are still linked from somewhere."""
+    rest = sorted([v for v in WATCH.values() if not by_problem.get(v.get("top") or "")], key=lambda v: -v["recs"])
+    if not rest:
+        return ""
+    li = "".join(f'<li><a href="{BASE}/watch/{v["vid"]}/">{e(trunc(nice(v["title"]), 80))}</a> <span>{e(v.get("channel") or "")} · {v["recs"]}</span></li>' for v in rest)
+    return f'<details class="morel"><summary>Other recommended lessons ({len(rest)})</summary><ul>{li}</ul></details>'
 
 
 def build_categories():
@@ -387,12 +407,12 @@ def build_categories():
         boxes += f'<div class="box"><h2>{e(g)}<span>{sum(p["video_count"] for p in ps):,} lessons</span></h2>' + "".join(
             f'<a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}<span>{p["video_count"]} lessons</span></a>' for p in ps) + "</div>"
     page("/categories/", f"Golf problems | {SITE['name']}", "Every golf problem with the lessons golfers recommend for it.",
-         f'<h1 class="ptitle">Problems</h1><div class="boxes">{boxes}</div>', nav="cat")
+         f'<h1 class="ptitle">Problems</h1><div class="boxes">{boxes}</div>{other_lessons()}', nav="cat")
 
 
 def build_watch(v):
     tc = sorted((v.get("topic_counts") or {}).items(), key=lambda x: -x[1])
-    tags = "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{n} mention {e(PNAME[t]["name"].lower())}</a>' for t, n in tc if t in PNAME)
+    tags = "".join((f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">' if by_problem.get(t) else '<span class="tag">') + f'{n} mention {e(PNAME[t]["name"].lower())}' + ('</a>' if by_problem.get(t) else '</span>') for t, n in tc if t in PNAME)
     notes = []
     for t, _ in tc:
         for x in (v.get("t_notes") or {}).get(t, []):
@@ -800,7 +820,7 @@ def build_badges_page():
 
 def build_coach(s, c):
     vids = sorted([v for v in c["videos"]], key=lambda v: -v["recs"])[:48]
-    tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME)
+    tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME and by_problem.get(t))
     body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
 <h1>{e(c['name'])}{coach_mark(s)}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
