@@ -42,7 +42,7 @@
   };
   function themeState() {
     var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    $("#theme").setAttribute("aria-pressed", String(dark));
+    $("#theme").setAttribute("aria-pressed", String(dark)); $("#theme").textContent = dark ? "Light mode" : "Dark mode";
   }
   themeState();
   if (settings.frames === false) $$("img[src*='i.ytimg.com']").forEach(function (i) { i.src = i.src.replace("/mq2.jpg", "/mqdefault.jpg").replace("/hq2.jpg", "/hqdefault.jpg"); });
@@ -97,7 +97,7 @@
     var tag = (ev.target.tagName || "").toLowerCase();
     if (ev.key === "Escape") { var m = $("#keys"); if (m) m.remove(); closeMenu(true); if (tag === "input") ev.target.blur(); return; }
     if (tag === "input" || tag === "textarea" || tag === "select" || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    if (ev.key === "/") { ev.preventDefault(); $("#q").focus(); }
+    if (ev.key === "/") { ev.preventDefault(); openSearch(); }
     else if (settings.keys === false && /^[hklw]$/.test(ev.key)) return;
     else if (ev.key === "h") location.href = B + "/";
     else if (ev.key === "k") play();
@@ -126,9 +126,21 @@
     $("#s-clear-all").onclick = function () { ["history", "liked", "disliked", "later", "settings", "plans"].forEach(function (k) { save(k, k === "settings" || k === "plans" ? {} : []); }); flash("Everything reset"); };
   }
 
+  // ---------- header: mobile search, hairline ----------
+  function openSearch() { document.body.classList.add("searching"); $("#stoggle").setAttribute("aria-expanded", "true"); $("#q").focus(); }
+  function closeSearch() { document.body.classList.remove("searching"); $("#stoggle").setAttribute("aria-expanded", "false"); }
+  $("#stoggle").onclick = function () { document.body.classList.contains("searching") ? closeSearch() : openSearch(); };
+  $("#q").addEventListener("keydown", function (ev) { if (ev.key === "Escape") { closeSearch(); $("#stoggle").focus(); } });
+  var topbar = $("#top"), onScroll = function () { topbar.classList.toggle("scrolled", window.scrollY > 0); };
+  window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
   // ---------- welcome box ----------
   var wc = $("#wclose");
   if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
+
+  // ---------- plan box only when following a plan ----------
+  var planParam = new URLSearchParams(location.search).get("plan");
+  $$(".inplan[data-plan]").forEach(function (b) { if (b.dataset.plan !== planParam && !(load("plans", {})[b.dataset.plan] || []).length) b.style.display = "none"; });
 
   // ---------- fix plan progress ----------
   var plans = load("plans", {});
@@ -198,8 +210,7 @@
         var s = Math.log(1 + v[4]) + 0.4 * Math.log(1 + v[5]) + (personal ? 0.6 * aff : 0) - (seen[v[0]] ? 1.5 : 0) + 0.8 * rnd(seed + i);
         return [s, v];
       }).sort(function (a, b) { return b[0] - a[0]; }).map(function (x) { return x[1]; });
-      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.slice(0, 48)); infinite(feed, scored, 48); }
-      else { var shown = {}; $$("[data-vid]", feed).forEach(function (a) { shown[a.dataset.vid] = 1; }); infinite(feed, scored.filter(function (v) { return !shown[v[0]]; }), 0); }
+      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.slice(0, 24)); }
       return;
     }
 
@@ -208,9 +219,16 @@
       var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase();
       $("#q").value = q; $("#ltitle").textContent = q ? 'Results for "' + q + '"' : "Search";
       if (q) {
-        var words = q.split(/\s+/), hit = function (s) { s = s.toLowerCase(); return words.every(function (x) { return s.indexOf(x) >= 0; }); };
-        var ps = ix.p.filter(function (p) { return hit(p[1] + " " + p[2]); }), cs = ix.c.filter(function (c) { return hit(c[1]); });
-        if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + " recs</a>"; }).join("") + "</div></div>";
+        var SYN = { slicing: "slice", sliced: "slice", slices: "slice", hooking: "hook", hooks: "hook", shanking: "shanks", shank: "shanks", shanked: "shanks",
+          topping: "topping", topped: "topping", tops: "topping", chunk: "fat", chunking: "fat", chunked: "fat", fat: "fat", thin: "thin", sculled: "thin",
+          chipping: "chipping", chip: "chipping", chips: "chipping", putt: "putting", putts: "putting", driver: "driver", drive: "driver", irons: "iron", iron: "iron",
+          bunker: "bunker", sand: "bunker", ott: "over the top", "over-the-top": "over the top", ee: "early extension", casting: "casting", lag: "lag", speed: "speed" };
+        var words = q.split(/\s+/).map(function (w) { return SYN[w] || w; });
+        var rx = words.map(function (w) { return new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); });
+        var hit = function (s) { s = s.toLowerCase(); return rx.every(function (r) { return r.test(s); }); };
+        var hitAny = function (s) { s = s.toLowerCase(); return rx.some(function (r) { return r.test(s); }); };
+        var ps = ix.p.filter(function (p) { return hitAny(p[1] + " " + p[0].replace(/-/g, " ")); }), cs = ix.c.filter(function (c) { return hit(c[1]); });
+        if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + " recommendations</a>"; }).join("") + "</div></div>";
         if (cs.length) extra += '<div class="sres"><h2>Coaches</h2><div class="tags">' + cs.slice(0, 12).map(function (c) { return '<a class="tag" href="' + B + "/coach/" + c[0] + '/">' + esc(c[1]) + "</a>"; }).join("") + "</div></div>";
         var sl = ps.map(function (p) { return p[0]; });
         var pscore = function (v) { return sl.reduce(function (a, p) { return a + ((v[14] || {})[p] || 0); }, 0); };

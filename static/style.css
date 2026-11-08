@@ -216,3 +216,56 @@ body.open .side{visibility:visible;transition:transform .2s}
 @media (max-width:600px){.ptiles{grid-template-columns:repeat(2,1fr);gap:8px}.pnm{font-size:16px;left:8px;bottom:6px}.ptop{padding:0 8px;font-size:13px}.pok{padding:0 8px 10px;font-size:12px}.welcome h1{font-size:24px}}
 .pth::after{background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.85))}
 .pnm{text-shadow:0 1px 3px rgba(0,0,0,.6)}
+/* ---- header v2 ---- */
+.top{height:56px;padding:0 16px;gap:16px;border-bottom:1px solid transparent;transition:border-color .15s}
+.top.scrolled{border-bottom-color:var(--line)}
+.brand{gap:8px;font-size:17px;font-weight:650;letter-spacing:-.2px;margin-left:2px}
+.brand img{width:24px;height:24px;border-radius:6px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.brand span{position:static!important;left:auto!important}
+.search{flex:0 1 520px;position:relative;align-items:center}
+.search input{height:40px;border-radius:10px!important;border:1px solid var(--line)!important;background:var(--chip);padding:0 36px 0 40px;font-size:15px}
+.search input:focus{background:var(--bg);border-color:var(--acc)!important;outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 20%,transparent)}
+.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mut);display:flex}.si svg{width:18px;height:18px}
+.kh{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mut)}
+.search>button{display:none}
+.hlink{font-size:14px;color:var(--mut);white-space:nowrap;padding:8px 6px}.hlink:hover{color:var(--fg)}
+#stoggle{display:none}
+.tbtn{font:inherit;font-size:13px;background:var(--chip);color:var(--fg);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
+@media (min-width:1001px){body:not(.wpage) #menu{display:none}body.mini .side{width:240px}body.mini .main{margin-left:240px}}
+@media (max-width:760px){
+  .search{display:none;position:absolute;left:0;right:0;top:56px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line);flex:none}
+  body.searching .search{display:flex}
+  .si{left:24px}.kh{display:none}
+  #stoggle{display:grid}.hlink{display:none}
+  .left{flex:1}
+}
+:root[data-theme=dark] .pb{background:#3ecf8e!important}:root[data-theme=dark] .pb:after{border-left-color:#0f0f0f}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pb{background:#3ecf8e!important}:root:not([data-theme=light]) .pb:after{border-left-color:#0f0f0f}}
+/* ---- review 2 ---- */
+.welcome{background:transparent;padding:8px 0 0}
+.welcome h1{font-size:30px;letter-spacing:-.6px;max-width:720px}
+p.more{margin:12px 0 28px}p.more a{color:var(--acc);font-weight:600}
+.lb{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.55)}.lb svg{width:18px;height:18px}
+@media (pointer:coarse){.lb{display:none}}
+.rctx{color:var(--acc);font-weight:600}
+blockquote.tq{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--acc) 10%,var(--bg));font-size:15px;line-height:1.45}
+blockquote.tq cite{display:block;margin-top:4px;font-style:normal;font-size:13px;color:var(--mut)}
+.steplab{margin:0 0 2px!important;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+.pill.done{height:32px;padding:0 12px;font-size:13px}
+.plist{display:grid;gap:10px;max-width:900px}
+.plist .plc{display:grid;grid-template-columns:120px 1fr;grid-template-rows:auto auto;gap:2px 14px;align-items:start;padding:8px;border-radius:12px}
+.plist .plc:hover{background:var(--chip)}
+.plist .plc .th{grid-row:span 2;box-shadow:none;border-radius:8px}
+.plist .plc b{margin-top:0}
+.plc .th{box-shadow:none}
+.crow{grid-template-columns:28px 1fr;gap:2px 10px}
+.crow b{font-size:16px;font-weight:600}
+.crow span:not(.n){grid-column:2;text-align:left!important;font-size:14px}
+.crow i{grid-column:2}
+.crow .n{grid-row:span 3;align-self:start;padding-top:2px}
+.filters{gap:8px;padding:8px 10px}
+.filters label{font-size:13px;font-weight:500;color:var(--mut);gap:4px}
+.filters select{border-radius:999px;padding:6px 10px;font-size:14px;color:var(--fg)}
+.chead .av{display:none}
+.pth::after{background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.9))}
+.pnm{font-size:18px;color:#fff;opacity:1}

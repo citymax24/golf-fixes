@@ -1,29 +1,218 @@
 [
-  {"key": "slice", "slug": "slice", "name": "Slice", "group": "Ball flight", "q": "How do I fix my slice?", "intro": "The ball starts left and curves hard right (for right-handers). Usually an open clubface relative to an out-to-in path."},
-  {"key": "hook", "slug": "hook", "name": "Hook", "group": "Ball flight", "q": "How do I stop hooking the ball?", "intro": "The ball curves hard left. Usually a closed clubface relative to the path, often from an over-active release or a strong grip."},
-  {"key": "shank", "slug": "shanks", "name": "Shanks", "group": "Contact", "q": "How do I stop shanking?", "intro": "The ball comes off the hosel and shoots right. Often caused by moving toward the ball in the downswing or an open face with the handle too far out."},
-  {"key": "fat_thin", "slug": "fat-and-thin-shots", "name": "Fat & thin shots", "group": "Contact", "q": "How do I stop hitting it fat or thin?", "intro": "Hitting the ground before the ball, or catching it too high on the face. Mostly a low-point and weight-shift problem."},
-  {"key": "topping", "slug": "topping", "name": "Topping the ball", "group": "Contact", "q": "Why do I keep topping the ball?", "intro": "The leading edge hits the top half of the ball. Often from standing up, early extension or a scooping release."},
-  {"key": "iron_contact", "slug": "iron-contact", "name": "Iron compression", "group": "Contact", "q": "How do I compress my irons?", "intro": "Ball-first contact with a forward-leaning shaft. The difference between flushed irons and weak, high shots."},
-  {"key": "early_extension", "slug": "early-extension", "name": "Early extension", "group": "Swing faults", "q": "How do I fix early extension?", "intro": "Hips move toward the ball in the downswing and you lose your posture. One of the most common faults among amateurs."},
-  {"key": "over_the_top", "slug": "over-the-top", "name": "Over the top", "group": "Swing faults", "q": "How do I stop coming over the top?", "intro": "The club moves outward at the start of the downswing and cuts across the ball. The classic source of pulls and slices."},
-  {"key": "casting_lag", "slug": "casting-and-lag", "name": "Casting & lag", "group": "Swing faults", "q": "How do I stop casting and create lag?", "intro": "Releasing the wrist angle too early from the top. Costs speed and leads to scooping and thin shots."},
-  {"key": "sway_weight_shift", "slug": "sway-and-weight-shift", "name": "Sway & weight shift", "group": "Swing faults", "q": "How do I shift my weight properly?", "intro": "Sliding off the ball in the backswing or hanging back in the downswing instead of rotating and moving pressure forward."},
-  {"key": "takeaway_backswing", "slug": "takeaway-and-backswing", "name": "Takeaway & backswing", "group": "Swing sequence", "q": "What does a good takeaway and backswing look like?", "intro": "The first move sets everything up: club path, face, width and turn."},
-  {"key": "transition_downswing", "slug": "transition-and-downswing", "name": "Transition & downswing", "group": "Swing sequence", "q": "How should I start the downswing?", "intro": "Sequencing from the top: what moves first and how the club drops into the slot."},
-  {"key": "rotation_hips", "slug": "hip-rotation", "name": "Hip rotation", "group": "Swing sequence", "q": "How do I rotate my hips properly?", "intro": "How the lower body turns and clears so the arms and club can swing through."},
-  {"key": "release_clubface", "slug": "release-and-clubface", "name": "Release & clubface control", "group": "Swing sequence", "q": "How do I square the clubface at impact?", "intro": "How the face rotates through impact. The biggest factor for where the ball starts."},
-  {"key": "grip", "slug": "grip", "name": "Grip", "group": "Setup", "q": "How should I grip the golf club?", "intro": "Hand position and pressure. A small change here changes face control more than almost anything else."},
-  {"key": "setup_posture", "slug": "setup-and-posture", "name": "Setup & posture", "group": "Setup", "q": "What is the correct golf setup and posture?", "intro": "Stance, ball position, spine angle and alignment before the club ever moves."},
-  {"key": "driver_distance", "slug": "driver-and-distance", "name": "Driver & distance", "group": "Clubs", "q": "How do I hit my driver longer and straighter?", "intro": "Launch, attack angle, tee height and the setup changes that make the driver different from irons."},
-  {"key": "wedges_pitching", "slug": "wedges-and-pitching", "name": "Wedges & pitching", "group": "Short game", "q": "How do I hit better pitch shots?", "intro": "Partial wedge shots and distance control from 30 to 100 yards."},
-  {"key": "chipping", "slug": "chipping", "name": "Chipping", "group": "Short game", "q": "How do I chip better?", "intro": "Short shots around the green: technique, club choice and the yips."},
-  {"key": "bunker", "slug": "bunker-shots", "name": "Bunker shots", "group": "Short game", "q": "How do I get out of the bunker?", "intro": "Greenside sand shots: using the bounce and hitting the sand, not the ball."},
-  {"key": "putting", "slug": "putting", "name": "Putting", "group": "Short game", "q": "How do I putt better?", "intro": "Stroke, speed control and reading greens."},
-  {"key": "speed_training", "slug": "speed-training", "name": "Speed training", "group": "Training", "q": "How do I increase my swing speed?", "intro": "Overspeed training and protocols to swing faster."},
-  {"key": "mobility_fitness", "slug": "mobility-and-fitness", "name": "Mobility & fitness", "group": "Training", "q": "Which exercises help my golf swing?", "intro": "Flexibility and strength that make the positions possible in the first place."},
-  {"key": "practice_method", "slug": "how-to-practice", "name": "How to practice", "group": "Training", "q": "How should I practice golf?", "intro": "Structuring range sessions, drills and feedback so practice actually transfers to the course."},
-  {"key": "course_management", "slug": "course-management", "name": "Course management", "group": "On the course", "q": "How do I score better without changing my swing?", "intro": "Target selection, club choice and strategy."},
-  {"key": "mental", "slug": "mental-game", "name": "Mental game", "group": "On the course", "q": "How do I improve my mental game?", "intro": "Routines, pressure and staying out of your own way."},
-  {"key": "fundamentals_general", "slug": "swing-fundamentals", "name": "Swing fundamentals", "group": "Swing sequence", "q": "What are the fundamentals of the golf swing?", "intro": "Overall swing concepts and models that tie the pieces together."}
+ {
+  "key": "slice",
+  "slug": "slice",
+  "name": "Slice",
+  "group": "Ball flight",
+  "q": "How do I fix my slice?",
+  "intro": "The ball curves hard to the right (for right-handers), usually from a clubface that is open to the swing path."
+ },
+ {
+  "key": "hook",
+  "slug": "hook",
+  "name": "Hook",
+  "group": "Ball flight",
+  "q": "How do I stop hooking the ball?",
+  "intro": "The ball curves hard left. Usually a closed clubface relative to the path, often from an over-active release or a strong grip."
+ },
+ {
+  "key": "shank",
+  "slug": "shanks",
+  "name": "Shanks",
+  "group": "Contact",
+  "q": "How do I stop shanking?",
+  "intro": "The ball comes off the hosel and shoots right. Often caused by moving toward the ball in the downswing or an open face with the handle too far out."
+ },
+ {
+  "key": "fat_thin",
+  "slug": "fat-and-thin-shots",
+  "name": "Fat & thin shots",
+  "group": "Contact",
+  "q": "How do I stop hitting it fat or thin?",
+  "intro": "Hitting the ground before the ball, or catching it too high on the face. Mostly a low-point and weight-shift problem."
+ },
+ {
+  "key": "topping",
+  "slug": "topping",
+  "name": "Topping the ball",
+  "group": "Contact",
+  "q": "Why do I keep topping the ball?",
+  "intro": "The leading edge hits the top half of the ball. Often from standing up, early extension or a scooping release."
+ },
+ {
+  "key": "iron_contact",
+  "slug": "iron-contact",
+  "name": "Iron contact",
+  "group": "Contact",
+  "q": "How do I hit my irons more solidly?",
+  "intro": "Ball-first contact with a forward-leaning shaft. The difference between flushed irons and weak, high shots."
+ },
+ {
+  "key": "early_extension",
+  "slug": "early-extension",
+  "name": "Early extension",
+  "group": "Swing faults",
+  "q": "How do I fix early extension?",
+  "intro": "Hips move toward the ball in the downswing and you lose your posture. One of the most common faults among amateurs."
+ },
+ {
+  "key": "over_the_top",
+  "slug": "over-the-top",
+  "name": "Over the top",
+  "group": "Swing faults",
+  "q": "How do I stop coming over the top?",
+  "intro": "The club moves outward at the start of the downswing and cuts across the ball. The classic source of pulls and slices."
+ },
+ {
+  "key": "casting_lag",
+  "slug": "casting-and-lag",
+  "name": "Casting & lag",
+  "group": "Swing faults",
+  "q": "How do I stop casting and create lag?",
+  "intro": "Releasing the wrist angle too early from the top. Costs speed and leads to scooping and thin shots."
+ },
+ {
+  "key": "sway_weight_shift",
+  "slug": "sway-and-weight-shift",
+  "name": "Sway & weight shift",
+  "group": "Swing faults",
+  "q": "How do I shift my weight properly?",
+  "intro": "Sliding off the ball in the backswing or hanging back in the downswing instead of rotating and moving pressure forward."
+ },
+ {
+  "key": "takeaway_backswing",
+  "slug": "takeaway-and-backswing",
+  "name": "Takeaway & backswing",
+  "group": "Swing sequence",
+  "q": "What does a good takeaway and backswing look like?",
+  "intro": "The first move sets everything up: club path, face, width and turn."
+ },
+ {
+  "key": "transition_downswing",
+  "slug": "transition-and-downswing",
+  "name": "Transition & downswing",
+  "group": "Swing sequence",
+  "q": "How should I start the downswing?",
+  "intro": "Sequencing from the top: what moves first and how the club drops into the slot."
+ },
+ {
+  "key": "rotation_hips",
+  "slug": "hip-rotation",
+  "name": "Hip rotation",
+  "group": "Swing sequence",
+  "q": "How do I rotate my hips properly?",
+  "intro": "How the lower body turns and clears so the arms and club can swing through."
+ },
+ {
+  "key": "release_clubface",
+  "slug": "release-and-clubface",
+  "name": "Release & clubface control",
+  "group": "Swing sequence",
+  "q": "How do I square the clubface at impact?",
+  "intro": "How the face rotates through impact. The biggest factor for where the ball starts."
+ },
+ {
+  "key": "grip",
+  "slug": "grip",
+  "name": "Grip",
+  "group": "Setup",
+  "q": "How should I grip the golf club?",
+  "intro": "Hand position and pressure. A small change here changes face control more than almost anything else."
+ },
+ {
+  "key": "setup_posture",
+  "slug": "setup-and-posture",
+  "name": "Setup & posture",
+  "group": "Setup",
+  "q": "What is the correct golf setup and posture?",
+  "intro": "Stance, ball position, spine angle and alignment before the club ever moves."
+ },
+ {
+  "key": "driver_distance",
+  "slug": "driver-and-distance",
+  "name": "Driver & distance",
+  "group": "Clubs",
+  "q": "How do I hit my driver longer and straighter?",
+  "intro": "Launch, attack angle, tee height and the setup changes that make the driver different from irons."
+ },
+ {
+  "key": "wedges_pitching",
+  "slug": "wedges-and-pitching",
+  "name": "Wedges & pitching",
+  "group": "Short game",
+  "q": "How do I hit better pitch shots?",
+  "intro": "Partial wedge shots and distance control from 30 to 100 yards."
+ },
+ {
+  "key": "chipping",
+  "slug": "chipping",
+  "name": "Chipping",
+  "group": "Short game",
+  "q": "How do I chip better?",
+  "intro": "Short shots around the green: technique, club choice and the yips."
+ },
+ {
+  "key": "bunker",
+  "slug": "bunker-shots",
+  "name": "Bunker shots",
+  "group": "Short game",
+  "q": "How do I get out of the bunker?",
+  "intro": "Greenside sand shots: using the bounce and hitting the sand, not the ball."
+ },
+ {
+  "key": "putting",
+  "slug": "putting",
+  "name": "Putting",
+  "group": "Short game",
+  "q": "How do I putt better?",
+  "intro": "Stroke, speed control and reading greens."
+ },
+ {
+  "key": "speed_training",
+  "slug": "speed-training",
+  "name": "Speed training",
+  "group": "Training",
+  "q": "How do I increase my swing speed?",
+  "intro": "Overspeed training and protocols to swing faster."
+ },
+ {
+  "key": "mobility_fitness",
+  "slug": "mobility-and-fitness",
+  "name": "Mobility & fitness",
+  "group": "Training",
+  "q": "Which exercises help my golf swing?",
+  "intro": "Flexibility and strength that make the positions possible in the first place."
+ },
+ {
+  "key": "practice_method",
+  "slug": "how-to-practice",
+  "name": "How to practice",
+  "group": "Training",
+  "q": "How should I practice golf?",
+  "intro": "Structuring range sessions, drills and feedback so practice actually transfers to the course."
+ },
+ {
+  "key": "course_management",
+  "slug": "course-management",
+  "name": "Course management",
+  "group": "On the course",
+  "q": "How do I score better without changing my swing?",
+  "intro": "Target selection, club choice and strategy."
+ },
+ {
+  "key": "mental",
+  "slug": "mental-game",
+  "name": "Mental game",
+  "group": "On the course",
+  "q": "How do I improve my mental game?",
+  "intro": "Routines, pressure and staying out of your own way."
+ },
+ {
+  "key": "fundamentals_general",
+  "slug": "swing-fundamentals",
+  "name": "Swing fundamentals",
+  "group": "Swing sequence",
+  "q": "What are the fundamentals of the golf swing?",
+  "intro": "Overall swing concepts and models that tie the pieces together."
+ }
 ]
