@@ -170,6 +170,20 @@
     q.addEventListener("blur", function () { setTimeout(close, 150); });
   })();
 
+  // ---------- "Did this fix it?" votes (counted as GoatCounter events, no cookies) ----------
+  var vote = $(".vote");
+  if (vote) {
+    var vid = vote.dataset.vid, votes = load("votes", {});
+    var done = function (v) { $$("[data-vote]", vote).forEach(function (b) { b.disabled = true; b.classList.toggle("on", b.dataset.vote === v); b.setAttribute("aria-pressed", String(b.dataset.vote === v)); }); $(".vthanks", vote).hidden = false; };
+    if (votes[vid]) done(votes[vid]);
+    $$("[data-vote]", vote).forEach(function (b) {
+      b.onclick = function () {
+        var v = b.dataset.vote; votes[vid] = v; save("votes", votes); done(v);
+        try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "vote-" + v + "/" + vid, title: (v === "yes" ? "Fixed it: " : "Did not help: ") + vote.dataset.t, event: true }); } catch (e) {}
+      };
+    });
+  }
+
   // ---------- welcome box ----------
   var wc = $("#wclose");
   if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
