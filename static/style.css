@@ -276,3 +276,5 @@ blockquote.tq cite{display:block;margin-top:4px;font-style:normal;font-size:13px
 .ins{margin:0;padding-left:20px;display:grid;gap:6px}.ins li{font-size:14px;line-height:1.4}.ins a{color:var(--acc);font-weight:600;margin-left:4px}
 .ask{margin:32px 0 8px;background:var(--chip);border-radius:12px;padding:16px;max-width:760px}.ask h2{font-size:17px;margin:0 0 4px}.ask p{margin:0 0 10px;color:var(--mut);font-size:14px}
 .up{color:var(--acc);font-weight:600}
+/* iOS Safari zooms into inputs < 16px: keep all form controls at 16px on touch devices */
+@media (pointer:coarse),(max-width:760px){input,select,textarea,.search input,.filters select{font-size:16px!important}}
