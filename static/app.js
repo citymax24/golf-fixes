@@ -134,6 +134,42 @@
   var topbar = $("#top"), onScroll = function () { topbar.classList.toggle("scrolled", window.scrollY > 0); };
   window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
+  // ---------- top nav: Saved link when something is saved ----------
+  if (load("liked").length || load("later").length) { var ts = $("#tsaved"); if (ts) ts.hidden = false; }
+
+  // ---------- search suggestions ----------
+  (function () {
+    var q = $("#q"), box = $("#sugg"), ix = null, items = [], sel = -1;
+    var SYN = { slicing: "slice", sliced: "slice", shank: "shanks", shanking: "shanks", hooking: "hook", chunk: "fat", chunking: "fat", topped: "topping",
+      chip: "chipping", putt: "putting", drive: "driver", irons: "iron", sand: "bunker", ott: "over the top", ee: "early extension" };
+    function get(cb) { if (ix) return cb(ix); fetch(B + "/static/index.json").then(function (r) { return r.json(); }).then(function (d) { ix = d; cb(d); }); }
+    function close() { box.hidden = true; q.setAttribute("aria-expanded", "false"); sel = -1; }
+    function render() {
+      box.innerHTML = items.map(function (it, i) { return '<li role="option" id="sg' + i + '"' + (i === sel ? ' aria-selected="true" class="on"' : "") + '><a href="' + it.h + '"><b>' + esc(it.t) + "</b><span>" + esc(it.s) + "</span></a></li>"; }).join("");
+      box.hidden = !items.length; q.setAttribute("aria-expanded", String(!!items.length));
+      if (sel >= 0) q.setAttribute("aria-activedescendant", "sg" + sel); else q.removeAttribute("aria-activedescendant");
+    }
+    q.addEventListener("input", function () {
+      var v = q.value.trim().toLowerCase(); if (v.length < 2) { items = []; return render(); }
+      v = SYN[v] || v;
+      get(function (d) {
+        var m = function (s) { return s.toLowerCase().split(/[^a-z0-9]+/).some(function (w) { return w.indexOf(v) === 0; }) || s.toLowerCase().indexOf(v) === 0; };
+        var ps = d.p.filter(function (p) { return m(p[1]) || m(p[2]); }).slice(0, 4).map(function (p) { return { h: B + "/fix/" + p[0] + "/", t: p[1], s: "Problem · " + p[3].toLocaleString() + " recommendations" }; });
+        var cs = d.c.filter(function (c) { return m(c[1]); }).slice(0, 2).map(function (c) { return { h: B + "/coach/" + c[0] + "/", t: c[1], s: "Coach · " + c[2].toLocaleString() + " recommendations" }; });
+        var vs = d.v.filter(function (x) { return m(x[1]); }).slice(0, 3).map(function (x) { return { h: B + "/watch/" + x[0] + "/", t: x[1], s: x[2] + " · " + x[4] + " golfers recommend" }; });
+        items = ps.concat(cs, vs).slice(0, 7); sel = -1; render();
+      });
+    });
+    q.addEventListener("keydown", function (ev) {
+      if (box.hidden) return;
+      if (ev.key === "ArrowDown") { ev.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); sel = Math.max(-1, sel - 1); render(); }
+      else if (ev.key === "Enter" && sel >= 0) { ev.preventDefault(); location.href = items[sel].h; }
+      else if (ev.key === "Escape") close();
+    });
+    q.addEventListener("blur", function () { setTimeout(close, 150); });
+  })();
+
   // ---------- welcome box ----------
   var wc = $("#wclose");
   if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
