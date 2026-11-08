@@ -389,3 +389,12 @@ html,body{max-width:100%;overflow-x:clip}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ms .msl{fill:#E3C16F}:root:not([data-theme=light]) .ms .mss{stroke:#E3C16F}:root:not([data-theme=light]) .ms .mst{fill:#F4EFE2}:root:not([data-theme=light]) .lau b{color:#E3C16F}}
 .rctx.win{font-weight:700;color:#8A6A1F}.rctx.win .lau{margin:0 3px 0 0;cursor:inherit}
 [data-theme=dark] .rctx.win{color:#E3C16F}
+/* award text on list pages */
+.awt{margin-left:8px;font-size:13px;font-weight:700;letter-spacing:.1px;color:#8A6A1F;white-space:nowrap}
+[data-theme=dark] .awt{color:#E3C16F}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .awt{color:#E3C16F}}
+.awt .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.crow .awt,.crow .awt span{display:inline;margin:0;font-size:13px;font-weight:700;color:#8A6A1F}.crow .awt{margin-left:8px}
+[data-theme=dark] .crow .awt,[data-theme=dark] .crow .awt span{color:#E3C16F}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .crow .awt,:root:not([data-theme=light]) .crow .awt span{color:#E3C16F}}
+.crow .awt .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
