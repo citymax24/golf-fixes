@@ -371,3 +371,11 @@ html,body{max-width:100%;overflow-x:clip}
 .aw span{font-size:12px;color:#0b7a4b;font-weight:600}.aw img{height:96px;width:auto}
 [data-theme=dark] .aw{background:#fff}
 @media (max-width:720px){.bhero{grid-template-columns:1fr}.bshow{display:none}.bvs{grid-template-columns:1fr}.btxt li{flex-direction:column;align-items:stretch}}
+/* badge kit on coach page */
+.bkit{margin:0 0 24px;border:1px solid var(--line);border-radius:14px;padding:0 16px}
+.bkit>summary{cursor:pointer;padding:14px 0;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:8px}
+.bkit>summary::-webkit-details-marker{display:none}.bkit>summary::before{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s;margin-right:4px}
+.bkit[open]>summary::before{transform:rotate(45deg)}.bkit[open]{padding-bottom:16px}.bkit>p{margin:0 0 4px}
+.bcard h3{font-size:15px;margin:0 0 12px}.bnote2{margin:-6px 0 12px;font-size:13px;color:var(--mut)}.btxt h3{font-size:15px;margin:20px 0 4px}
+.bshow{align-self:start;position:sticky;top:80px}
+.bkit{scroll-margin-top:72px}.bkit>p a{text-decoration:underline}
