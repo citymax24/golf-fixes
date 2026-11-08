@@ -241,7 +241,7 @@ def build_home():
 def reddit_block(p):
     r = REDDIT.get(p["key"]) or {}
     vmap = {v["vid"]: v for v in VIDEOS}
-    sl = [clean_title(t) for t in r.get("sounds_like", [])][:4]
+    sl = [BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t) for t in r.get("sounds_like", [])][:4]
     ins = [i for i in r.get("insights", []) if i.get("vid") in vmap][:3]
     if not sl and not ins:
         return ""
