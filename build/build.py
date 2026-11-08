@@ -82,7 +82,7 @@ for p in PROBLEMS:
         n = (v.get("topic_counts") or {}).get(k, 0)
         if n >= MIN:
             ok = (v.get("t_success") or {}).get(k, 0)
-            rows.append((n + 0.75 * ok + 0.02 * min(v["recs"], 50), n, ok, v))
+            rows.append((n + 0.001 * ok + 0.00001 * min(v["recs"], 50), n, ok, v))
     rows.sort(key=lambda r: -r[0])
     by_problem[k] = rows[: SITE.get("max_videos_per_problem", 60)]
     p["total_recs"], p["video_count"] = sum(r[1] for r in rows), len(rows)
@@ -135,7 +135,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
     side = "".join(f'<a href="{BASE}{h}"{" class=on" if nav == n else ""}>{svg(ic)}<span>{lbl}</span></a>' for n, h, ic, lbl in [
         ("home", "/", "home", "Home"), ("cat", "/categories/", "cat", "Problems"), ("plans", "/plans/", "list", "Fix plans"),
         ("coaches", "/coaches/", "coach", "Coaches"), ("browse", "/browse/", "browse", "Browse"),
-        ("liked", "/liked/", "like", "Liked"), ("later", "/later/", "later", "Watch later"), ("history", "/history/", "hist", "History")])
+        ("liked", "/liked/", "like", "Liked"), ("later", "/later/", "later", "Watch later"), ("history", "/history/", "hist", "History"), ("about", "/about/", "help", "How we rank")])
     nl = SITE.get("newsletter_url")
     doc = f"""<!doctype html>
 <html lang="en"><head>
@@ -200,7 +200,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 def chips(active=None):
     order = ["slice", "shank", "early_extension", "over_the_top", "hook", "fat_thin", "driver_distance", "iron_contact", "chipping",
              "putting", "casting_lag", "bunker", "wedges_pitching", "rotation_hips", "takeaway_backswing", "setup_posture", "grip"]
-    tops = [PNAME[k] for k in order if k in PNAME and PNAME[k]["video_count"]][:14]
+    tops = sorted([q for q in PROBLEMS if q["video_count"] >= 5], key=lambda q: (q["key"] not in ("slice", "shank"), -q["video_count"]))[:14]
     c = f'<a class="chip{" on" if not active else ""}" href="{BASE}/">All</a>'
     c += "".join(f'<a class="chip{" on" if active == p["key"] else ""}" href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>' for p in tops)
     return f'<div class="chips">{c}<a class="chip" href="{BASE}/categories/">All problems →</a></div>'
@@ -215,27 +215,46 @@ def build_home():
                 return sc, n, ok, v
         return None
     pick = [PNAME[k] for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "driver_distance", "iron_contact", "chipping",
-                               "putting", "casting_lag", "fat_thin", "bunker"] if k in PNAME and best(k)][:8]
+                               "putting", "casting_lag", "fat_thin", "bunker"] if k in PNAME and best(k)][:7]
 
     def tile(p):
         sc, n, ok, v = best(p["key"])
         proof = f'✓ {ok} say{"s" if ok == 1 else ""} it fixed it' if ok else f'{n} golfers recommend it'
         return (f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><span class="pth"><img loading="lazy" src="{thumb(v["vid"])}" alt="">'
-                f'<span class="pnm">{e(p["name"])}</span></span><span class="ptop"><i>Top pick</i> {e(trunc(nice(v["title"]), 48))}</span>'
+                f'</span><span class="pnm2">{e(p["name"])}</span><span class="ptop">Top pick: {e(trunc(nice(v["title"]), 44))}</span>'
                 f'<span class="pok">{proof}</span></a>')
     tiles = "".join(tile(p) for p in pick)
     body = f"""<section class="welcome" id="welcome">
 <h1>The golf lessons Reddit golfers say actually fixed their swing.</h1>
 <p class="lede"><b>{TOTAL_RECS:,}</b> golfer recommendations from r/GolfSwing and r/golftips, ranked by problem. <a href="{BASE}/about/">How we rank</a></p>
-<div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>Hook, topping, bunker, mental game and more</span></a></div>
-<button class="wclose" id="wclose">Hide intro</button></section>
+<div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
+</section>
 {chips()}
-{('<h2 class="row">Not sure where to start? Follow a 5-video plan</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
+{('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
 <div class="grid" id="feed">{''.join(card(v) for v in top[:24])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
+
+
+def fixes_list(p):
+    r = REDDIT.get(p["key"]) or {}
+    vmap = {v["vid"]: v for v in VIDEOS}
+    ins = [i for i in r.get("insights", []) if i.get("vid") in vmap][:3]
+    if not ins:
+        return ""
+    return ('<div class="fixes"><h2>What golfers say fixed it</h2><ol>'
+            + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></div>")
+
+
+def sounds_like(p):
+    r = REDDIT.get(p["key"]) or {}
+    sl = [BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t) for t in r.get("sounds_like", [])][:4]
+    if not sl:
+        return ""
+    return ('<section class="slbox"><h2>Sounds like you?</h2><p class="dim">How golfers described it when they asked for help:</p><ul class="sl">'
+            + "".join(f"<li>“{e(t)}”</li>" for t in sl) + "</ul></section>")
 
 
 def reddit_block(p):
@@ -265,7 +284,7 @@ def plan_cta(p):
         return ""
     mins = pl.get("mins")
     return (f'<a class="plancta" href="{BASE}/plan/{pl["slug"]}/"><b>Fix it step by step: {len(pl["items"])} videos'
-            f'{f" ({mins} min)" if mins else ""}</b><span>From cause to drill, in the order that makes sense →</span></a>')
+            f'{f" ({mins} min)" if mins else ""}</b><span>Watch them in order, cause first, drill last →</span></a>')
 
 
 def build_problem(p):
@@ -279,9 +298,10 @@ def build_problem(p):
     body = f"""{chips(p['key'])}
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
-<p class="meta"><b>{p['video_count']}</b> lessons ranked by <b>{p['total_recs']:,}</b> independent recommendations{f' · <b>{ok_total}</b> golfers said it fixed it' if ok_total else ''}. <a href="{BASE}/about/">How we count</a></p>{plan_cta(p)}{aid_html}</section>
-{reddit_block(p)}
-<div class="grid">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
+<p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{fixes_list(p)}{plan_cta(p)}{aid_html}</section>
+<div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
+{f'<p class="more"><button class="pill inl" id="showall" aria-controls="ranked">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
+{sounds_like(p)}
 {ask_cta(p)}
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
@@ -305,7 +325,7 @@ def build_categories():
 
 def build_watch(v):
     tc = sorted((v.get("topic_counts") or {}).items(), key=lambda x: -x[1])
-    tags = "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in tc if t in PNAME)
+    tags = "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{n} mention {e(PNAME[t]["name"].lower())}</a>' for t, n in tc if t in PNAME)
     notes = []
     for t, _ in tc:
         for x in (v.get("t_notes") or {}).get(t, []):
@@ -330,13 +350,14 @@ def build_watch(v):
     yrs = v.get("years") or []
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     body = f"""<div class="watch"><div class="wl">
+{''.join(plan_bar(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
 <p class="vst">{rank_ctx(v)}<b>{v['recs']}</b> golfers recommend{f' · <span class="ok">✓ {v["success"]} say{"s" if v["success"] == 1 else ""} it fixed it</span>' if v.get('success') else ''}{f' · last recommended {lastrec(v["vid"])}' if lastrec(v["vid"]) else ''}</p>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
-<span class="seg"><button class="pill" data-act="liked">{svg('like')}<span>Like</span></button><button class="pill" data-act="disliked" aria-label="Dislike">{svg('dislike')}</button></span>
+<button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>
 <button class="pill" data-act="later">{svg('later')}<span>Watch later</span></button>
 <a class="pill" href="https://www.youtube.com/watch?v={e(v['vid'])}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>YouTube</span></a></div>
 <div class="desc">{f'<p class="dim">{TYPES.get(v["type"], "")}{" · " + LEVELS[v["level"]] if v.get("level") in LEVELS else ""}</p>' if v.get("type") else ''}
@@ -399,13 +420,14 @@ def comments_html(v):
         if c.get("q") and len(c["q"]) > 12 and e(c["q"]) in body:
             body = body.replace(e(c["q"]), f'<mark>{e(c["q"])}</mark>', 1)
         st = STANCE.get(c.get("st"), (None, 0))[0]
-        tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st else ""
+        tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st and c.get("st") in ("critical",) else ""
         return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh">{('<b>u/' + e(c['a']) + '</b>') if c['a'] else '<b>[deleted]</b>'} {c['y']} · r/{e(c['sub'])}{f' · <span class="up">▲ {c["s"]}</span>' if c.get("s", 0) >= 5 else ''}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
 <p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
     main = [c for c in cs if c.get("st") not in ("praise", "joke")]
     rest = [c for c in cs if c.get("st") in ("praise", "joke")]
     nu = sum(1 for c in cs if c.get("st") == "useful"); ncrit = sum(1 for c in cs if c.get("st") == "critical")
-    summary = f'<p class="dim">{nu} useful · {ncrit} critical · {len(rest)} just praise</p>' if card else ""
+    nfix = sum(1 for c in cs if c["l"] == "Says it fixed it")
+    summary = f'<p class="dim">{nfix} say it fixed it{f" · {ncrit} say it didn&#39;t help" if ncrit else ""}</p>' if card else ""
     rows = "".join(one(c) for c in main) + (f'<details class="morecm"><summary>{len(rest)} more comments with just praise</summary>{"".join(one(c) for c in rest)}</details>' if rest else "")
     more = v["recs"] - len(cs)
     return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{summary}{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
@@ -446,6 +468,16 @@ def top_quote(v):
     return f'<blockquote class="tq">“{e(best[1])}”<cite>{("u/" + e(best[2]["a"])) if best[2]["a"] else "Reddit"} · r/{e(best[2]["sub"])}{f" · ▲ {best[2]['s']}" if best[2].get("s", 0) >= 5 else ""}</cite></blockquote>'
 
 
+def plan_bar(pl, v):
+    ids = [i["vid"] for i in pl["items"]]
+    k = ids.index(v["vid"])
+    vm = {x["vid"]: x for x in VIDEOS}
+    nxt = ids[k + 1] if k + 1 < len(ids) else None
+    nx = f'<a href="{BASE}/watch/{nxt}/?plan={pl["slug"]}">Next: {e(trunc(nice(vm[nxt]["title"]), 40))} →</a>' if nxt and nxt in vm else f'<a href="{BASE}/plan/{pl["slug"]}/">Back to plan →</a>'
+    return (f'<div class="pbar" data-plan="{pl["slug"]}" hidden><a href="{BASE}/plan/{pl["slug"]}/"><b>{e(pl["title"])}</b></a> · Step {k + 1} of {len(ids)}'
+            f'<span class="prog"><span style="width:{100 * (k + 1) / len(ids):.0f}%"></span></span>{nx}</div>')
+
+
 def plan_box(pl, v):
     ids = [i["vid"] for i in pl["items"]]
     k = ids.index(v["vid"])
@@ -478,7 +510,7 @@ def build_plans():
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
         page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og3/plan-{PNAME[pl['key']]['slug']}.png")
     page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
-         f'<h1 class="ptitle">Fix plans</h1><p class="lead">5–6 lessons in order, from cause to drill, picked from the most-recommended videos.</p><div class="plist">{cards}</div>', nav="plans")
+         f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short playlists, 4–6 videos in order, built from the lessons golfers link most.</p><div class="plist">{cards}</div>', nav="plans")
     return cards
 
 
