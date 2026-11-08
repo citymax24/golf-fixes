@@ -191,6 +191,9 @@
     $$(".brow").forEach(function (r) { r.hidden = !!v && r.dataset.name.indexOf(v) < 0; if (!r.hidden) n++; });
     var no = $("#bnone"); if (no) no.hidden = n > 0;
   });
+  var kit = $("#badges");
+  function openKit() { if (kit && location.hash === "#badges") { kit.open = true; kit.scrollIntoView(); } }
+  openKit(); window.addEventListener("hashchange", openKit);
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-copy]"); if (!b) return;
     var t = b.dataset.copy, done = function () { flash("Copied"); var o = b.textContent; b.textContent = "Copied ✓"; setTimeout(function () { b.textContent = o; }, 1400); };
