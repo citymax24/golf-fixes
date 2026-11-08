@@ -184,6 +184,11 @@
     });
   }
 
+  // ---------- badges page: find your channel, select-all on focus ----------
+  var bf = $("#bfind");
+  if (bf) bf.addEventListener("input", function () { var v = bf.value.trim().toLowerCase(); $$(".bset").forEach(function (s) { s.hidden = v && s.dataset.name.indexOf(v) < 0; }); });
+  $$(".bdg textarea").forEach(function (t) { t.addEventListener("focus", function () { t.select(); }); });
+
   // ---------- welcome box ----------
   var wc = $("#wclose");
   if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
