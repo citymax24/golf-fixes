@@ -448,8 +448,9 @@ def build_watch(v):
          (f"{v['summary']} {rec}" if v.get("summary") and len(v["summary"]) + len(rec) < 158 else (v.get("summary") or f"{v['channel']} lesson. {rec}")) if v.get("summary") else f"{v['channel']} lesson. {rec}",
          body, cls="wpage", og=thumb(v["vid"], "hqdefault"),
          ld={"@context": "https://schema.org", "@type": "VideoObject", "name": v["title"], "thumbnailUrl": thumb(v["vid"], "hqdefault"),
-             "uploadDate": v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01", "description": f"{v['recs']} golfers recommended this lesson.",
-             "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}"})
+             "uploadDate": (v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01") + "T00:00:00+00:00",
+             "description": f"{v['recs']} golfers recommended this lesson.", "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}",
+             **({"duration": f"PT{v['duration_s'] // 60}M{v['duration_s'] % 60}S"} if v.get("duration_s") else {})})
 
 
 def card_desc(v, notes):
