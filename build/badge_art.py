@@ -119,6 +119,8 @@ def _sized(t, font, smax, smin, track, y):
 
 def _wrap(t):
     w = t.split(" ")
+    if len(w) < 2:
+        return t, ""
     if "&" in w:
         i = w.index("&") + 1
         return " ".join(w[:i]), " ".join(w[i:])
