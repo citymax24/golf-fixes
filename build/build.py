@@ -156,8 +156,8 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <header class="top" id="top">
   <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
   <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark.svg?v=a" alt="" width="24" height="24"><span>GolfVotes</span></a></div>
-  <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson"><kbd class="kh" aria-hidden="true">/</kbd></form>
-  <div class="right"><a class="hlink" href="{BASE}/about/">How we rank</a><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
+  <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list"><kbd class="kh" aria-hidden="true">/</kbd><ul class="sugg" id="sugg" role="listbox" hidden></ul></form>
+  <div class="right"><nav class="tnav" aria-label="Main"><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">Browse</a><a href="{BASE}/later/" id="tsaved" hidden>Saved</a><a href="{BASE}/about/">How we rank</a></nav><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
 </header>
 <nav class="side" id="side">{side}
 </nav>
