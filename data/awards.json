@@ -1,4 +1,16 @@
 {
+ "alexelliottgolf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "andy-carter-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
  "athletic-motion-golf": [
   {
    "k": "early_extension",
@@ -19,25 +31,43 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "be-better-golf": [
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "bryson-dechambeau": [
   {
-   "k": "fat_thin",
+   "k": "live",
    "y": "2026"
-  },
+  }
+ ],
+ "chasing-scratch-podcast": [
   {
-   "k": "driver_distance",
+   "k": "live",
    "y": "2026"
-  },
+  }
+ ],
+ "chris-como-golf": [
   {
-   "k": "speed_training",
+   "k": "live",
    "y": "2026"
   }
  ],
  "chrisryangolf": [
   {
    "k": "top10",
+   "y": "2026"
+  },
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -49,11 +79,31 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "drkwongolf": [
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "dstgolf": [
   {
    "k": "iron_contact",
+   "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "elite-golf-schools": [
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -61,11 +111,37 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "fore-play-golf": [
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "foresight-golf": [
   {
    "k": "chipping",
+   "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "george-gankas-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "giles-gill-golf": [
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -73,15 +149,87 @@
   {
    "k": "grip",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "golf-digest": [
   {
-   "k": "shank",
+   "k": "live",
    "y": "2026"
-  },
+  }
+ ],
+ "golf-distillery": [
   {
-   "k": "course_management",
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "golf-secrets": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "golf-sidekick": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "golfnow": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "golfslump": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "golftec": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "good-good-extra": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "grant-horvat-golf-2": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "jake-hutt-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "jay-bark": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "jchowngolf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "jerome-rufin": [
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -97,11 +245,79 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "jonathan-kim-moss-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "kerrod-gray-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "kraftygolf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "larry-cheung": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "malaska-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "mark-crossfield": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "meandmygolf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "mike-s-3d-life": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "milo-lines-golf": [
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "monte-scheinblum": [
   {
    "k": "casting_lag",
+   "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "mygolfinstructor": [
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -109,17 +325,25 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "paul-wilson-golf": [
   {
-   "k": "mental",
+   "k": "live",
    "y": "2026"
   }
  ],
  "performance-golf": [
   {
    "k": "slice",
+   "y": "2026"
+  },
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -131,29 +355,35 @@
   {
    "k": "transition_downswing",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "porzak-golf": [
   {
-   "k": "putting",
+   "k": "top10",
    "y": "2026"
   },
   {
-   "k": "top10",
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "randoyo-digdoyo": [
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
  "rick-shiels-golf": [
   {
-   "k": "hook",
-   "y": "2026"
-  },
-  {
-   "k": "wedges_pitching",
-   "y": "2026"
-  },
-  {
    "k": "top10",
+   "y": "2026"
+  },
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -161,11 +391,61 @@
   {
    "k": "practice_method",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "rotaryswing-com-golf-instruction": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "sagutogolf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "scratch-golf-academy": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "speedgolf-tv": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "taylormade-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "the-art-of-simple-golf": [
+  {
+   "k": "live",
+   "y": "2026"
+  }
+ ],
+ "tigerwoodstv": [
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
  "titleist": [
   {
    "k": "top10",
+   "y": "2026"
+  },
+  {
+   "k": "live",
    "y": "2026"
   }
  ],
@@ -173,11 +453,15 @@
   {
    "k": "top10",
    "y": "2026"
+  },
+  {
+   "k": "live",
+   "y": "2026"
   }
  ],
- "yoga-with-adriene": [
+ "tpi-titleist-performance-institute": [
   {
-   "k": "mobility_fitness",
+   "k": "live",
    "y": "2026"
   }
  ]
