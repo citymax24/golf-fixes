@@ -66,8 +66,16 @@ def fmt_n(n):
 
 
 # ---------- data shaping ----------
+# Coach URLs must not change when a channel is renamed (embedded badges point at them): remember slugs by channel URL and name.
+SLUGS_FN = os.path.join(ROOT, "data", "coach_slugs.json")
+SLUGS = json.load(open(SLUGS_FN)) if os.path.exists(SLUGS_FN) else {"url": {}, "name": {}}
 for v in VIDEOS:
-    v["cs"] = slugify(v.get("channel"))
+    u, nm = v.get("channel_url") or "", v.get("channel") or ""
+    v["cs"] = SLUGS["url"].get(u) or SLUGS["name"].get(nm) or slugify(nm)
+    if u:
+        SLUGS["url"].setdefault(u, v["cs"])
+    if nm:
+        SLUGS["name"].setdefault(nm, v["cs"])
     tc = v.get("topic_counts") or {}
     v["top"] = max(tc, key=tc.get) if tc else None
     v["page"] = v["recs"] >= MIN          # gets its own watch page
@@ -98,10 +106,12 @@ for v in WATCH.values():
         c["topics"][t] += n
 COACHES = sorted([(s, c) for s, c in channels.items() if c["recs"] >= SITE.get("min_recs_per_coach", 10)], key=lambda x: -x[1]["recs"])
 COACH_SET = {s for s, _ in COACHES}
+AWARD_MIN = 10  # a '#1 most recommended' award needs at least this many recommendations and a clear lead over #2
 coach_wins = defaultdict(list)
 for p in PROBLEMS:
-    if by_problem[p["key"]]:
-        coach_wins[by_problem[p["key"]][0][3]["cs"]].append(p)
+    r = by_problem[p["key"]]
+    if r and r[0][1] >= AWARD_MIN and (len(r) == 1 or r[0][1] > r[1][1]):
+        coach_wins[r[0][3]["cs"]].append(p)
 TOTAL_RECS = sum(v["recs"] for v in VIDEOS)
 GROUPS = ["Ball flight", "Contact", "Swing faults", "Swing sequence", "Setup", "Clubs", "Short game", "Training", "On the course"]
 
@@ -606,12 +616,18 @@ def make_badges():
         for k in [p["key"] for p in coach_wins.get(s, []) if p["key"] in PNAME] + (["top10"] if i < 10 else []):
             if (k, yr) not in have:
                 store.setdefault(s, []).append({"k": k, "y": yr})
+    for s, c in COACHES:
+        if c["recs"] >= LIVE_MIN and not any(x["k"] == "live" for x in store.get(s, [])):
+            store.setdefault(s, []).append({"k": "live", "y": yr})
     json.dump(store, open(fn, "w"), indent=1, sort_keys=True)
+    json.dump(SLUGS, open(SLUGS_FN, "w"), indent=0, sort_keys=True, ensure_ascii=False)
     bdir = os.path.join(ROOT, "static", "badge"); os.makedirs(bdir, exist_ok=True)
     for s, lst in store.items():
         if s not in COACH_SET:
             continue
         for x in lst:
+            if x["k"] == "live":
+                continue
             stem, label, big, line, sub, proof = award_info(s, x["k"], x["y"])
             for th, suf in (("light", ""), ("dark", "-dark")):
                 svg, w, h = badge_art.badge(big, line, x["y"], th, e(label), sub)
@@ -621,8 +637,8 @@ def make_badges():
             AWARDS.setdefault(s, []).append(dict(x, stem=stem, label=label, proof=proof, w=w, h=h))
         AWARDS.get(s, []).sort(key=lambda x: (-int(x["y"]), x["k"] == "top10"))
     shutil.copytree(bdir, os.path.join(OUT, "badge"), dirs_exist_ok=True)
-    for s, c in COACHES:
-        if c["recs"] >= LIVE_MIN:
+    for s, c in channels.items():  # live badge: once issued, it keeps being drawn (an embedded badge must never break)
+        if any(x["k"] == "live" for x in store.get(s, [])):
             for th, suf in (("light", ""), ("dark", "-dark")):
                 svg, w, h = badge_art.live_badge(c["recs"], th, f'{c["recs"]:,} golfer recommendations on GolfVotes')
                 open(os.path.join(OUT, "badge", s + suf + ".svg"), "w").write(svg)
@@ -693,7 +709,7 @@ def build_badges_page():
 <p class="lead">When golfers recommend your lessons to each other, you earn a badge. Use it on your website, your channel or your socials.</p>
 <h2>Where to find yours</h2><p>On your own coach page: open <a href="{BASE}/coaches/">Coaches</a>, find your channel and click <b>“Are you …? Use your GolfVotes badges”</b>. There you can copy the code or download the image.</p>
 <h2>The badges</h2><ul>
-<li><b>#1 for a problem:</b> your lesson had the most independent recommendations for that problem at a GolfVotes update.</li>
+<li><b>#1 for a problem:</b> at a GolfVotes update, your lesson had the most independent recommendations for that problem: at least {AWARD_MIN}, and more than any other lesson (no ties).</li>
 <li><b>Top 10:</b> your channel was one of the 10 with the most recommendations across all problems.</li>
 <li><b>Live badge:</b> your current number of golfer recommendations (from {LIVE_MIN}). It updates by itself.</li>
 <li><b>Text line for YouTube:</b> for any lesson with at least 10 recommendations.</li></ul>
