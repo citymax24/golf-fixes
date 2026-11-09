@@ -315,8 +315,8 @@ def fixes_list(p):
     ins = [i for i in r.get("insights", []) if i.get("vid") in vmap][:3]
     if not ins:
         return ""
-    return ('<div class="fixes"><h2>What golfers say fixed it</h2><ol>'
-            + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></div>")
+    return ('<details class="fixes"><summary>What golfers say fixed it</summary><ol>'
+            + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></details>")
 
 
 def sounds_like(p):
@@ -379,7 +379,7 @@ def build_problem(p):
     body = f"""{chips(p['key'])}
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
-<p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{fixes_list(p)}{plan_cta(p)}{aid_html}</section>
+<p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}{fixes_list(p)}{aid_html}</section>
 <div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
 {f'<p class="more"><button class="pill inl" id="showall" aria-controls="ranked">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
 {more_lessons(p, rows)}
@@ -416,7 +416,8 @@ def build_categories():
 
 def build_watch(v):
     tc = sorted((v.get("topic_counts") or {}).items(), key=lambda x: -x[1])
-    tags = "".join((f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">' if by_problem.get(t) else '<span class="tag">') + f'{n} mention {e(PNAME[t]["name"].lower())}' + ('</a>' if by_problem.get(t) else '</span>') for t, n in tc if t in PNAME)
+    tag_items = [(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">' if by_problem.get(t) else '<span class="tag">') + f'{n} mention {e(PNAME[t]["name"].lower())}' + ('</a>' if by_problem.get(t) else '</span>') for t, n in tc if t in PNAME]
+    tags = "".join(tag_items[:4]) + (f'<details class="tmore"><summary>+{len(tag_items) - 4} more</summary>{"".join(tag_items[4:])}</details>' if len(tag_items) > 4 else "")
     notes = []
     for t, _ in tc:
         for x in (v.get("t_notes") or {}).get(t, []):
@@ -446,7 +447,7 @@ def build_watch(v):
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-<p class="vst">{rank_ctx(v)}<b>{v['recs']}</b> golfers recommend{f' · <span class="ok">✓ {v["success"]} say{"s" if v["success"] == 1 else ""} it fixed it</span>' if v.get('success') else ''}{f' · last recommended {lastrec(v["vid"])}' if lastrec(v["vid"]) else ''}</p>
+{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span><b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">✓ {v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>
