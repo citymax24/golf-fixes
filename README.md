@@ -11,8 +11,10 @@ sorted by problem: slice, shanks, early extension, chipping and more. Inspired b
    the golfer says it fixed it.
 3. Each golfer counts once per video. Videos are ranked per problem by these independent recommendations.
 
-This repository contains only derived data (video IDs, counts, labels, short summaries). No comment text
-and no usernames are published. The raw data and pipeline live in a private repository.
+This repository contains derived data (video IDs, counts, labels, short summaries) and short excerpts of
+public comments that recommend a lesson, each linked to the original. No usernames are published: authors
+are not stored, and mentions of other users inside excerpts are masked. The raw data and pipeline live in a
+private repository. Want a comment removed? Open an issue with its link.
 
 ## Build
 ```bash
