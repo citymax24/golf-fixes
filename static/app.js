@@ -17,7 +17,6 @@
   }
   function toggleOff(k, vid) { save(k, load(k).filter(function (x) { return x.v !== vid; })); }
   var settings = load("settings", {});
-  var TH = settings.frames === false ? "mqdefault" : "mq2";
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
@@ -45,7 +44,6 @@
     $("#theme").setAttribute("aria-pressed", String(dark)); $("#theme").textContent = dark ? "Light mode" : "Dark mode";
   }
   themeState();
-  if (settings.frames === false) $$("img[src*='i.ytimg.com']").forEach(function (i) { i.src = i.src.replace("/mq2.jpg", "/mqdefault.jpg").replace("/hq2.jpg", "/hqdefault.jpg"); });
   document.addEventListener("error", function (ev) {
     var t = ev.target; if (t.tagName === "IMG" && /\/(mq2|hq2)\.jpg$/.test(t.src)) t.src = t.src.replace(/(mq2|hq2)\.jpg$/, "mqdefault.jpg");
   }, true);
@@ -116,9 +114,8 @@
   if (cp) cp.onclick = function () { navigator.clipboard.writeText($("#prompt").textContent).then(function () { flash("Prompt copied"); }); };
 
   // ---------- settings page ----------
-  if ($("#s-frames")) {
-    $("#s-frames").checked = settings.frames !== false; $("#s-hidedis").checked = settings.hidedis !== false;
-    $("#s-frames").onchange = function () { settings.frames = this.checked; save("settings", settings); flash("Saved"); };
+  if ($("#s-hidedis")) {
+    $("#s-hidedis").checked = settings.hidedis !== false;
     $("#s-hidedis").onchange = function () { settings.hidedis = this.checked; save("settings", settings); flash("Saved"); };
     $("#s-keys").checked = settings.keys !== false;
     $("#s-keys").onchange = function () { settings.keys = this.checked; save("settings", settings); flash("Saved"); };
@@ -248,7 +245,7 @@
   if (!list && !feed) return;
   function card(v) {
     var href = B + "/watch/" + v[0] + "/", t = TYPES[v[8]];
-    return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="https://i.ytimg.com/vi/' + v[0] + "/" + TH + '.jpg" alt="">' +
+    return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + B + '/static/thumbs/mq2/' + v[0] + '.webp" alt="" onerror="this.onerror=null;this.style.visibility=\'hidden\'">' +
       (v[12] ? '<span class="du">' + dur(v[12]) + "</span>" : "") + '</a><button class="lb" aria-label="Watch later" title="Watch later"><svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button></div>' +
       '<div class="vm"><h3><a href="' + href + '">' + esc(v[1]) + '</a></h3><p class="ch">' + (v[3] ? '<a href="' + B + "/coach/" + v[3] + '/">' + esc(v[2]) + "</a>" : esc(v[2])) + (t ? " · " + t : "") +
       '</p><p class="st"><b>' + v[4] + "</b> golfers recommend" + (v[5] ? ' · <span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? " · " + esc(v[6]) : "") + "</p></div></article>";
