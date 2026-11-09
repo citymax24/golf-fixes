@@ -190,6 +190,10 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 
 
 def thumb(vid, q="mq2"):
+    """Preview images are self-hosted (static/thumbs, see build/fetch_thumbs.py) so visitors never contact Google
+    just to see them. Other variants (og:image, JSON-LD) stay external: only crawlers fetch those."""
+    if q in ("mq2", "hq2"):
+        return f"{BASE}/static/thumbs/{q}/{vid}.webp"
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
 
 
@@ -623,7 +627,7 @@ def build_client_pages():
     page("/browse/", f"Browse all lessons | {SITE['name']}", "Browse and filter every golf lesson golfers recommended.",
          f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<p class="dim" id="count"></p><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
     page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
-<label class="set"><input type="checkbox" id="s-frames"> Show a frame from the video instead of the uploaded thumbnail (less clickbait)</label>
+
 <label class="set"><input type="checkbox" id="s-hidedis"> Hide disliked videos everywhere</label>
 <label class="set"><input type="checkbox" id="s-keys"> Single-key keyboard shortcuts (h, k, l, w)</label>
 <p><button class="pill inl" id="s-clear-h">Clear watch history</button> <button class="pill inl" id="s-clear-all">Reset everything</button></p>
@@ -861,16 +865,17 @@ def build_text():
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
+<h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20creator%20request">max@fassia.io</a>; it will be removed in the next update.</p>
 <h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment. It will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
 <p>No cookies and no tracking across sites. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
 <p><b>Visitor statistics:</b> We count page views with GoatCounter (goatcounter.com), a privacy-friendly service without cookies. It records the page, the referring site, browser type, screen size and country, but no personal data and no IP addresses are stored. This lets us see how many people use the site and where they come from. When you answer “Did this video fix it for you?”, that answer is counted the same way, without any personal data; your own vote is remembered only in your browser.</p>
-<p><b>YouTube:</b> Video thumbnails are loaded from YouTube's image servers (i.ytimg.com), which receive your IP address. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
+<p><b>YouTube:</b> The small preview images are copies stored on this site, so looking at a page sends nothing to Google or YouTube. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
 <p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p>
 <h2>Legal basis and recipients</h2>
-<p>When you open a page, your browser connects to GitHub (hosting), to GoatCounter (visitor statistics, script from gc.zgo.at) and, for thumbnails, to Google/YouTube (i.ytimg.com). Your IP address is necessarily transmitted to these services to deliver the content. We do not receive it and do not store it. Legal basis is our legitimate interest in running and improving a free website (Art. 6(1)(f) GDPR). GoatCounter stores no IP addresses and sets no cookies. GitHub and Google may process data in the USA; both participate in the EU-US Data Privacy Framework.</p>
+<p>When you open a page, your browser connects to GitHub (hosting) and to GoatCounter (visitor statistics, script from gc.zgo.at). Your IP address is necessarily transmitted to these services to deliver the content. Only when you click play does your browser also connect to Google/YouTube. We do not receive it and do not store it. Legal basis is our legitimate interest in running and improving a free website (Art. 6(1)(f) GDPR). GoatCounter stores no IP addresses and sets no cookies. GitHub and Google (after a click on play) may process data in the USA; both participate in the EU-US Data Privacy Framework.</p>
 <p>Features you use yourself (likes, history, watch later, theme, your “fixed it” answer) are saved only in your browser (localStorage) and are not sent to us. You can delete them in Settings or in your browser. The statistics we keep are anonymous counts; we have no log files of our own.</p>
 <h2>Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and to object to processing based on legitimate interests (Art. 15–21 GDPR). Because we do not store personal data about visitors, there is usually nothing to hand out or delete, but write to the address below and we will check. You can also complain to a data protection authority, for example the Hessian Commissioner for Data Protection and Freedom of Information (Wiesbaden).</p>
