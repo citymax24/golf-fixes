@@ -517,7 +517,7 @@ def comments_html(v):
             body = body.replace(e(c["q"]), f'<mark>{e(c["q"])}</mark>', 1)
         st = STANCE.get(c.get("st"), (None, 0))[0]
         tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st and c.get("st") in ("critical",) else ""
-        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh"><b>A golfer</b> · {c['y']} · r/{e(c['sub'])}{f' · <span class="up">▲ {c["s"]}</span>' if c.get("s", 0) >= 5 else ''}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
+        return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh"><b>r/{e(c['sub'])}</b> · {c['y']}{f' · <span class="up">▲ {c["s"]}</span>' if c.get("s", 0) >= 5 else ''}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
 <p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
     main = [c for c in cs if c.get("st") not in ("praise", "joke")]
     rest = [c for c in cs if c.get("st") in ("praise", "joke")]
@@ -533,7 +533,7 @@ def _old_comments_html(v):
     cs = COMMENTS.get(v["vid"]) or []
     if not cs:
         return ""
-    rows = "".join(f"""<div class="cm"><p class="cmh"><b>A golfer</b> · {c['y']} · r/{e(c['sub'])}{f' · in “{e(c["pt"])}”' if c.get('pt') else ''}</p>
+    rows = "".join(f"""<div class="cm"><p class="cmh"><b>r/{e(c['sub'])}</b> · {c['y']}{f' · in “{e(c["pt"])}”' if c.get('pt') else ''}</p>
 <p>{e(c['b'])}</p><p class="cmf"><span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""" for c in cs)
     more = v["recs"] - len(cs)
     return f'<section class="cms"><h2>{len(cs)} comments from Reddit</h2>{rows}{f"<p class=dim>…and {more} more golfers who recommended it.</p>" if more > 0 else ""}<p class="dim small">Excerpts of public comments, without usernames, linked to the original. Want yours removed? See <a href="{BASE}/about/#removal">About</a>.</p></section>'
@@ -566,7 +566,7 @@ def top_quote(v):
                 best = (score, cc["quote"], c)
     if not best:
         return ""
-    return f'<blockquote class="tq">“{e(best[1])}”<cite>a golfer on r/{e(best[2]["sub"])}{f" · ▲ {best[2]['s']}" if best[2].get("s", 0) >= 5 else ""}</cite></blockquote>'
+    return f'<blockquote class="tq">“{e(best[1])}”<cite>r/{e(best[2]["sub"])}{f" · ▲ {best[2]['s']}" if best[2].get("s", 0) >= 5 else ""}</cite></blockquote>'
 
 
 def plan_bar(pl, v):
