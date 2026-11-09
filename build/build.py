@@ -160,7 +160,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{BASE}/static/favicon.svg?v=a" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=a">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
-<link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
+<link rel="preload" href="{BASE}/static/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}/static/fonts/inter-600.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}/static/fonts/inter-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
@@ -263,7 +263,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' · <span class="ok">✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}{f' · last recommended {lastrec(v["vid"])}' if pname and lastrec(v["vid"]) else ''}</p></div>
+<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' <span class="ok">· ✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' <span class="nw">· {sub}</span>' if sub and not pname else ''}{f' <span class="nw">· last recommended {lastrec(v["vid"])}</span>' if pname and lastrec(v["vid"]) else ''}</p></div>
 </article>"""
 
 
