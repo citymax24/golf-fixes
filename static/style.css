@@ -1,3 +1,6 @@
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/newsreader.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/jbmono-500.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url("fonts/jbmono-700.woff2") format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/inter-400.woff2") format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/inter-500.woff2") format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url("fonts/inter-600.woff2") format("woff2")}
@@ -454,3 +457,58 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 @media (min-width:1001px){.welcome .hero{padding:56px 0 80px}.welcome .hero h1.hq{font-size:56px;letter-spacing:-2px}.welcome .hero h1.hq span{font-size:24px}.welcome .ptiles{margin-top:-48px}}
 @media (max-width:600px){.welcome .hero h1.hq{font-size:36px}.welcome .hero{padding:24px 0 56px}}
 [data-theme=dark] .welcome .ptile{box-shadow:0 12px 32px -12px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06)}
+
+/* ===== DIRECTION A: THE TALLY (paper, pencil, green ink; gold = earned) ===== */
+:root{--bg:#F6F1E4;--fg:#1B1B18;--mut:#55524A;--chip:#ECE5D3;--chip2:#DFD6BE;--line:#D9D0B8;--acc:#0A6B42;--ok:#0A6B42;--ph:#E0D8C2;--tick:#0B5D3E;--gold-ink:#7A5C18;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;--mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;--ease:cubic-bezier(.2,.7,.2,1)}
+:root[data-theme=dark]{--bg:#0E1712;--fg:#F1EEE4;--mut:#B9B6AA;--chip:#17241C;--chip2:#22332A;--line:#2B3A32;--acc:#3ECF8E;--ok:#3ECF8E;--ph:#17241C;--tick:#3ECF8E;--gold-ink:#E3C16F}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0E1712;--fg:#F1EEE4;--mut:#B9B6AA;--chip:#17241C;--chip2:#22332A;--line:#2B3A32;--acc:#3ECF8E;--ok:#3ECF8E;--ph:#17241C;--tick:#3ECF8E;--gold-ink:#E3C16F}}
+body{background:var(--bg)}
+/* type: serif for what you read, mono for what you count, Inter for what you press */
+.ptitle,.intro h1,.chead h1,.vt,.plan h1,.prose h1,.welcome h1,.prose h2,.ask h2,.fixes>summary,.slbox h2,.cms h2,.vote h2,.row{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
+.ptitle,.intro h1,.chead h1,.vt,.plan h1,.prose h1{font-size:36px;line-height:1.1;letter-spacing:-.02em}
+.vt{font-size:30px;line-height:1.15}
+h2.row,.cms h2,.slbox h2,.ask h2,.vote h2,.prose h2{font-size:24px;line-height:1.2}
+.fixes>summary{font-size:22px}
+.kick,.welcome h2.pick,.dim.small{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.st b,.vst b,.kpis b,.meta b,.crow>span,.ptop i,.rk,.du{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:0}
+.st b,.vst b{font-weight:700;font-size:14px}
+.ptile .pnm2,.ptile .pnm2{font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:-.01em}
+/* paper: hairlines instead of shadows, small radii */
+.th,.pth,.player,.plc .th,.ptile,.ask,.vote,.cm,.tag,.chip,.pill,.fixes,.bkit,.bcard,.morel,.welcome .ptile{border-radius:4px}
+.ptile,.welcome .ptile{box-shadow:none;border:1px solid var(--line);background:var(--bg)}
+.ptile:hover{border-color:var(--tick)}
+.rk{border-radius:2px}.rk.g1{background:#C8A24A;color:#0B3D2C}
+/* tally */
+.tl{display:inline-block;vertical-align:-2px;color:var(--tick);flex:none}
+.tl path{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.rc{display:inline-flex;align-items:center;gap:6px;cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 21l1-5L17 3l4 4L8 20z' fill='%23C8A24A' stroke='%231B1B18' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E") 3 21,auto}
+.tl.an path{stroke-dasharray:1;stroke-dashoffset:1;animation:tdraw .7s .15s var(--ease) forwards}
+@keyframes tdraw{to{stroke-dashoffset:0}}
+/* hero: no band, no template. Type does the work. */
+.welcome{margin:0 0 40px;padding:8px 0 0}
+.welcome .hero{background:none!important;box-shadow:none;clip-path:none;color:var(--fg);padding:24px 0 0;position:relative}
+.welcome .hero h1.hq{color:var(--fg);font-size:56px;line-height:1;letter-spacing:-.035em;margin:0 0 20px;font-weight:800}
+.welcome .hero h1.hq em{position:relative;font-style:normal;color:var(--tick);white-space:nowrap}
+.welcome .hero h1.hq em::after{content:"";position:absolute;left:-2%;right:-2%;bottom:-.06em;height:.16em;background:no-repeat center/100% 100% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cpath d='M1 5C20 2 40 7 60 4S90 3 99 5' fill='none' stroke='%23C8A24A' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");clip-path:inset(0 100% 0 0);animation:uline .8s .3s var(--ease) forwards}
+@keyframes uline{to{clip-path:inset(0 0 0 0)}}
+.welcome .hero h1.hq span{font-family:var(--serif);font-weight:500;font-size:24px;line-height:1.25;letter-spacing:-.01em;color:var(--mut);margin-top:12px}
+.welcome .hero .lede{color:var(--mut);max-width:520px;margin:0 0 32px}
+.welcome .hero .lede a{color:var(--fg);text-decoration-color:var(--tick)}
+.welcome .hero h2.pick{color:var(--gold-ink);margin:0}
+.welcome .ptiles{margin-top:12px}
+.hart{position:absolute;right:0;top:40px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;color:var(--tick)}
+.hart .tl{height:96px;width:auto}.hart .tl path{stroke-width:1.1}
+.hart span{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--mut)}
+@media (max-width:1000px){.hart{display:none}}
+@media (max-width:600px){.welcome .hero h1.hq{font-size:40px}.welcome .hero h1.hq span{font-size:20px}.ptitle,.intro h1,.chead h1,.plan h1,.prose h1{font-size:32px}.vt{font-size:26px}}
+/* vote: the stroke is yours */
+.vbtns .pill{border:1px solid var(--line);background:var(--bg)}.vbtns .pill svg{width:18px;height:18px}
+.vthanks .vy,.vthanks .vn{display:none}.vote.v-yes .vthanks .vy,.vote.v-no .vthanks .vn{display:inline}
+.vthanks .tl{vertical-align:-6px;color:var(--tick)}
+/* footer tally */
+.tf{font-family:var(--mono);font-size:12px;color:var(--mut);margin:12px 0 0}
+@media (prefers-reduced-motion:reduce){.tl.an path{animation:none;stroke-dashoffset:0}.welcome .hero h1.hq em::after{animation:none;clip-path:none}}
+@media (max-width:600px){.ptile .pnm2,.welcome .ptile .pnm2{font-size:19px;line-height:1.15}}
+svg.tl{width:auto;height:14px;fill:none}svg.tl[height="22"]{height:22px}svg.tl[height="72"]{height:72px}.hart svg.tl{height:96px}
+.vst .rc{gap:8px}.vst .tl{height:18px}

@@ -71,6 +71,17 @@
   });
   function markLater() { $$(".thw").forEach(function (w) { var b = $(".lb", w); if (b) { var on = has("later", w.dataset.vid); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); } }); }
   markLater();
+  function tally(n) {
+    var m = Math.min(Math.max(n | 0, 0), 15), d = "", i, g, k, ox, x;
+    if (!m) return "";
+    for (i = 0; i < m; i++) {
+      g = Math.floor(i / 5); k = i % 5; ox = g * 28;
+      if (k < 4) { x = ox + 3 + k * 5 + ((i * 7) % 5 - 2) * 0.25; d += "M" + x.toFixed(2) + " " + (2 + ((i * 3) % 3 - 1) * 0.3).toFixed(2) + "L" + (x + ((i * 5) % 3 - 1) * 0.35).toFixed(2) + " " + (18 + ((i * 2) % 3 - 1) * 0.3).toFixed(2); }
+      else d += "M" + (ox - 0.5) + " 14.5L" + (ox + 21.5) + " 5.5";
+    }
+    var w = Math.max(Math.floor((m - 1) / 5) * 28 + (m % 5 === 0 || m > 5 ? 24 : 3 + (m - 1) * 5 + 3), 8);
+    return '<svg class="tl" viewBox="0 0 ' + w + ' 20" width="' + Math.round(w * 14 / 20) + '" height="14" aria-hidden="true"><path d="' + d + '" pathLength="1"/></svg>';
+  }
   function flash(t) {
     var d = $("#toast") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "toast" }));
     d.setAttribute("role", "status"); d.setAttribute("aria-live", "polite");
@@ -171,7 +182,7 @@
   var vote = $(".vote");
   if (vote) {
     var vid = vote.dataset.vid, votes = load("votes", {});
-    var done = function (v) { $$("[data-vote]", vote).forEach(function (b) { b.disabled = true; b.classList.toggle("on", b.dataset.vote === v); b.setAttribute("aria-pressed", String(b.dataset.vote === v)); }); $(".vthanks", vote).hidden = false; };
+    var done = function (v) { $$("[data-vote]", vote).forEach(function (b) { b.disabled = true; b.classList.toggle("on", b.dataset.vote === v); b.setAttribute("aria-pressed", String(b.dataset.vote === v)); }); vote.classList.toggle("v-yes", v === "yes"); vote.classList.toggle("v-no", v === "no"); $(".vthanks", vote).hidden = false; };
     if (votes[vid]) done(votes[vid]);
     $$("[data-vote]", vote).forEach(function (b) {
       b.onclick = function () {
@@ -180,6 +191,10 @@
       };
     });
   }
+
+  // ---------- small things for the second look ----------
+  var qf = $("#q");
+  if (qf && qf.form) qf.form.addEventListener("submit", function (ev) { if (qf.value.trim().toLowerCase() === "fore") { ev.preventDefault(); flash("FORE! Heads up."); qf.value = ""; } });
 
   // ---------- badges page: find your channel, select-all on focus ----------
   var bf = $("#bfind");
@@ -248,7 +263,7 @@
     return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + B + '/static/thumbs/mq2/' + v[0] + '.webp" alt="" onerror="this.onerror=null;this.style.visibility=\'hidden\'">' +
       (v[12] ? '<span class="du">' + dur(v[12]) + "</span>" : "") + '</a><button class="lb" aria-label="Watch later" title="Watch later"><svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button></div>' +
       '<div class="vm"><h3><a href="' + href + '">' + esc(v[1]) + '</a></h3><p class="ch">' + (v[3] ? '<a href="' + B + "/coach/" + v[3] + '/">' + esc(v[2]) + "</a>" : esc(v[2])) + (t ? " · " + t : "") +
-      '</p><p class="st"><span><b>' + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";
+      '</p><p class="st"><span class="rc" title="Each stroke is one golfer. Five make a bundle.">' + tally(v[4]) + "<b>" + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";
   }
   function dur(s) { var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x; }
   function paint(el, arr, append) { el.insertAdjacentHTML(append ? "beforeend" : "afterbegin", arr.map(card).join("")); if (!append) {} markLater(); }
@@ -262,7 +277,8 @@
     io.observe(sentinel);
   }
 
-  fetch(B + "/static/index.json").then(function (r) { return r.json(); }).then(function (ix) {
+  // new visitors on the home page already have the top lessons in the HTML: skip the 690 KB search index until it is needed
+  if (!(feed && !load("liked").length && !load("disliked").length && !load("history").length)) fetch(B + "/static/index.json").then(function (r) { return r.json(); }).then(function (ix) {
     var byId = {}; ix.v.forEach(function (v) { byId[v[0]] = v; });
     var dis = {}; load("disliked").forEach(function (x) { dis[x.v] = 1; });
     var hideDis = settings.hidedis !== false;

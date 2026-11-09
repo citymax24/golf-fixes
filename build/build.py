@@ -177,7 +177,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <main class="main" id="main" tabindex="-1">{body}
   <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a> · Coaches: <a href="{BASE}/badges/">get your badges</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
   <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
-  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
+  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.<p class="tf">Counted {VDATA["generated"]}. No mulligans.</p></footer>
 </main>
 <script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
 <script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
@@ -251,6 +251,27 @@ def coach_mark(s, count=False):
 PKEY = {p["name"]: p["key"] for p in PROBLEMS}
 
 
+def tally(n, h=14, anim=False):
+    """Hand-drawn tally strokes for n recommendations (max 15 shown): four strokes, the fifth crosses the bundle.
+    Deterministic 'wobble' gives it a pencil feel. Same geometry as tally() in app.js."""
+    m = min(max(int(n), 0), 15)
+    if not m:
+        return ""
+    d = ""
+    for i in range(m):
+        g, k = divmod(i, 5)
+        ox = g * 28
+        if k < 4:
+            x = ox + 3 + k * 5 + ((i * 7) % 5 - 2) * 0.25
+            d += f"M{x:.2f} {2 + ((i * 3) % 3 - 1) * 0.3:.2f}L{x + ((i * 5) % 3 - 1) * 0.35:.2f} {18 + ((i * 2) % 3 - 1) * 0.3:.2f}"
+        else:
+            d += f"M{ox - 0.5} 14.5L{ox + 21.5} 5.5"
+    w = (m - 1) // 5 * 28 + (24 if m % 5 == 0 or m > 5 else 3 + (m - 1) * 5 + 3)
+    w = max(w, 8)
+    return (f'<svg class="tl{" an" if anim else ""}" viewBox="0 0 {w} 20" width="{round(w * h / 20)}" height="{h}" aria-hidden="true">'
+            f'<path d="{d}" pathLength="1"/></svg>')
+
+
 def card(v, n=None, ok=None, rank=None, pname=None):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
@@ -263,7 +284,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk{" g1" if rank == 1 else ""}">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p></div>
+<p class="st"><span class="rc" title="Each stroke is one golfer. Five make a bundle.">{tally(n)}<b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p></div>
 </article>"""
 
 
@@ -297,7 +318,8 @@ def build_home():
     body = f"""<section class="welcome" id="welcome">
 <div class="hero"><h1 class="hq">What’s your <em>miss?</em><span>Other golfers already picked the lesson.</span></h1>
 <p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and <a href="{BASE}/about/">counted</a> which YouTube lessons golfers recommend for each problem.</p>
-<h2 class="pick">Pick your miss</h2></div>
+<h2 class="pick">Pick your miss</h2>
+<div class="hart" aria-hidden="true">{tally(5, 72, True)}<span>= five golfers said so</span></div></div>
 <div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
 </section>
 {chips()}
@@ -447,7 +469,7 @@ def build_watch(v):
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span><b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">✓ {v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
+{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span class="rc" title="Each stroke is one golfer. Five make a bundle.">{tally(v['recs'], 18)}<b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">✓ {v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>
@@ -460,8 +482,8 @@ def build_watch(v):
 <p class="dim">AI summary of what golfers said.</p>
 <div class="tags">{tags}</div></div>
 <section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
-<p class="vbtns"><button class="pill inl" data-vote="yes">👍 <span>Yes, it helped</span></button><button class="pill inl" data-vote="no">👎 <span>Not for me</span></button></p>
-<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
+<p class="vbtns"><button class="pill inl" data-vote="yes">{svg('like')}<span>Yes, it helped</span></button><button class="pill inl" data-vote="no"><span>Not for me</span></button></p>
+<p class="vthanks dim" hidden><span class="vy">{tally(1, 22, True)} Counted. One more stroke for this lesson.</span><span class="vn">Noted. Not every lesson fits every swing.</span> <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
@@ -884,8 +906,8 @@ def build_text():
 <p>Video pages quote short excerpts of public Reddit comments without usernames and with a link to the original. Authors can ask for removal by email or on GitHub; see <a href="{BASE}/about/#removal">About</a>.</p>
 <p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
-    for slug, nav, title, empty in [("liked", "liked", "Liked", "Videos you like show up here."), ("history", "history", "History", "Videos you open show up here."),
-                                    ("later", "later", "Watch later", "Save videos to watch later."), ("search", "", "Search", "")]:
+    for slug, nav, title, empty in [("liked", "liked", "Liked", "Your card is empty. Like a lesson and it lands here."), ("history", "history", "History", "Nothing played yet. Lessons you open land here."),
+                                    ("later", "later", "Watch later", "Nothing parked. Use the clock on a lesson to save it for later."), ("search", "", "Search", "")]:
         page(f"/{slug}/", f"{title} | {SITE['name']}", title, f'<h1 class="ptitle" id="ltitle">{title}</h1><div class="grid" id="list" data-list="{slug}"></div><p class="dim" id="empty">{empty}</p>',
              nav=nav, canonical=False)
 
@@ -907,7 +929,7 @@ def build_misc():
         d = os.path.join(OUT, "go", slug); os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w").write(f'<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url={e(target)}"><a href="{e(target)}" rel="sponsored">Continue</a>')
     open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /go/\nSitemap: {URL}/sitemap.xml\n")
-    page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">That page moved.</h1><p class="lead">Pick your problem:</p><div class="tags">' + "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[k]["slug"]}/">{e(PNAME[k]["name"])}</a>' for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "chipping", "putting"] if k in PNAME) + '</div>', canonical=False)
+    page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">Out of bounds.</h1><p class="lead">Take a drop and pick your problem:</p><div class="tags">' + "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[k]["slug"]}/">{e(PNAME[k]["name"])}</a>' for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "chipping", "putting"] if k in PNAME) + '</div>', canonical=False)
     open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
                                                      "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
     if SITE.get("cname"):
