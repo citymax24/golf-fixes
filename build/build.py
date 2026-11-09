@@ -263,7 +263,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><b>{n}</b> golfer{"s" if n != 1 else ""} recommend{"s" if n == 1 else ""}{f' · <span class="ok">✓ {ok} say{"s" if ok == 1 else ""} it fixed it</span>' if ok else ''}{f' · {sub}' if sub and not pname else ''}{f' · last recommended {lastrec(v["vid"])}' if pname and lastrec(v["vid"]) else ''}</p></div>
+<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p></div>
 </article>"""
 
 
