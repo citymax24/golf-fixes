@@ -638,7 +638,7 @@ def build_client_pages():
 <h2>Files</h2><table class="files"><tr><td><a href="{BASE}/static/data/golfvotes-lessons.json" download>golfvotes-lessons.json</a></td><td>All ranked lessons: video id, title, coach, recommendations, “fixed it” count, problems, type, level, summary</td></tr>
 <tr><td><a href="{BASE}/static/data/golfvotes-problems.json" download>golfvotes-problems.json</a></td><td>Problems with their top lessons in order</td></tr></table>
 <h2>Give it to your agent</h2><p>Paste this into ChatGPT, Claude or any assistant:</p><pre id="prompt">{e(prompt)}</pre><p><button class="pill inl" id="copyprompt">Copy this prompt</button></p>
-<h2>License</h2><p>Data: free to use with attribution to {e(SITE['name'])} ({e(URL)}). Video titles and thumbnails belong to their creators.</p></div>""", nav="data")
+<h2>License</h2><p>Our compilation (counts, rankings, labels, summaries) is free to use with attribution to {e(SITE['name'])} ({e(URL)}). It does not cover third-party content: video titles, thumbnails and videos belong to their creators and YouTube, and Reddit comments to their authors. Provided as is, without warranty.</p></div>""", nav="data")
     os.makedirs(os.path.join(OUT, "static", "data"), exist_ok=True)
     lessons = [{"id": v["vid"], "url": f"https://www.youtube.com/watch?v={v['vid']}", "title": v["title"], "coach": v["channel"], "recommendations": v["recs"],
                 "fixed_it": v.get("success", 0), "problems": {PNAME[t]["name"]: n for t, n in (v.get("topic_counts") or {}).items() if t in PNAME},
@@ -808,7 +808,10 @@ def build_badges_page():
 <li><b>Text line for YouTube:</b> for any lesson with at least 10 recommendations.</li></ul>
 <h2>The rules</h2><ul><li>Badges are earned, never sold.</li><li>Award badges carry a year and stay valid for that year, even if the ranking changes later.</li>
 <li>Every badge links to your GolfVotes profile, where viewers can check the rankings behind it.</li>
-<li>Use them as they are: no edits to numbers, years or wording.</li></ul>
+<li>Use them as they are: no edits to numbers, years or wording.</li>
+<li>Use a badge only for the channel and lessons it names, never to suggest that GolfVotes endorses a product, course or service.</li>
+<li>A badge is a statement about golfer recommendations, not a quality guarantee. If it is used misleadingly, or the underlying data turns out to be wrong, we may withdraw it.</li>
+<li>Free to use under these terms. The badge links to your GolfVotes profile; please keep that link.</li></ul>
 <p class="dim">Questions: <a href="mailto:max@fassia.io?subject=GolfVotes%20badges">max@fassia.io</a></p></div>
 <div class="bshow">{hero}</div></section></div>"""
     page("/badges/", f"Badges for coaches | {SITE['name']}", "How golf coaches earn GolfVotes badges for the YouTube lessons golfers recommend most.", body)
@@ -858,14 +861,22 @@ def build_text():
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
-<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. If you wrote one and want it removed, open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a> with the link and it will be removed in the next update.</p>
+<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment. It will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
 <p>No cookies and no tracking across sites. Liked videos, history, watch later and your theme are stored only in your browser (localStorage).</p>
 <p><b>Visitor statistics:</b> We count page views with GoatCounter (goatcounter.com), a privacy-friendly service without cookies. It records the page, the referring site, browser type, screen size and country, but no personal data and no IP addresses are stored. This lets us see how many people use the site and where they come from. When you answer “Did this video fix it for you?”, that answer is counted the same way, without any personal data; your own vote is remembered only in your browser.</p>
 <p><b>YouTube:</b> Video thumbnails are loaded from YouTube's image servers (i.ytimg.com), which receive your IP address. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
-<p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p><p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
+<p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p>
+<h2>Legal basis and recipients</h2>
+<p>When you open a page, your browser connects to GitHub (hosting), to GoatCounter (visitor statistics, script from gc.zgo.at) and, for thumbnails, to Google/YouTube (i.ytimg.com). Your IP address is necessarily transmitted to these services to deliver the content. We do not receive it and do not store it. Legal basis is our legitimate interest in running and improving a free website (Art. 6(1)(f) GDPR). GoatCounter stores no IP addresses and sets no cookies. GitHub and Google may process data in the USA; both participate in the EU-US Data Privacy Framework.</p>
+<p>Features you use yourself (likes, history, watch later, theme, your “fixed it” answer) are saved only in your browser (localStorage) and are not sent to us. You can delete them in Settings or in your browser. The statistics we keep are anonymous counts; we have no log files of our own.</p>
+<h2>Your rights</h2>
+<p>You have the right to access, rectification, erasure, restriction of processing, data portability and to object to processing based on legitimate interests (Art. 15–21 GDPR). Because we do not store personal data about visitors, there is usually nothing to hand out or delete, but write to the address below and we will check. You can also complain to a data protection authority, for example the Hessian Commissioner for Data Protection and Freedom of Information (Wiesbaden).</p>
+<h2>Reddit comments</h2>
+<p>Video pages quote short excerpts of public Reddit comments without usernames and with a link to the original. Authors can ask for removal by email or on GitHub; see <a href="{BASE}/about/#removal">About</a>.</p>
+<p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
     for slug, nav, title, empty in [("liked", "liked", "Liked", "Videos you like show up here."), ("history", "history", "History", "Videos you open show up here."),
                                     ("later", "later", "Watch later", "Save videos to watch later."), ("search", "", "Search", "")]:
