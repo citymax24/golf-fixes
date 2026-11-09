@@ -248,7 +248,7 @@
     return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + B + '/static/thumbs/mq2/' + v[0] + '.webp" alt="" onerror="this.onerror=null;this.style.visibility=\'hidden\'">' +
       (v[12] ? '<span class="du">' + dur(v[12]) + "</span>" : "") + '</a><button class="lb" aria-label="Watch later" title="Watch later"><svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button></div>' +
       '<div class="vm"><h3><a href="' + href + '">' + esc(v[1]) + '</a></h3><p class="ch">' + (v[3] ? '<a href="' + B + "/coach/" + v[3] + '/">' + esc(v[2]) + "</a>" : esc(v[2])) + (t ? " · " + t : "") +
-      '</p><p class="st"><b>' + v[4] + "</b> golfers recommend" + (v[5] ? ' · <span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? " · " + esc(v[6]) : "") + "</p></div></article>";
+      '</p><p class="st"><span><b>' + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";
   }
   function dur(s) { var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x; }
   function paint(el, arr, append) { el.insertAdjacentHTML(append ? "beforeend" : "afterbegin", arr.map(card).join("")); if (!append) {} markLater(); }
