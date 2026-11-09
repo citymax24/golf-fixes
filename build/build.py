@@ -254,13 +254,14 @@ PKEY = {p["name"]: p["key"] for p in PROBLEMS}
 def card(v, n=None, ok=None, rank=None, pname=None):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
+    win = bool(rank == 1 and pname and any(x["k"] == PKEY.get(pname) for x in AWARDS.get(v["cs"], [])))  # gold only for a real award
     href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"https://www.youtube.com/watch?v={v['vid']}"
     dur = fmt_dur(v.get("duration_s"))
     yrs = v.get("years") or []
     sub = f"{fmt_n(v['views'])} views" if v.get("views") else (f"recommended {yrs[0]}–{yrs[1]}" if yrs and yrs[0] != yrs[1] else (f"recommended {yrs[0]}" if yrs else ""))
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     return f"""<article class="vc" data-vid="{e(v['vid'])}">
-<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk{" g1" if rank == 1 else ""}">#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
+<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
 <p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p></div>
