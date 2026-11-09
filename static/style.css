@@ -436,3 +436,14 @@ form.filters label:last-child{grid-column:1 / -1}
 form.filters label:last-child{flex-direction:row;align-items:center;font-size:14px;font-weight:500}
 @media (min-width:700px){form.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .rk.g1{background:#C8A24A;color:#0B3D2C}
+/* problem page: the answer first */
+.ranked .vc:first-child .vm h3{font-size:20px;line-height:1.25}
+.ranked .vc:first-child .tq{margin:12px 0 0;font-size:15px;line-height:1.5}
+@media (min-width:900px){
+  .ranked{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ranked .vc:first-child{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:-8px}
+  .ranked .vc:first-child .vm{margin:0}
+  .ranked .vc:first-child .vm h3{font-size:24px;line-height:1.2;letter-spacing:-.01em}
+  .ranked .vc:first-child .vm .st{font-size:15px;margin-top:8px}
+  .main{--ml:14px}.vc .ch,.vc .st{font-size:14px}.vc .ch{color:var(--mut)}.intro p{font-size:16px;line-height:1.6}
+}
