@@ -40,8 +40,14 @@ def trunc(s, n):
     return s if len(s) <= n else s[: n - 1].rsplit(" ", 1)[0].rstrip(" ,.;:–-|") + "…"
 
 
+_EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]+")
+
+
 def nice(t):
     t = t or ""
+    t = _EMOJI.sub("", t)
+    t = re.sub(r"(?<=\w)'(?=\w)", "\u2019", t)
+    t = re.sub(r"\s{2,}", " ", t).strip()
     letters = [c for c in t if c.isalpha()]
     if letters and sum(c.isupper() for c in letters) / len(letters) > 0.7:
         small = {"a", "an", "the", "and", "or", "to", "for", "of", "in", "on", "with", "your", "at", "by"}
@@ -251,7 +257,7 @@ def coach_mark(s, count=False):
 PKEY = {p["name"]: p["key"] for p in PROBLEMS}
 
 
-def card(v, n=None, ok=None, rank=None, pname=None):
+def card(v, n=None, ok=None, rank=None, pname=None, extra=""):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
     win = bool(rank == 1 and pname and any(x["k"] == PKEY.get(pname) for x in AWARDS.get(v["cs"], [])))  # gold only for a real award
@@ -264,7 +270,7 @@ def card(v, n=None, ok=None, rank=None, pname=None):
 <div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p></div>
+<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p>{extra}</div>
 </article>"""
 
 
@@ -381,7 +387,7 @@ def build_problem(p):
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
 <p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}{fixes_list(p)}{aid_html}</section>
-<div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name']) for i, (s, n, ok, v) in enumerate(rows))}</div>
+<div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name'], top_quote(v) if i == 0 else "") for i, (s, n, ok, v) in enumerate(rows))}</div>
 {f'<p class="more"><button class="pill inl" id="showall" aria-controls="ranked">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
 {more_lessons(p, rows)}
 {sounds_like(p)}
@@ -439,7 +445,7 @@ def build_watch(v):
     if len(rel) < 12:
         rel += [x for x in sorted(channels[v["cs"]]["videos"], key=lambda x: -x["recs"]) if x["vid"] != v["vid"] and x["page"] and x not in rel][: 12 - len(rel)]
     upnext = "".join(f'<a class="un" href="{BASE}/watch/{x["vid"]}/"><span class="th"><img loading="lazy" src="{thumb(x["vid"])}" alt=""></span>'
-                     f'<span><b>{e(x["title"])}</b><i>{e(x["channel"])}</i><i>{x["recs"]} golfers recommend</i></span></a>' for x in rel)
+                     f'<span><b>{e(nice(x["title"]))}</b><i>{e(x["channel"])}</i><i>{x["recs"]} golfers recommend</i></span></a>' for x in rel)
     yrs = v.get("years") or []
     won = 'class="rctx win"' in rank_ctx(v)  # the winning lesson shows its seal in the rank line, not twice
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>{"" if won else coach_mark(v["cs"])}' if v["cs"] in COACH_SET else e(v["channel"])
