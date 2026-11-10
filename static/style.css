@@ -500,3 +500,18 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .lh .bftx{transform:scaleX(-1);transform-origin:160px 0;transform-box:view-box}
 @media (min-width:1001px){.bf{grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:48px}}
 @media (max-width:1000px){.bfq{font-size:16px}}@media (max-width:359px){.bfq{font-size:15px}.bfd span{font-size:11px;padding:2px 7px}}
+/* finder course: fairway, green, bunkers, mowing stripes (own drawing) */
+.bfc{background:#B4D49A}
+.bfw{fill:#C9E2AE}.bfws{fill:url(#bfst)}.bfsp{fill:#fff;opacity:.16}.bftb{fill:#D8EBC2}
+.bfg{fill:#BBDBA0}.bfg2{fill:#DDF0C6}.bfs{fill:#F4EBD2;stroke:#DDCDA2;stroke-width:1.6}
+.bftr{fill:#5E9A55}.bfsh{fill:#0B3D2C;opacity:.16}
+.bfcup{fill:#0B3D2C}.bfball{fill:#fff;stroke:#0B3D2C}.bftx{fill:#0B3D2C;opacity:.75}
+.bfl{stroke:#0B3D2C;stroke-width:3}
+.bfd::before{border-color:#0B3D2C;background:#fff}.bfd::after{border-color:#0B3D2C}
+.bfd.on::before{background:#0B3D2C;border-color:#0B3D2C}
+.bfd span{border-color:transparent;box-shadow:0 1px 3px rgba(11,61,44,.28)}
+[data-theme=dark] .bfc{background:#12251A}[data-theme=dark] .bfw{fill:#1B3A26}[data-theme=dark] .bfsp{opacity:.05}[data-theme=dark] .bftb{fill:#234A30}
+[data-theme=dark] .bfg{fill:#21442C}[data-theme=dark] .bfg2{fill:#2C5A3A}[data-theme=dark] .bfs{fill:#A99C78;stroke:#8C805F}
+[data-theme=dark] .bftr{fill:#2F5E36}[data-theme=dark] .bfsh{fill:#000;opacity:.3}
+[data-theme=dark] .bfcup{fill:#0B1710}[data-theme=dark] .bftx{fill:#E8F1EA}[data-theme=dark] .bfl{stroke:#F1EEE4}[data-theme=dark] .bfball{stroke:#0B1710}
+[data-theme=dark] .bfd::before{border-color:#F1EEE4;background:#12251A}[data-theme=dark] .bfd::after{border-color:#F1EEE4}[data-theme=dark] .bfd.on::before{background:#3ECF8E;border-color:#3ECF8E}

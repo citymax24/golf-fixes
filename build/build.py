@@ -316,8 +316,17 @@ def finder():
                    f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
                    f'<p class="bfs">{p["total_recs"]:,} recommendations from golfers for this miss.</p></div>')
     return f"""<div class="bf" id="bf"><div><p class="bfq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10l5.2 1.1a2 2 0 0 1 1.6 2.3l-.7 4.3A3 3 0 0 1 15.1 20H11a3 3 0 0 1-2.4-1.2L5 14l.7-.7a1.6 1.6 0 0 1 2.1-.2L9 14"/></svg>Tap where your ball usually ends up</p><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
-<path class="bfw" d="M112 344C92 252 72 160 110 62C126 20 194 20 210 62C248 160 228 252 208 344Z"/><circle class="bfg" cx="160" cy="46" r="26"/><circle class="bfcup" cx="160" cy="46" r="5"/>
-<text class="bftx" x="160" y="24" text-anchor="middle">TARGET</text>{lines}<circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="348" text-anchor="middle">YOU</text></svg>{dots}</div>
+<defs><pattern id="bfst" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><rect class="bfsp" width="13" height="26"/></pattern></defs>
+<ellipse class="bfsh" cx="60" cy="312" rx="22" ry="9"/><circle class="bftr" cx="46" cy="302" r="15"/><ellipse class="bfsh" cx="290" cy="322" rx="16" ry="7"/><circle class="bftr" cx="280" cy="314" r="11"/>
+<path class="bfw" d="M118 348C96 300 104 262 122 232C140 202 96 170 104 124C110 84 126 68 130 46C134 22 186 22 190 46C194 72 216 96 214 134C212 172 186 200 198 238C210 272 216 310 204 348Z"/>
+<path class="bfws" d="M118 348C96 300 104 262 122 232C140 202 96 170 104 124C110 84 126 68 130 46C134 22 186 22 190 46C194 72 216 96 214 134C212 172 186 200 198 238C210 272 216 310 204 348Z"/>
+<rect class="bftb" x="144" y="314" width="32" height="24" rx="6"/>
+<path class="bfg" d="M160 18c21 0 35 13 33 30s-15 29-34 29-33-12-33-29 14-30 34-30z"/><path class="bfg2" d="M160 24c16 0 27 10 26 24s-12 23-27 23-26-9-26-23 11-24 27-24z"/>
+<path class="bfs" d="M50 170c14-8 30 0 32 16 2 12-8 16-6 30 2 12-8 22-20 20-14-2-20-16-16-30 4-12-4-24 10-36z"/>
+<path class="bfs" d="M244 150c12-6 28 0 30 12 2 12-10 22-24 22-12 0-18-8-18-18 0-8 4-12 12-16z"/>
+<path class="bfs" d="M206 34c8-6 22-4 24 6 2 10-8 16-18 14-10-2-14-14-6-20z"/>
+<circle class="bfcup" cx="160" cy="46" r="4.5"/>
+<text class="bftx" x="160" y="12" text-anchor="middle">TARGET</text>{lines}<circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="352" text-anchor="middle">YOU</text></svg>{dots}</div>
 <label class="bfh"><input type="checkbox" id="bflh"> I play left-handed</label></div>
 <div class="bfr" aria-live="polite"><div class="bfp bf0" id="bf-0"><h2>Six misses. One tap.</h2><p>Pick the spot on the course where your shots usually end up. We name the miss and play the lesson golfers recommend most for it.</p></div>{panels}</div></div>"""
 
