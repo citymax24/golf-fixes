@@ -801,6 +801,11 @@ blockquote.tq cite{text-indent:0;line-height:1.4}
 .slbox h2,.ask h2{font-size:20px;line-height:1.3;margin:0 0 4px}
 .slbox .dim{font-size:14px;line-height:1.4;margin:0 0 12px}
 .sl{gap:8px}
+/* every quoted post title links to its thread, same link as "View on Reddit" on comment rows; on touch screens the
+   link gets a 44px area that does not change the line height (negative margins), and the rows sit 24px apart so the
+   areas of two rows never overlap */
+.sl li a{display:inline-block;text-indent:0;margin-left:4px;color:var(--acc);white-space:nowrap;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+@media (pointer:coarse){.sl{gap:24px}.sl li a{padding:12px 4px;margin:-12px 0 -12px 0}}
 .ask p{margin:0 0 12px}
 .seo>.dim{font-size:14px;line-height:1.4}
 
