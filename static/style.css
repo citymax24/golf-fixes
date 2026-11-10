@@ -527,3 +527,17 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 [data-theme=dark] .bfm1{opacity:.03}[data-theme=dark] .bfm2{fill:#000;opacity:.15}
 [data-theme=dark] .bftr{fill:#285230}[data-theme=dark] .bftr2{fill:#356A3D}[data-theme=dark] .bftr3{fill:#2E5E36}
 .bfm2{display:none}.bfm1{opacity:.07}
+/* finder course v3: aerial feel (meandering fairway, diamond mow pattern, fingered bunkers, grass grain) */
+.bfc{background:#A6CA88}
+.bfcut{fill:#B7D89B;stroke:#B7D89B;stroke-width:13}
+.bfw{fill:#C6E1AA}.bfws{fill:url(#bfst)}.bfws2{fill:url(#bfst2)}.bfsp{opacity:.1}
+.bftb{fill:#D2E9BA}
+.bfgo{fill:none;stroke:#B0D394;stroke-width:22;stroke-linejoin:round;opacity:.7}
+.bfgc{fill:#BBDCA0;stroke:#BBDCA0;stroke-width:9}.bfg2{fill:#DCF0C4}
+.bflip{fill:#84AE6C}.bfhi{fill:#fff;opacity:.5}.bfs{fill:#F1E6C8}
+.bfsh{fill:#0B3D2C;opacity:.2}.bfn{mix-blend-mode:multiply;pointer-events:none}
+.bfm1,.bfm2{display:none}
+[data-theme=dark] .bfc{background:#10231A}[data-theme=dark] .bfcut{fill:#173120;stroke:#173120}[data-theme=dark] .bfw{fill:#1C3B27}
+[data-theme=dark] .bfgo{stroke:#1A3824}[data-theme=dark] .bfgc{fill:#21462D;stroke:#21462D}[data-theme=dark] .bfg2{fill:#2D5D3B}
+[data-theme=dark] .bfhi{opacity:.12}[data-theme=dark] .bfn{mix-blend-mode:normal;opacity:.5}[data-theme=dark] .bfsp{opacity:.04}
+.bfc svg g{filter:none}.bfsp{opacity:.16}[data-theme=dark] .bfsp{opacity:.05}.bfsh{opacity:.16}
