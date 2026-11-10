@@ -308,8 +308,10 @@ def finder():
         p = PNAME[k]; sc, n, ok, v = by_problem[k][0]
         href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"{BASE}/fix/{p['slug']}/"
         panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(p["intro"])}</p>'
-                   f'<a class="bft" href="{href}"><img loading="lazy" src="{thumb(v["vid"])}" alt=""><span><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
-                   f'<em>{n} recommend{"s" if n == 1 else ""}{f" · ✓ {ok} fixed it" if ok else ""}</em></span></a>'
+                   f'<div class="bfv"><button class="bfplay" type="button" data-vid="{e(v["vid"])}" data-t="{e(nice(v["title"]))}" aria-label="Play: {e(nice(v["title"]))}">'
+                   f'<img loading="lazy" src="{thumb(v["vid"], "hq2" if v["page"] else "mq2")}" alt=""><span class="pb"></span></button></div>'
+                   f'<a class="bftt" href="{href}"><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
+                   f'<em>{n} recommend{"s" if n == 1 else ""}{f" · ✓ {ok} fixed it" if ok else ""}</em></a>'
                    f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
                    f'<p class="bfs">{p["total_recs"]:,} recommendations from golfers for this miss.</p></div>')
     return f"""<div class="bf" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">

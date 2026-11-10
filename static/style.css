@@ -471,3 +471,12 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .bfa{display:inline-flex;width:auto}.bfp .bfs{font-size:13px;margin:12px 0 0}
 @media (max-width:759px){.bf{grid-template-columns:1fr;gap:20px;margin-bottom:32px}.bf>div:first-child{max-width:360px}.bf .bfp h2{font-size:26px}.bft{grid-template-columns:120px minmax(0,1fr)}.bfr{min-height:0;scroll-margin-top:72px}}
 @media (prefers-reduced-motion:reduce){.bfl.on{animation:none;stroke-dashoffset:0}}
+/* finder: play the lesson in place */
+.bfv{max-width:420px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000;margin:0 0 12px}
+.bfplay{position:relative;display:block;width:100%;height:100%;border:0;padding:0;background:#000;cursor:pointer}
+.bfplay img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}.bfplay:hover .pb{background:var(--acc)}
+.bfvid{width:100%;height:100%;border:0;display:block}
+.bftt{display:flex;flex-direction:column;gap:2px;max-width:420px;margin:0 0 16px;color:var(--fg)}
+.bftt i{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mut)}
+.bftt b{font-size:16px;line-height:1.3;font-weight:600}.bftt em{font-style:normal;font-size:14px;color:var(--ok);font-weight:600}
+@media (max-width:759px){.bfv,.bftt{max-width:none}}
