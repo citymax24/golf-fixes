@@ -181,6 +181,24 @@
     });
   }
 
+  // ---------- ball-flight finder ----------
+  var bf = $("#bf");
+  if (bf) {
+    var lh = $("#bflh");
+    if (load("lefty", false) === true) { lh.checked = true; bf.classList.add("lh"); }
+    lh.onchange = function () { bf.classList.toggle("lh", lh.checked); save("lefty", lh.checked); };
+    $$(".bfd", bf).forEach(function (a) {
+      a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        var k = a.dataset.k;
+        $$(".bfd", bf).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
+        $$(".bfl", bf).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
+        $$(".bfp", bf).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
+        if (window.innerWidth < 760) $(".bfr", bf).scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+    });
+  }
+
   // ---------- badges page: find your channel, select-all on focus ----------
   var bf = $("#bfind");
   if (bf) bf.addEventListener("input", function () {
