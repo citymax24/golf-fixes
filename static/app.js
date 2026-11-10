@@ -17,6 +17,9 @@
   }
   function toggleOff(k, vid) { save(k, load(k).filter(function (x) { return x.v !== vid; })); }
   var settings = load("settings", {});
+  // touch screens: the chip row starts at "All"; bring the active chip into view once, without animation [fix-13]
+  (function () { var o = $(".chips .chip.on"); if (!o || !window.matchMedia || !matchMedia("(pointer:coarse)").matches) return; var c = o.parentNode, r = o.getBoundingClientRect(), cr = c.getBoundingClientRect(); if (r.right > cr.right - 48 || r.left < cr.left) c.scrollLeft += r.left - cr.left - 48; })();
+  var CK = '<svg class="ck" viewBox="-6 -6 63.5 70.45" aria-hidden="true"><path d="M0 31.56L18.5 58.45L51.5 0"/></svg>';
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
@@ -280,7 +283,7 @@
     return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + th + "mq2/" + v[0] + '.webp"' + (hq ? ' srcset="' + th + "mq2/" + v[0] + ".webp 320w, " + th + "hq2/" + v[0] + '.webp 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"' : "") + ' alt="" onerror="this.onerror=null;this.style.visibility=\'hidden\'">' +
       (v[12] ? '<span class="du">' + dur(v[12]) + "</span>" : "") + '</a><button class="lb" aria-label="Watch later" title="Watch later"><svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button></div>' +
       '<div class="vm"><h3><a href="' + href + '">' + esc(v[1]) + '</a></h3><p class="ch">' + (v[3] ? '<a href="' + B + "/coach/" + v[3] + '/">' + esc(v[2]) + "</a>" : esc(v[2])) + (t ? " · " + t : "") +
-      '</p><p class="st"><span><b>' + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">✓ ' + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";
+      '</p><p class="st"><span><b>' + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">' + CK + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";
   }
   function dur(s) { var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x; }
   function paint(el, arr, append) { el.insertAdjacentHTML(append ? "beforeend" : "afterbegin", arr.map(function (v) { return card(v, el === feed); }).join("")); if (!append) {} markLater(); }
@@ -322,7 +325,7 @@
     var kind = list.dataset.list, arr = [], extra = "";
     if (kind === "search") {
       var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase();
-      $("#q").value = q; $("#ltitle").textContent = q ? 'Results for "' + q + '"' : "Search";
+      $("#q").value = q; $("#ltitle").textContent = q ? "Results for \u201c" + q + "\u201d" : "Search";
       if (q) {
         var SYN = { slicing: "slice", sliced: "slice", slices: "slice", hooking: "hook", hooks: "hook", shanking: "shanks", shank: "shanks", shanked: "shanks",
           topping: "topping", topped: "topping", tops: "topping", chunk: "fat", chunking: "fat", chunked: "fat", fat: "fat", thin: "thin", sculled: "thin",
@@ -356,7 +359,7 @@
           srt === "oldest" ? function (x, y) { return x[11] - y[11] || y[4] - x[4]; } : srt === "views" ? function (x, y) { return y[13] - x[13]; } :
           srt === "hidden" ? function (x, y) { return (y[4] / Math.log(10 + y[13])) - (x[4] / Math.log(10 + x[13])); } : function (x, y) { return y[4] - x[4]; });
         list.innerHTML = ""; $$(".sentinel").forEach(function (s) { s.remove(); });
-        $("#count").textContent = a.length + " lessons"; paint(list, a.slice(0, 48)); infinite(list, a, 48);
+        $("#count").textContent = a.length.toLocaleString("en-US") + " lessons"; paint(list, a.slice(0, 48)); infinite(list, a, 48);
         $("#empty").textContent = a.length ? "" : "No lessons match these filters.";
       };
       f.onchange = run; run(); return;
