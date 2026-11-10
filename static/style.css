@@ -571,3 +571,79 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .brand .wm{display:block;width:auto;height:23px;color:var(--fg);overflow:visible}
 .brand .wmc{stroke:var(--acc)}
 @media (max-width:600px){.brand .wm{height:21px}}
+
+/* ===== polish pass ===== */
+/* Part 1: global, header, brand, home. Ordered by component; ids in the comments are the audit findings.
+   Shared values: page gutter --gut 12 / 24 / 32 (same as .main), spacing 4/8/12/16/24/32/48,
+   radii 12 (thumbnails, cards) / 6 (chips) / 999 (pills), focus ring 2px var(--acc) with 2px offset (4px on cards). */
+
+/* -- global: page gutter as a variable (header, drawer and edge-to-edge rows use it) [brand-01] -- */
+:root{--gut:32px}
+@media (max-width:1000px){:root{--gut:24px}}
+@media (max-width:600px){:root{--gut:12px}}
+
+/* -- global: touch. A tapped chip, pill or icon keeps its resting fill
+   (the old "background:inherit" made it transparent, the active chip became white on white) [home-m-08] -- */
+@media (hover:none){
+  .icon:hover{background:transparent}
+  .chip:hover,.pill:hover{background:var(--chip)}
+  .chip.on:hover,.pill.on:hover,.ask .pill:hover{background:var(--fg)}
+  .pill.start:hover{background:var(--acc)}
+  .pill.done.on:hover{background:var(--ok)}
+}
+/* -- global: press feedback (one step darker), no grey tap rectangle on iOS [brand-15] -- */
+.top .icon,.brand,.tnav a,.side>a,.chip,.pill,.tbtn{-webkit-tap-highlight-color:transparent}
+.top .icon:active,.side>a:active,.chip:active,.pill:active,.tbtn:active{background:var(--chip2)}
+.chip.on:active,.pill.on:active,.ask .pill:active{background:var(--fg)}
+.pill.start:active{background:var(--acc2)}
+.pill.done.on:active{background:var(--ok)}
+/* -- global: the green call-to-action pill needs dark text in dark mode (white on mint was 2.0:1) [home-m-10] -- */
+:root[data-theme=dark] .pill.start{color:#0f0f0f}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pill.start{color:#0f0f0f}}
+
+/* -- header: on the page grid. Menu bars and wordmark start on the gutter, search glyph and nav text end on it
+   [brand-01, home-d-03, home-m-12] -- */
+.top{padding:0 max(var(--gut),calc((100% - 1360px)/2 + var(--gut)))}
+.brand{margin:0 -6px;padding:0 6px}
+.tnav{margin-right:-10px}
+@media (max-width:1000px){
+  .top .icon{width:44px;height:44px}
+  #menu{margin-left:-13px}
+  #stoggle{margin-right:-13px}
+  .left{gap:0}
+  .brand{margin-left:-3px}
+  .top .icon:focus-visible{outline-offset:-4px}
+}
+@media (max-width:600px){
+  #menu{margin-left:-12px;padding:0 11px 0 9px}
+  #stoggle{margin-right:-12px;padding:0 9px 0 11px}
+  .brand{margin-left:-4px}
+}
+@media (min-width:761px) and (max-width:1000px){.right{display:none}.search{flex:0 1 520px;margin-left:auto}}
+/* header: the hairline is drawn outside the 56px box, so the content box is 56 (was 55) and
+   icons, field and nav sit on whole pixels [brand-06] */
+.top{border-bottom:0;box-shadow:0 1px 0 transparent;transition:box-shadow .15s}
+.top.scrolled{box-shadow:0 1px 0 var(--line)}
+/* header: wordmark with caps of exactly 16px, centred in the bar (logo-word.svg is cropped to its ink box) [brand-02] */
+.brand .wm{height:18px}
+/* header: brand link is a real tap target (44px on phones, 40px on desktop), rounded focus ring with air [brand-11] */
+.brand{height:40px;border-radius:8px}
+.brand:focus-visible{outline-offset:-2px}
+@media (max-width:1000px){.brand{height:44px}}
+/* header: desktop nav shows the current section; 36px link box on whole pixels (was 35.6) [brand-10] */
+.tnav a{line-height:20px}
+.tnav a.on{color:var(--fg)}
+/* header: search placeholder in the muted grey of icon and nav (browser default was under AA) [brand-09];
+   the "/" hint leaves once the field has focus [brand-12] */
+.search input::placeholder{color:var(--mut);opacity:1}
+.search:focus-within .kh{display:none}
+/* header, phones: suggestions start right under the field, no page text in the slot below the search bar [brand-08] */
+@media (max-width:760px){.sugg{top:calc(100% - 3px)}}
+/* search page on phones: the search bar that opens by itself no longer covers the page title [brand-14] */
+@media (max-width:760px){body.searching .main:has(>#list[data-list=search]){padding-top:69px}}
+@media (max-width:600px){body.searching .main:has(>#list[data-list=search]){padding-top:65px}}
+
+/* -- drawer: icons under the menu icon, labels under the wordmark, 44px rows, visible edge in dark mode [brand-07] -- */
+.side{border-right:1px solid var(--line)}
+@media (max-width:1000px){.side>a{height:44px;gap:13px;padding:0 12px 0 9px}}
+@media (max-width:600px){.side{padding:12px 4px}.side>a{padding:0 12px 0 5px}}

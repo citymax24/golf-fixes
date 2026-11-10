@@ -126,7 +126,7 @@ WORDMARK = open(os.path.join(ROOT, "static", "logo-word.svg")).read().strip().re
 # ---------- icons ----------
 I = {
     "menu": '<path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/>',
-    "search": '<path d="M20.87 20.17l-5.59-5.59A6.95 6.95 0 0 0 17 10a7 7 0 1 0-7 7c1.75 0 3.35-.64 4.58-1.71l5.59 5.59.7-.71zM10 16a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/>',
+    "search": '<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>',
     "help": '<path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>',
     "moon": '<path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>',
     "home": '<path d="M4 21V10.08l8-6.96 8 6.96V21h-6v-6h-4v6H4z"/>',
@@ -157,6 +157,9 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
         ("coaches", "/coaches/", "coach", "Coaches"), ("browse", "/browse/", "browse", "Browse"),
         ("liked", "/liked/", "like", "Liked"), ("later", "/later/", "later", "Watch later"), ("history", "/history/", "hist", "History"), ("about", "/about/", "help", "How we rank")])
     nl = SITE.get("newsletter_url")
+    tnav = "".join(f'<a href="{BASE}{h}"' + (f' class="on" aria-current="{"page" if path == h else "true"}"' if nav == n else "") + f'>{lbl}</a>'
+                   for n, h, lbl in [("cat", "/categories/", "Problems"), ("plans", "/plans/", "Fix plans"), ("coaches", "/coaches/", "Coaches"), ("browse", "/browse/", "Browse")])
+    tnav += f'<a href="{BASE}/later/" id="tsaved" hidden>Saved</a><a href="{BASE}/about/"' + (' class="on" aria-current="page"' if nav == "about" else "") + '>How we rank</a>'
     doc = f"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -166,7 +169,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og3/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="{BASE}/static/favicon.svg?v=c" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=c"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
+<link rel="icon" href="{BASE}/static/favicon.svg?v=d" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=d"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
@@ -177,15 +180,15 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
   <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home">{WORDMARK}</a></div>
   <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list"><kbd class="kh" aria-hidden="true">/</kbd><ul class="sugg" id="sugg" role="listbox" hidden></ul></form>
-  <div class="right"><nav class="tnav" aria-label="Main"><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">Browse</a><a href="{BASE}/later/" id="tsaved" hidden>Saved</a><a href="{BASE}/about/">How we rank</a></nav><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
+  <div class="right"><nav class="tnav" aria-label="Main">{tnav}</nav><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
 </header>
 <nav class="side" id="side">{side}
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot"><p>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a> · Coaches: <a href="{BASE}/badges/">get your badges</a></p><p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
-  <a href="{BASE}/report/">Stats</a> · <a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a> · <a href="{BASE}/guides/best-golf-drills/">Best drills</a><br>
-  <a href="{BASE}/data/">Data</a> · <a href="{BASE}/settings/">Settings</a> · <a href="{BASE}/about/">About</a><br><a href="{BASE}/privacy/">Privacy</a> · <a href="{BASE}/imprint/">Imprint</a><br>Not affiliated with Reddit or YouTube.</footer>
+  <footer class="foot"><p class="fmsg"><span>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></span> <span>Coaches: <a href="{BASE}/badges/">get your badges</a></span></p><p class="fthm"><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
+  <nav class="fnav" aria-label="Footer"><a href="{BASE}/report/">Stats</a><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a><a href="{BASE}/about/">About</a><a href="{BASE}/privacy/">Privacy</a><a href="{BASE}/imprint/">Imprint</a></nav>
+  <p class="fnote">Not affiliated with Reddit or YouTube.</p></footer>
 </main>
 <script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
 <script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
@@ -257,9 +260,11 @@ def coach_mark(s, count=False):
 
 
 PKEY = {p["name"]: p["key"] for p in PROBLEMS}
+HQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "hq2"))}
+HQ_SRCSET = ' srcset="{a} 320w, {b} 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"'
 
 
-def card(v, n=None, ok=None, rank=None, pname=None, extra=""):
+def card(v, n=None, ok=None, rank=None, pname=None, extra="", hq=False):
     n = v["recs"] if n is None else n
     ok = v.get("success", 0) if ok is None else ok
     win = bool(rank == 1 and pname and any(x["k"] == PKEY.get(pname) for x in AWARDS.get(v["cs"], [])))  # gold only for a real award
@@ -269,7 +274,7 @@ def card(v, n=None, ok=None, rank=None, pname=None, extra=""):
     sub = f"{fmt_n(v['views'])} views" if v.get("views") else (f"recommended {yrs[0]}–{yrs[1]}" if yrs and yrs[0] != yrs[1] else (f"recommended {yrs[0]}" if yrs else ""))
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     return f"""<article class="vc" data-vid="{e(v['vid'])}">
-<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}" alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
+<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}"{HQ_SRCSET.format(a=thumb(v['vid']), b=thumb(v['vid'], 'hq2')) if hq and v['vid'] in HQ2 else ''} alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
 <p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p>{extra}</div>
@@ -339,7 +344,7 @@ def build_home():
         proof = f'✓ {ok} say{"s" if ok == 1 else ""} it fixed it' if ok else f'{n} golfers recommend it'
         return (f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><span class="pth"><img loading="lazy" src="{thumb(v["vid"])}" alt="">'
                 f'</span><span class="pnm2">{e(p["name"])}</span><span class="ptop">Top pick: {e(trunc(nice(v["title"]), 44))}</span>'
-                f'<span class="pok">{proof}</span></a>')
+                f'<span class="pok{" fx" if ok else ""}">{proof}</span></a>')
     tiles = "".join(tile(p) for p in pick)
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">What’s your miss?<span>Other golfers already picked the lesson.</span></h1>
@@ -350,7 +355,7 @@ def build_home():
 </section>
 {chips()}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
-<div class="grid" id="feed">{''.join(card(v) for v in top[:24])}</div>
+<div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[:24])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
@@ -649,7 +654,7 @@ def build_plans():
         first = vmap[items[0]["vid"]]
         mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
         pl["mins"] = mins
-        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these{(" · ✓ " + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + " fixed it") if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i><span>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these</span>{('<span class="ok">✓ ' + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + ' fixed it</span>') if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
         steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
 <div><p class="steplab">Step {n}{(' · ' + TYPES[vmap[i['vid']]['type']]) if vmap[i['vid']].get('type') in TYPES and vmap[i['vid']]['type'] != 'other' else ''}</p><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{e(nice(vmap[i['vid']]['title']))}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} golfers recommend</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
