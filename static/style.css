@@ -1449,3 +1449,32 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 .rv.ftw .wmc{stroke-dasharray:112;stroke-dashoffset:112}
 .rv.ftw.in .wmc{stroke-dashoffset:0;transition:stroke-dashoffset .9s cubic-bezier(.3,.7,.2,1) .25s}
 @media (max-width:600px){.vsb>:last-child:nth-child(odd){grid-column:1/-1}}
+
+/* -- the same head and board language on the list pages: coaches as a leaderboard (no pictures), the coach page with
+   a display head, its topics as words and its lessons as board rows, the problems page as groups of words, and a 404
+   that stays on the course. -- */
+.phero.pone{display:block}
+.pone .phs{max-width:760px}
+.pht h1 .lau,.pht h1 .cm{vertical-align:middle}
+.phi .pill{text-decoration:none;white-space:nowrap}
+.ldr.cbr{grid-template-columns:24px minmax(0,1fr);grid-template-areas:"p n" "p s" ". b"}
+.cbr .ldn b{-webkit-line-clamp:3}
+.cbl{color:var(--mut)}
+@media (min-width:900px){
+  .ldk.cbk,.ldr.cbr{grid-template-columns:40px minmax(0,1fr) 220px 104px}
+  .ldk.cbk span:nth-child(2){grid-column:auto}
+  .ldr.cbr{grid-template-areas:"p n v o" "p n b o"}
+  .cbr .ldn b{font-size:18px;line-height:24px}
+  .cbl{color:var(--fg)}
+}
+.ldl.long10:not(.showall)>li:nth-child(n+11){display:none}
+.pix.cix{margin:0 0 24px}
+.pix.cat{margin:0}
+.cgrp{margin:0 0 24px}
+.cgrp .pick{margin:0 0 4px}
+.pix.nf{margin-top:8px}
+@media (min-width:601px){.cgrp{margin-bottom:32px}}
+@media (max-width:600px){.pix.cat .ix:nth-child(n+13),.pix.nf .ix:nth-child(n+13){display:inline}}
+.pix .pick{margin:0 0 8px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+.phi .pill{display:inline-flex}
+.pht h1 svg{vertical-align:middle}

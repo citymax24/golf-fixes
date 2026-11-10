@@ -319,14 +319,14 @@ def board(vs):
 MQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
 
 
-def problem_index(skip=None):
+def problem_index(skip=None, only=None):
     """Every problem as a word with its count; the picture of its top lesson floats beside the pointer on hover."""
     def entry(p):
         top1 = by_problem.get(p["key"]) or []
         vid = top1[0][3]["vid"] if top1 and top1[0][3]["vid"] in MQ2 else ""
         return (f'<a class="ix" href="{BASE}/fix/{p["slug"]}/"{f" data-vid={chr(34)}{e(vid)}{chr(34)}" if vid else ""}>'
                 f'{e(p["name"])}<sup>{p["total_recs"]:,}</sup></a>')
-    return "".join(entry(p) for p in sorted([p for p in PROBLEMS if p["video_count"] and p["key"] != skip], key=lambda p: -p["total_recs"]))
+    return "".join(entry(p) for p in sorted([p for p in (only if only is not None else PROBLEMS) if p["video_count"] and p["key"] != skip], key=lambda p: -p["total_recs"]))
 
 
 MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
@@ -492,15 +492,15 @@ def other_lessons():
 
 
 def build_categories():
-    boxes = ""
+    groups = ""
     for g in GROUPS:
-        ps = sorted([p for p in PROBLEMS if p["group"] == g and p["video_count"]], key=lambda p: -p["total_recs"])
-        if not ps:
-            continue
-        boxes += f'<div class="box"><h2>{e(g)}<span>{sum(p["video_count"] for p in ps):,} lessons</span></h2>' + "".join(
-            f'<a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}<span>{p["video_count"]} lessons</span></a>' for p in ps) + "</div>"
+        ps = [p for p in PROBLEMS if p["group"] == g and p["video_count"]]
+        if ps:
+            groups += f'<section class="cgrp"><h2 class="pick">{e(g)}</h2><nav class="ixs" aria-label="{e(g)}">{problem_index(only=ps)}</nav></section>'
+    nprob = len([p for p in PROBLEMS if p["video_count"]])
     page("/categories/", f"Golf problems | {SITE['name']}", "Every golf problem with the lessons golfers recommend for it.",
-         f'<h1 class="ptitle">Problems</h1><div class="boxes">{boxes}</div>{other_lessons()}', nav="cat")
+         f'<section class="phero pone"><div class="pht"><h1>What do you want to fix?</h1><p class="phs">{nprob} problems. The small number is how many recommendations we counted.</p></div></section>'
+         f'<div class="pix cat">{groups}</div>{other_lessons()}', nav="cat")
 
 
 def build_watch(v):
@@ -773,12 +773,15 @@ def award_line(s):
 
 
 def build_coaches():
-    rows = "".join(f'<a class="crow" href="{BASE}/coach/{s}/"><span class="n">{i}</span><b>{e(c["name"])}{award_line(s)}</b>'
-                   f'<span><b>{c["recs"]:,}</b> recommendations · {len(c["videos"])} videos</span>'
-                   f'<i>{e(", ".join(PNAME[t]["name"] for t, _ in c["topics"].most_common(3) if t in PNAME))}</i></a>' for i, (s, c) in enumerate(COACHES, 1))
+    mx = COACHES[0][1]["recs"]
+    rows = "".join(f'<li class="ldi"><a class="ldr cbr{" ld3" if i <= 3 else ""}" href="{BASE}/coach/{s}/" style="--w:{100 * c["recs"] / mx:.1f}%"><span class="ldp">{i}</span>'
+                   f'<span class="ldn"><b>{e(c["name"])}{award_line(s)}</b><i>{e(", ".join(PNAME[t]["name"] for t, _ in c["topics"].most_common(3) if t in PNAME))}</i></span>'
+                   f'<span class="lds"><span class="ldv"><b data-cnt="{c["recs"]}">{c["recs"]:,}</b> <i>recommendations</i></span>'
+                   f'<span class="ldo cbl">{len(c["videos"])} <i>lesson{"s" if len(c["videos"]) != 1 else ""}</i></span></span><span class="ldbar"></span></a></li>' for i, (s, c) in enumerate(COACHES, 1))
     page("/coaches/", f"Most recommended golf coaches on YouTube | {SITE['name']}",
          "The YouTube golf instructors golfers recommend most, ranked by independent recommendations.",
-         f'<h1 class="ptitle">Most recommended coaches</h1><p class="lead">Ranked by how often golfers recommended their lessons to other golfers.</p><div class="clist">{rows}</div>', nav="coaches")
+         f'<section class="phero pone"><div class="pht"><h1>Most recommended coaches</h1><p class="phs">{len(COACHES)} YouTube coaches, ranked by how often golfers recommended their lessons.</p></div></section>'
+         f'<section class="ldb"><div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>Lessons</span></div><ol class="ldl">{rows}</ol></section>', nav="coaches")
 
 
 AWARDS = {}  # coach slug -> list of award dicts (persisted in data/awards.json, never removed: a badge stays valid for its year)
@@ -925,11 +928,17 @@ def build_badges_page():
 
 def build_coach(s, c):
     vids = sorted([v for v in c["videos"]], key=lambda v: -v["recs"])[:48]
-    tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME and by_problem.get(t))
-    body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
-<h1>{e(c['name'])}{coach_mark(s)}</h1><p class="dim cst"><span><b>{c['recs']:,}</b> recommendations</span><span><b>{len(c['videos'])}</b> videos</span>{f'<span class="ok">{CK}{c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
-<div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
-{awards_strip(s)}{badge_kit(s, c)}<div class="grid">{''.join(card(v) for v in vids)}</div>"""
+    tops = "".join(f'<a class="ix" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])}<sup>{n:,}</sup></a>' for t, n in c["topics"].most_common(8) if t in PNAME and by_problem.get(t))
+    pos = next((i for i, (x, _) in enumerate(COACHES, 1) if x == s), None)
+    mx = max([v["recs"] for v in vids] + [1])
+    body = f"""<nav class="pcrumb" aria-label="Breadcrumb"><a href="{BASE}/coaches/">All {len(COACHES)} coaches</a>{f'<span aria-hidden="true">/</span><span>#{pos} most recommended</span>' if pos else ''}</nav>
+<section class="phero pone"><div class="pht"><h1>{e(c['name'])}{coach_mark(s)}</h1>
+<p class="phs">{c['recs']:,} recommendations for {len(c['videos'])} lesson{'s' if len(c['videos']) != 1 else ''}.{f' {c["success"]} golfers say it fixed it.' if c['success'] > 1 else ''}</p>
+{f'<p class="phi"><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
+{f'<section class="pix cix"><h2 class="pick">Recommended for</h2><nav class="ixs" aria-label="Topics">{tops}</nav></section>' if tops else ''}
+{awards_strip(s)}{badge_kit(s, c)}
+<section class="ldb ldbp">{LDK}<ol class="ldl{" long10" if len(vids) > 12 else ""}" id="rest">{"".join(board_row(v, v["recs"], v.get("success", 0), i, mx) for i, v in enumerate(vids, 1))}</ol></section>
+{f'<p class="more"><button class="pill inl" id="showall" aria-controls="rest">Show all {len(vids)} lessons</button></p>' if len(vids) > 12 else ''}"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
          f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} independent recommendations.", body, nav="coaches")
 
@@ -1004,7 +1013,10 @@ def build_misc():
         d = os.path.join(OUT, "go", slug); os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w").write(f'<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url={e(target)}"><a href="{e(target)}" rel="sponsored">Continue</a>')
     open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /go/\nSitemap: {URL}/sitemap.xml\n")
-    page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">That page moved.</h1><p class="lead">Pick your problem:</p><div class="tags">' + "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[k]["slug"]}/">{e(PNAME[k]["name"])}</a>' for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "chipping", "putting"] if k in PNAME) + '</div>', canonical=False)
+    page("/404.html", f"Not found | {SITE['name']}", "Not found.",
+         f'<section class="phero pone"><div class="pht"><h1>Out of bounds.</h1><p class="phs">This page moved or never existed.</p>'
+         f'<p class="phi"><a class="pill start" href="{BASE}/">Back to the tee →</a></p></div></section>'
+         f'<section class="pix nf"><h2 class="pick">Pick your problem</h2><nav class="ixs" aria-label="All problems">{problem_index()}</nav></section>', canonical=False)
     open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
                                                      "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
     if SITE.get("cname"):
