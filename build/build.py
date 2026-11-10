@@ -167,7 +167,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <link rel="icon" href="{BASE}/static/favicon.svg?v=a" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=a">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
-<script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem("gv_nowelcome"))document.documentElement.classList.add("nowelcome")}}catch(e){{}}</script>
+<script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
 {f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
@@ -308,10 +308,11 @@ def finder():
         p = PNAME[k]; sc, n, ok, v = by_problem[k][0]
         href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"{BASE}/fix/{p['slug']}/"
         panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(p["intro"])}</p>'
-                   f'<div class="bfv"><button class="bfplay" type="button" data-vid="{e(v["vid"])}" data-t="{e(nice(v["title"]))}" aria-label="Play: {e(nice(v["title"]))}">'
+                   f'<div class="bfv"><button class="bfplay" type="button" data-vid="{e(v["vid"])}" data-t="{e(nice(v["title"]))}" data-c="{e(v.get("channel") or "")}" aria-label="Play: {e(nice(v["title"]))}">'
                    f'<img loading="lazy" src="{thumb(v["vid"], "hq2" if v["page"] else "mq2")}" alt=""><span class="pb"></span></button></div>'
                    f'<a class="bftt" href="{href}"><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
                    f'<em>{n} recommend{"s" if n == 1 else ""}{f" · ✓ {ok} fixed it" if ok else ""}</em></a>'
+                   f'<p class="bfy">Not playing? <a href="https://www.youtube.com/watch?v={e(v["vid"])}" target="_blank" rel="noopener">Open it on YouTube ↗</a></p>'
                    f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
                    f'<p class="bfs">{p["total_recs"]:,} recommendations from golfers for this miss.</p></div>')
     return f"""<div class="bf" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">

@@ -50,7 +50,7 @@
 
   // ---------- player ----------
   function play() {
-    var b = $("button.player[data-vid]"); if (!b) return;
+    var b = $("button.player[data-vid]"); if (!b) { var fb = $(".bfp:not([hidden]) .bfplay"); if (fb) fb.click(); return; }
     var f = document.createElement("iframe");
     f.className = "player";
     f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.vid + "?autoplay=1&rel=0&modestbranding=1";
@@ -191,15 +191,19 @@
       var pb = ev.target.closest(".bfplay"); if (!pb) return;
       var f = document.createElement("iframe");
       f.className = "bfvid"; f._btn = pb;
-      f.src = "https://www.youtube-nocookie.com/embed/" + pb.dataset.vid + "?autoplay=1&rel=0&modestbranding=1";
+      f.src = "https://www.youtube-nocookie.com/embed/" + pb.dataset.vid + "?autoplay=1&playsinline=1&rel=0&modestbranding=1";
       f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen"; f.allowFullscreen = true;
       f.referrerPolicy = "strict-origin-when-cross-origin"; f.title = "Video: " + pb.dataset.t;
+      var hi = { v: pb.dataset.vid, t: pb.dataset.t, c: pb.dataset.c || "" };
+      var hh = load("history").filter(function (x) { return x.v !== hi.v; }); hh.unshift(hi); save("history", hh.slice(0, 300));
       pb.replaceWith(f); f.setAttribute("tabindex", "0"); f.focus();
     });
+    bff.addEventListener("keydown", function (ev) { if (ev.key === " " && ev.target.classList.contains("bfd")) { ev.preventDefault(); ev.target.click(); } });
     $$(".bfd", bff).forEach(function (a) {
       a.addEventListener("click", function (ev) {
         ev.preventDefault();
         var k = a.dataset.k;
+        if (a.classList.contains("on")) return;
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
         $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
         $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
@@ -227,8 +231,7 @@
   });
 
   // ---------- welcome box ----------
-  var wc = $("#wclose");
-  if (wc) wc.onclick = function () { document.documentElement.classList.add("nowelcome"); try { localStorage.setItem("gv_nowelcome", "1"); } catch (e) {} };
+  try { localStorage.removeItem("gv_nowelcome"); } catch (e) {}  // the old dismissible welcome box is gone; never hide the home intro
 
   // ---------- review 3: plan bar, show all, saved menu, search page ----------
   var pp = new URLSearchParams(location.search).get("plan");
