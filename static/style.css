@@ -550,3 +550,11 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 [data-theme=dark] .bftr{fill:#1F4428}[data-theme=dark] .bftr2{fill:#2B5A33}[data-theme=dark] .bftr3{fill:#346A3C}[data-theme=dark] .bfsh{fill:#000;opacity:.35}
 [data-theme=dark] .bfs{fill:#B3A682}[data-theme=dark] .bflip{fill:#091610}
 [data-theme=dark] .bfs{stroke:none}
+/* finder course: calm variant A (details stay, contrast drops so dots and flight lead) */
+.bfn,.bfpath{display:none}
+.bftr{fill:#93BC78}.bftr2{fill:#9DC582}.bftr3{fill:#A4CB89}.bfsh{opacity:.08}
+.bfwd{fill:#9CC381}.bfpl{fill:#9CC381}.bfpw{fill:#9CC7C4}
+.bfs{fill:#ECEFD6}.bfhi{opacity:.3}.bflip{fill:#94BB7A}.bfsp{opacity:.08}
+[data-theme=dark] .bftr{fill:#17301F}[data-theme=dark] .bftr2{fill:#1B3725}[data-theme=dark] .bftr3{fill:#1F3E2A}[data-theme=dark] .bfsh{opacity:.2}
+[data-theme=dark] .bfwd{fill:#0E2016}[data-theme=dark] .bfpl{fill:#0E2016}[data-theme=dark] .bfpw{fill:#1D3A44}
+[data-theme=dark] .bfs{fill:#5F6B52}[data-theme=dark] .bfhi{opacity:.06}[data-theme=dark] .bflip{fill:#0B1A11}[data-theme=dark] .bfsp{opacity:.04}
