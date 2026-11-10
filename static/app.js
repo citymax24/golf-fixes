@@ -209,7 +209,7 @@
         $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
         $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
         $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
-        if (window.innerWidth < 760) $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" });
+        if (window.innerWidth < 760) setTimeout(function () { $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 650);  // let the flight draw first
       });
     });
   }
