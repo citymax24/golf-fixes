@@ -132,12 +132,13 @@ I = {
     "home": '<path d="M4 21V10.08l8-6.96 8 6.96V21h-6v-6h-4v6H4z"/>',
     "cat": '<path d="M4 4h7v7H4zm2 2v3h3V6zm7-2h7v7h-7zm2 2v3h3V6zM4 13h7v7H4zm2 2v3h3v-3zm7-2h7v7h-7zm2 2v3h3v-3z"/>',
     "coach": '<path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>',
-    "like": '<path d="M18.77 11h-4.23l1.52-4.94C16.38 5.03 15.54 4 14.38 4c-.58 0-1.14.24-1.52.65L7 11H3v10h14.43c1.06 0 1.98-.67 2.19-1.61l1.34-6c.27-1.24-.78-2.39-2.19-2.39zM7 20H4v-8h3v8z"/>',
+    "like": '<path transform="translate(1.2 1.2) scale(.9)" d="M9 21h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2zM9 9l4.34-4.34L12 10h9v2l-3 7H9V9zM1 9h4v12H1z"/>',
     "hist": '<path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>',
     "later": '<path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>',
     "stats": '<path d="M5 9h3v11H5zm5.5-5h3v16h-3zM16 13h3v7h-3z"/>',
     "ext": '<path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42L17.59 5H14V3zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>',
-    "dislike": '<path d="M5.23 13h4.23l-1.52 4.94C7.62 18.97 8.46 20 9.62 20c.58 0 1.14-.24 1.52-.65L17 13h4V3H6.57c-1.06 0-1.98.67-2.19 1.61l-1.34 6C2.77 11.85 3.82 13 5.23 13zM17 4h3v8h-3V4z"/>',
+    "dislike": '<path transform="translate(1.2 1.2) scale(.9)" d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm0 12l-4.34 4.34L12 14H3v-2l3-7h9v10zm4-12h4v12h-4z"/>',
+    "play": '<path d="M8 5v14l11-7z"/>',
     "list": '<path d="M3 6h12v2H3zm0 4h12v2H3zm0 4h8v2H3zm12 0v6l5-3z"/>',
     "gear": '<path d="M19.14 12.94c.04-.31.06-.62.06-.94s-.02-.63-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.02 7.02 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.31-.09.63-.09.94s.02.63.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.48.48 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 15.6 12 3.6 3.6 0 0 1 12 15.6z"/>',
     "browse": '<path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>',
@@ -145,6 +146,7 @@ I = {
     "check": '<path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>',
 }
 svg = lambda k: f'<svg viewBox="0 0 24 24" aria-hidden="true">{I[k]}</svg>'
+CK = '<svg class="ck" viewBox="-6 -6 63.5 70.45" aria-hidden="true"><path d="M0 31.56L18.5 58.45L51.5 0"/></svg>'  # the check of the wordmark, drawn (a font glyph differs per device)
 
 
 # ---------- layout ----------
@@ -262,6 +264,7 @@ def coach_mark(s, count=False):
 PKEY = {p["name"]: p["key"] for p in PROBLEMS}
 HQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "hq2"))}
 HQ_SRCSET = ' srcset="{a} 320w, {b} 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"'
+RK4_SRCSET = ' srcset="{a} 320w, {b} 480w" sizes="(max-width:900px) 120px, 400px"'
 
 
 def card(v, n=None, ok=None, rank=None, pname=None, extra="", hq=False):
@@ -274,10 +277,10 @@ def card(v, n=None, ok=None, rank=None, pname=None, extra="", hq=False):
     sub = f"{fmt_n(v['views'])} views" if v.get("views") else (f"recommended {yrs[0]}–{yrs[1]}" if yrs and yrs[0] != yrs[1] else (f"recommended {yrs[0]}" if yrs else ""))
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>' if v["cs"] in COACH_SET else e(v["channel"])
     return f"""<article class="vc" data-vid="{e(v['vid'])}">
-<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'])}"{HQ_SRCSET.format(a=thumb(v['vid']), b=thumb(v['vid'], 'hq2')) if hq and v['vid'] in HQ2 else ''} alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
+<div class="thw" data-vid="{e(v['vid'])}"><a class="th" href="{href}"><img loading="lazy" src="{thumb(v['vid'], 'hq2' if pname and rank and rank <= 3 and v['vid'] in HQ2 else 'mq2')}"{HQ_SRCSET.format(a=thumb(v['vid']), b=thumb(v['vid'], 'hq2')) if hq and v['vid'] in HQ2 else ''}{RK4_SRCSET.format(a=thumb(v['vid']), b=thumb(v['vid'], 'hq2')) if pname and rank == 4 and v['vid'] in HQ2 else ''} alt="">{f'<span class="rk{" g1" if win else ""}"{" title=" + chr(34) + "Most recommended lesson for this problem, GolfVotes award" + chr(34) if win else ""}>#{rank}</span>' if rank else ''}{f'<span class="du">{dur}</span>' if dur else ''}</a><button class="lb" aria-label="Watch later" title="Watch later">{svg('later')}</button></div>
 <div class="vm"><h3><a href="{href}">{e(nice(v['title']))}</a></h3>
 <p class="ch">{ch}{f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ''}</p>
-<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">✓ {ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p>{extra}</div>
+<p class="st"><span><b>{n}</b> recommend{"s" if n == 1 else ""}</span>{f'<span class="ok">{CK}{ok} fixed it</span>' if ok else ''}{f'<span class="nw">{sub}</span>' if sub and not pname else ''}</p>{extra}</div>
 </article>"""
 
 
@@ -500,7 +503,7 @@ def build_watch(v):
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span><b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">✓ {v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
+{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span><b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">{CK}{v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>
@@ -513,7 +516,7 @@ def build_watch(v):
 <p class="dim">AI summary of what golfers said.</p>
 <div class="tags">{tags}</div></div>
 <section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
-<p class="vbtns"><button class="pill inl" data-vote="yes">👍 <span>Yes, it helped</span></button><button class="pill inl" data-vote="no">👎 <span>Not for me</span></button></p>
+<p class="vbtns"><button class="pill inl" data-vote="yes">{svg('like')}<span>Yes, it helped</span></button><button class="pill inl" data-vote="no">{svg('dislike')}<span>Not for me</span></button></p>
 <p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
@@ -654,14 +657,14 @@ def build_plans():
         first = vmap[items[0]["vid"]]
         mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
         pl["mins"] = mins
-        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{len(items)} videos{f" · {mins} min" if mins else ""}</span></span><b>{e(pl["title"])}</b><i><span>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these</span>{('<span class="ok">✓ ' + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + ' fixed it</span>') if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
+        cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{f'<span class="dn">{len(items)} videos · </span>{mins} min' if mins else f"{len(items)} videos"}</span></span><b>{e(pl["title"])}</b><i><span>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these</span>{('<span class="ok">' + CK + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + ' fixed it</span>') if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
         steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
 <div><p class="steplab">Step {n}{(' · ' + TYPES[vmap[i['vid']]['type']]) if vmap[i['vid']].get('type') in TYPES and vmap[i['vid']]['type'] != 'other' else ''}</p><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{e(nice(vmap[i['vid']]['title']))}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} golfers recommend</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
         body = f"""<div class="plan"><p class="kick">Fix plan · <a href="{BASE}/fix/{PNAME[pl['key']]['slug']}/">{e(PNAME[pl['key']]['name'])}</a></p><h1 class="ptitle">{e(pl['title'])}</h1>
 <p class="lead">{e(pl['intro'])}</p>
 <div class="planbar" data-plan="{pl['slug']}" data-n="{len(items)}"><b>{len(items)} videos{f" · {mins} min total" if mins else ""}</b><span class="prog"><span></span></span><span class="progt">0 of {len(items)} done</span></div>
-<p><a class="pill inl start" id="startplan" href="{BASE}/watch/{items[0]['vid']}/?plan={pl['slug']}">▶ <span>Start step 1</span></a> <a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
+<p><a class="pill inl start" id="startplan" href="{BASE}/watch/{items[0]['vid']}/?plan={pl['slug']}">{svg('play')}<span>Start step 1</span></a> <a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
         page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og3/plan-{PNAME[pl['key']]['slug']}.png")
     page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
@@ -731,7 +734,7 @@ def award_line(s):
 
 def build_coaches():
     rows = "".join(f'<a class="crow" href="{BASE}/coach/{s}/"><span class="n">{i}</span><b>{e(c["name"])}{award_line(s)}</b>'
-                   f'<span>{c["recs"]:,} recommendations · {len(c["videos"])} videos</span>'
+                   f'<span><b>{c["recs"]:,}</b> recommendations · {len(c["videos"])} videos</span>'
                    f'<i>{e(", ".join(PNAME[t]["name"] for t, _ in c["topics"].most_common(3) if t in PNAME))}</i></a>' for i, (s, c) in enumerate(COACHES, 1))
     page("/coaches/", f"Most recommended golf coaches on YouTube | {SITE['name']}",
          "The YouTube golf instructors golfers recommend most, ranked by independent recommendations.",
@@ -800,9 +803,10 @@ def awards_strip(s):
     a = AWARDS.get(s)
     if not a:
         return ""
-    items = "".join(f'<a class="aw" href="{x["proof"]}"><img src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * .64)}" height="96" loading="lazy">'
+    items = "".join(f'<a class="aw" href="{x["proof"]}"><img class="lt" src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * 96 / x["h"])}" height="96" loading="lazy">'
+                    f'<img class="dk" src="{BASE}/badge/{x["stem"]}-dark.svg" alt="{e(x["label"])}" width="{round(x["w"] * 96 / x["h"])}" height="96" loading="lazy">'
                     f'<span>{"See the ranking" if x["k"] != "top10" else "See all coaches"} →</span></a>' for x in a)
-    return f'<section class="awards" aria-label="GolfVotes awards"><div class="awl">{items}</div></section>'
+    return f'<section class="awards" aria-label="GolfVotes awards"><div class="awl awd">{items}</div></section>'
 
 
 def yt_vids(c):
@@ -852,7 +856,7 @@ def badge_kit(s, c):
 def build_badges_page():
     ex = [x for s, _ in COACHES for x in AWARDS.get(s, [])]
     show = [x for x in ex if x["k"] != "top10"][:1] + [x for x in ex if x["k"] == "top10"][:1]
-    hero = "".join(f'<img src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * .8)}" height="120">' for x in show)
+    hero = "".join(f'<img src="{BASE}/badge/{x["stem"]}.svg" alt="{e(x["label"])}" width="{round(x["w"] * 120 / x["h"])}" height="120">' for x in show)
     live = next(((s, c) for s, c in COACHES if c.get("live")), None)
     if live:
         hero += f'<img src="{BASE}/badge/{live[0]}.svg" alt="Live badge example" width="{round(live[1]["live"][0] * 100 / live[1]["live"][1])}" height="100">'
@@ -883,7 +887,7 @@ def build_coach(s, c):
     vids = sorted([v for v in c["videos"]], key=lambda v: -v["recs"])[:48]
     tops = " ".join(f'<a class="tag" href="{BASE}/fix/{PNAME[t]["slug"]}/">{e(PNAME[t]["name"])} · {n}</a>' for t, n in c["topics"].most_common(8) if t in PNAME and by_problem.get(t))
     body = f"""<section class="chead"><div class="av">{e((c['name'] or '?')[0])}</div><div>
-<h1>{e(c['name'])}{coach_mark(s)}</h1><p class="dim"><b>{c['recs']:,}</b> recommendations · <b>{len(c['videos'])}</b> videos{f' · <span class="ok">✓ {c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
+<h1>{e(c['name'])}{coach_mark(s)}</h1><p class="dim cst"><span><b>{c['recs']:,}</b> recommendations</span><span><b>{len(c['videos'])}</b> videos</span>{f'<span class="ok">{CK}{c["success"]} said it fixed their problem</span>' if c['success'] else ''}</p>
 <div class="tags">{tops}</div>{f'<p><a href="{e(c["url"])}" target="_blank" rel="noopener nofollow">YouTube channel ↗</a></p>' if c.get('url') else ''}</div></section>
 {awards_strip(s)}{badge_kit(s, c)}<div class="grid">{''.join(card(v) for v in vids)}</div>"""
     page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",

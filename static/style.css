@@ -647,3 +647,562 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .side{border-right:1px solid var(--line)}
 @media (max-width:1000px){.side>a{height:44px;gap:13px;padding:0 12px 0 9px}}
 @media (max-width:600px){.side{padding:12px 4px}.side>a{padding:0 12px 0 5px}}
+
+/* -- chips: one anatomy. 6px radius, 32px high with a mouse; on touch 36px visual with a 44px touch area
+   (they were 44px blocks, "All" was taller than wide) [home-m-07, home-d-07] -- */
+.chip{border-radius:6px;line-height:20px}
+@media (pointer:coarse){
+  .chip{position:relative;min-height:36px;min-width:44px;justify-content:center}
+  .chip::after{content:"";position:absolute;inset:-4px 0}
+}
+/* chips with a mouse on desktop: all visible in wrapped rows instead of a clipped scroller with no affordance [home-d-07] */
+@media (min-width:1001px) and (hover:hover) and (pointer:fine){
+  .chips{flex-wrap:wrap;gap:8px;overflow:visible;padding:4px 0 12px;-webkit-mask-image:none;mask-image:none}
+}
+/* scrolling rows run to the screen edge (they were cut by an invisible line one gutter before it) [home-m-09] */
+@media (max-width:1000px){.main>.chips{margin-left:calc(-1*var(--gut));margin-right:calc(-1*var(--gut));padding-left:var(--gut);scroll-padding-left:var(--gut)}}
+@media (max-width:760px){.main>.pgrid.row1{margin-left:calc(-1*var(--gut));margin-right:calc(-1*var(--gut));padding:0 var(--gut);scroll-padding:0 var(--gut)}}
+/* "more" links: 44px touch area without moving the layout [home-m-11] */
+p.more a{display:inline-block;padding:13px 6px;margin:-13px -6px;border-radius:6px}
+
+/* -- home hero type: display weight 800 at every width (it was lighter than the 800 heading beside it);
+   on phones 36px, fluid down to 32px on 320 screens so it never breaks to a lone "miss?";
+   balanced sub-line, no lone last word in the lede [home-m-03, home-d-11] -- */
+.welcome h1.hq{font-weight:800}
+.welcome h1.hq span{text-wrap:balance}
+.welcome .lede{text-wrap:pretty}
+@media (max-width:600px){.welcome h1.hq{font-size:clamp(32px,10vw,36px);letter-spacing:-.03em}}
+/* caps labels: one style, 12/1.4/700 with 1.4px tracking [home-m-14] */
+.welcome h2.pick{font-size:12px;line-height:1.4}
+.bftt i,.bft i{letter-spacing:1.4px}
+
+/* -- finder: follow the OS dark mode too; the course colours existed only for [data-theme=dark] [home-m-01, home-d-04] -- */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]) .bfw{fill:#1C3B27}
+  :root:not([data-theme=light]) .bfg{fill:#21442C}
+  :root:not([data-theme=light]) .bfc{background:#10231A}
+  :root:not([data-theme=light]) .bfsp{opacity:.04}
+  :root:not([data-theme=light]) .bftb{fill:#234A30}
+  :root:not([data-theme=light]) .bfg2{fill:#2D5D3B}
+  :root:not([data-theme=light]) .bfs{stroke:none;fill:#5F6B52}
+  :root:not([data-theme=light]) .bftr{fill:#17301F}
+  :root:not([data-theme=light]) .bfsh{fill:#000;opacity:.2}
+  :root:not([data-theme=light]) .bfcup{fill:#0B1710;fill-opacity:.5}
+  :root:not([data-theme=light]) .bftx{fill:#E8F1EA}
+  :root:not([data-theme=light]) .bfl{stroke:#F1EEE4}
+  :root:not([data-theme=light]) .bfball,:root:not([data-theme=light]) .bffs,:root:not([data-theme=light]) .bffp,:root:not([data-theme=light]) .bfff{stroke:#0B1710}
+  :root:not([data-theme=light]) .bfd::before{border-color:#F1EEE4;background:#12251A}
+  :root:not([data-theme=light]) .bfd::after{border-color:#F1EEE4}
+  :root:not([data-theme=light]) .bfd.on::before{background:#3ECF8E;border-color:#3ECF8E}
+  :root:not([data-theme=light]) .bfcut{fill:#173120;stroke:#173120}
+  :root:not([data-theme=light]) .bfgc{fill:#21462D;stroke:#21462D}
+  :root:not([data-theme=light]) .bflip{fill:#0B1A11}
+  :root:not([data-theme=light]) .bfm1{opacity:.03}
+  :root:not([data-theme=light]) .bfm2{fill:#000;opacity:.15}
+  :root:not([data-theme=light]) .bftr2{fill:#1B3725}
+  :root:not([data-theme=light]) .bftr3{fill:#1F3E2A}
+  :root:not([data-theme=light]) .bfgo{stroke:#1A3824}
+  :root:not([data-theme=light]) .bfhi{opacity:.06}
+  :root:not([data-theme=light]) .bfn{mix-blend-mode:normal;opacity:.5}
+  :root:not([data-theme=light]) .bfwd,:root:not([data-theme=light]) .bfpl{fill:#0E2016}
+  :root:not([data-theme=light]) .bfpath{stroke:#6E6A55;opacity:.6}
+  :root:not([data-theme=light]) .bfpw{fill:#1D3A44}
+  :root:not([data-theme=light]) .bffh{stroke:#E8F1EA;stroke-opacity:.5}
+}
+/* finder: the tap never moves the course; only the short intro stays centred until the first tap [home-d-02] */
+.bf{align-items:start}
+.bf>.bfr{align-self:center}
+.bf.used>.bfr{align-self:start}
+/* finder, phones: the course spans the content width (the 360px cap left it 6px short at 390, 46px at 430) [home-m-02] */
+@media (max-width:480px){.bf>div:first-child{max-width:none}}
+/* finder, 320 screens: "Pulled left" clear of the dot below it [home-m-15] */
+@media (max-width:359px){.bfd span{top:35px;line-height:1.2}}
+/* finder copy: no one-word last line ("it.", a lone "LIVE" under the lesson title) [home-d-12] */
+.bfp>h2+p{text-wrap:balance}
+.bftt b{text-wrap:pretty}
+/* finder dots: round focus ring (the 44px tap square drew a square ring around a round dot) */
+.bfd{border-radius:50%}
+/* left-handed toggle: brand colour when checked, box on the course edge, text 12px under the course,
+   44px row on touch (it was a browser-blue 13px box in a 19px row) [home-m-06, home-d-13] */
+.bfh{display:flex;width:fit-content;gap:8px;margin-top:12px;font-size:14px;line-height:20px;cursor:pointer}
+.bfh input{flex:none;width:16px;height:16px;margin:0;accent-color:var(--acc)}
+@media (pointer:coarse){.bfh{min-height:44px;margin-top:0}}
+
+/* -- problem tiles: the anatomy of the video cards (12px thumbnail on all four corners, text flush with it,
+   16/600 title, 14px meta, proof line on the tile bottom, same hover); the "All problems" tile becomes a quiet
+   16:9 block instead of a dashed box [home-m-05, home-d-05] -- */
+.ptiles{gap:32px 16px;margin-top:0}
+.ptile{overflow:visible;gap:0}
+.pth{border-radius:12px}
+.pth::after{content:none}
+.pth img{transition:transform .2s}
+.ptile:hover .pth img{transform:scale(1.02)}
+.ptile .pnm2{padding:12px 0 0;font-size:16px;line-height:1.3;font-weight:600;letter-spacing:-.1px}
+.ptile .ptop{padding:0;margin-top:4px;font-size:14px;line-height:1.4}
+.ptile .pok{padding:4px 0 0;margin-top:auto;font-size:14px;line-height:1.4;font-weight:500}
+.ptile.more{padding:0;border:0;background:none;justify-content:flex-start}
+.ptile.more b{display:grid;place-items:center;aspect-ratio:16/9;padding:0 12px;border-radius:12px;background:var(--chip);font-size:16px;line-height:1.3;font-weight:600;text-align:center;text-wrap:balance;transition:background-color .15s}
+.ptile.more:hover b{background:var(--chip2)}
+.ptile.more span{padding-top:12px;font-size:14px;line-height:1.4}
+.ptile:focus-visible{outline-offset:4px}
+@media (max-width:600px){.ptiles{gap:24px 12px}}
+/* proof line on tiles: green only when it says "fixed it", like the video cards (markup: .pok.fx) [home-m-13] */
+.ptile .pok.fx{color:var(--ok)}
+
+/* -- plan cards: title, meta, hover and focus of the video cards [home-d-06, home-m-09] -- */
+.pgrid .plc b{margin-top:12px;font-size:16px;line-height:1.3;font-weight:600;letter-spacing:-.1px}
+.pgrid .plc i{margin-top:4px;font-size:14px;line-height:20px}
+.pgrid .plc .th img{display:block;transition:transform .2s}
+.pgrid .plc:hover .th img{transform:scale(1.02)}
+.pgrid .plc{border-radius:12px}
+.pgrid .plc:focus-visible{outline-offset:4px}
+/* plan meta as separate items (markup in build.py and app.js): no break inside "✓ 21 fixed it", no leading dot [home-m-09] */
+.plc i{display:flex;flex-wrap:wrap;gap:2px 12px}
+.plc i .ok{white-space:nowrap}
+.plc .pprog:empty{display:none}
+
+/* -- home grids: one column grid per width, 4 tiles / 3 plans / 3 videos
+   (tablet: no orphan tile row, no clipped third plan card) [home-d-09] -- */
+@media (min-width:761px){
+  .ptiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .pgrid.row1{grid-auto-columns:minmax(0,1fr);overflow:visible}
+}
+@media (min-width:1001px){#feed{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* -- section rhythm (4px grid). Phones: 32 between sections, 12 under a heading, 16 before a "more" link, 24 between
+   card rows. From 601px: 48 / 16 / 24 / 32. [home-m-04, home-d-08] -- */
+.welcome h1.hq{margin-bottom:16px}
+.bfq{margin-bottom:12px}
+.welcome h2.pick{margin-bottom:12px}
+@media (max-width:759px){.bf{gap:16px}.bf:not(.used){gap:0}}
+@media (min-width:760px){.bf{margin-bottom:48px}}
+.welcome{margin-bottom:28px}               /* + the 4px top padding of the chip row = 32 */
+h2.row{margin:48px 0 16px;line-height:1.3}
+.chips+h2.row{margin-top:36px}            /* + the 12px bottom padding of the chip row = 48 */
+.pgrid.row1{margin-bottom:0}
+.pgrid+p.more,#feed+p.more{margin:24px 0 0}
+.grid{row-gap:32px}
+@media (max-width:600px){
+  h2.row{margin:32px 0 12px}
+  .chips+h2.row{margin-top:20px}
+  .pgrid+p.more,#feed+p.more{margin-top:16px}
+  .grid{row-gap:24px}
+}
+
+/* -- footer: message, theme button, one row of links, note. Two quiet rows from 761px; 44px touch areas
+   (markup in build.py: p.fmsg, p.fthm, nav.fnav, p.fnote; no dots, no <br>) [home-m-11, home-d-10] -- */
+.foot{line-height:1.6;padding-top:24px}
+.foot p{margin:0}
+.foot .fmsg{display:flex;flex-wrap:wrap;column-gap:16px}
+.foot p a{white-space:nowrap}
+.foot .fnav{display:flex;flex-wrap:wrap;gap:0 20px}
+.foot .fnav a{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;margin:0 -4px;border-radius:6px}
+.tbtn{min-height:32px;padding:0 12px;line-height:20px}
+@media (pointer:coarse){
+  .foot .fnav a{min-height:44px}
+  .tbtn{position:relative;min-height:36px;padding:0 16px}
+  .tbtn::after{content:"";position:absolute;inset:-4px 0}
+}
+@media (max-width:760px){.foot .fthm{margin:12px 0 4px}.foot .fnote{margin-top:4px}}
+@media (min-width:761px){
+  .foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 32px}
+  .foot .fmsg,.foot .fnav{flex:1 1 60%}
+  .foot .fthm,.foot .fnote{flex:none}
+}
+
+/* -- home hero, desktop from 1200px: text left, course right, the result beside the video, so the whole finder fits
+   a laptop screen and the tap never moves anything below [home-d-01]. Separable: delete this block for the stacked hero.
+   The 9px top margin lines up the cap heights of the headline and the "Tap where" label. -- */
+@media (min-width:1200px){
+  .welcome{display:grid;grid-template-columns:minmax(0,1fr) 440px;grid-template-rows:auto auto 1fr;column-gap:64px}
+  .welcome>*{grid-column:1/-1}
+  .welcome>h1.hq{grid-column:1;grid-row:1}
+  .welcome>.lede{grid-column:1;grid-row:2;margin-bottom:32px}
+  .welcome>.bf{display:contents}
+  .bf>div:first-child{grid-column:2;grid-row:1/span 3;margin-top:9px}
+  .bf>.bfr,.bf.used>.bfr{grid-column:1;grid-row:3;align-self:start}
+  .welcome>h2.pick{margin-top:48px}
+  .bfp:not([hidden]):not(.bf0){display:grid;grid-template-columns:minmax(0,420px) minmax(200px,1fr);column-gap:24px;align-items:start}
+  .bfp:not(.bf0)>h2,.bfp:not(.bf0)>h2+p{grid-column:1/-1}
+  .bfp:not(.bf0)>h2+p{margin-bottom:12px}
+  .bfp>.bfv{grid-column:1;grid-row:3/span 5;margin:0}
+  .bfp>.bftt,.bfp>.bfy,.bfp>.bfa,.bfp>.bfs{grid-column:2}
+  .bfp>.bftt{margin-top:-3px}
+  .bfp>.bfa{justify-self:start}
+}
+@media (min-width:1440px){.welcome{grid-template-columns:minmax(0,1fr) 480px}}
+
+/* ---------- Part 2: content pages (problem, watch, coaches, plans, secondary pages) ----------
+   Builds on the part 1 values (--gut, rhythm 32/48, radii 12/6/999, chips, focus ring). Reading measure for
+   long-form text 576px (about 72 characters), for watch-page copy 680px. */
+
+/* -- page titles: one H1 on every page type (problem, coach, lists, plans, prose): 28/32/800 on phones,
+   32/36/800 from 601px, whole-pixel line boxes; one lead, one caps label, one empty-state line
+   [sys-01, sec-06, coach-08, fix-04] -- */
+.ptitle,.chead h1,.intro h1{font-size:28px;line-height:32px;font-weight:800;letter-spacing:-.4px;text-wrap:balance}
+@media (min-width:601px){.ptitle,.chead h1,.intro h1{font-size:32px;line-height:36px;letter-spacing:-.6px}}
+.ptitle{margin:8px 0 16px}
+.lead{font-size:16px;line-height:24px;margin:-8px 0 24px;max-width:576px;text-wrap:pretty}
+.kick,.intro .kick{font-size:12px;line-height:1.4;font-weight:700;letter-spacing:1.4px}
+.kick+.ptitle{margin-top:4px}
+#empty.dim{font-size:16px;line-height:24px;margin:-8px 0 0}
+#empty.dim:empty{margin:0}
+
+/* -- problem page heading block on the scale: label 8 / H1 12 / lede 8 / meta; 16px lede, 14px meta,
+   "How we rank" never breaks in two, 760px block [fix-04] -- */
+.intro{max-width:760px;margin:8px 0 24px}
+.intro .kick{margin:0 0 8px}
+.intro h1{margin:0 0 12px}
+.intro p{font-size:16px;line-height:24px;margin:0 0 8px}
+.intro h1+p{text-wrap:pretty}
+.intro .meta{font-size:14px;line-height:20px}
+.intro .meta a{white-space:nowrap}
+/* plan call-to-action reads as card title + meta line; hover works in dark mode too
+   (the dark background is set with !important in the base, so the hover needs it as well) [fix-09] */
+.plancta{transition:background-color .15s}
+.plancta b{font-size:16px;line-height:1.3;font-weight:600;text-wrap:balance}
+.plancta span{font-size:14px;line-height:1.4;text-wrap:balance}
+:root[data-theme=dark] .plancta:hover{background:#0f5a40!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .plancta:hover{background:#0f5a40!important}}
+
+/* -- disclosure rows: one component (16/1.3/600 label, the drawn 7px chevron on the text edge, 44px row, hover in
+   the accent) for "What golfers say fixed it", "More lessons", "Other recommended lessons" and the praise-only
+   comments toggle (14px muted there) [fix-05, watch-14, sec-08, sys-04] -- */
+.fixes{margin:12px 0 -12px}
+.fixes ol{margin:0 0 12px}
+.fixes>summary,.morel>summary,.morecm>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:0;list-style:none;cursor:pointer}
+.fixes>summary,.morel>summary{font-size:16px;line-height:1.3;font-weight:600}
+.morel>summary::-webkit-details-marker,.morecm>summary::-webkit-details-marker{display:none}
+.fixes>summary::before,.morel>summary::before,.morecm>summary::before{content:"";flex:none;width:7px;height:7px;margin:0 2px 0 -3px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+.fixes[open]>summary::before,.morel[open]>summary::before,.morecm[open]>summary::before{margin:0 -.5px;transform:translateY(-2px) rotate(45deg)}
+@media (hover:hover){.fixes>summary:hover,.morel>summary:hover,.morecm>summary:hover,.bkit>summary:hover{color:var(--acc)}}
+.morel{padding-top:0;border-bottom:1px solid var(--line)}
+.morel ul{margin:4px 0 16px}
+.ranked~.morel{max-width:760px;margin:32px 0 0}
+.boxes+.morel{margin:8px 0 0}
+/* "More lessons" items: title, then channel + count as a meta line (it ran on and broke mid-name) [fix-14] */
+.morel li{margin:0 0 12px}
+.morel li span{display:block;font-size:12px;line-height:1.4;margin-top:2px}
+
+/* -- ranking grid, tablet and desktop [fix-01]. Separable (owner decision): one 2-col (600-900) / 3-col (901+) grid;
+   the #1 picture spans two columns, its text the third; #2-#4 are cards so no slot stays empty; list from #5.
+   Without it: delete this block and the nth-child(4) lines go with it. Large cards load the 480px file (build.py). -- */
+@media (min-width:600px) and (max-width:900px){
+  .ranked{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px}
+  .ranked .vc:first-child{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;padding-bottom:0;border-bottom:0;margin-bottom:0}
+  .ranked .vc:first-child .vm{padding-top:0}
+  .ranked .vc:first-child h3{-webkit-line-clamp:3}
+  .ranked .vc:nth-child(n+4){grid-column:1/-1;max-width:760px}
+}
+@media (min-width:901px){
+  .ranked{row-gap:24px}
+  .ranked .vc:first-child{grid-template-columns:calc((100% - 32px)*2/3 + 16px) minmax(0,1fr);gap:16px;padding-bottom:32px;margin-bottom:8px}
+  .ranked .vc:first-child h3{-webkit-line-clamp:3}
+  .ranked .vc:nth-child(n+2):nth-child(-n+4){margin-bottom:16px}
+  .ranked .vc:nth-child(4){display:block;grid-column:auto;max-width:none}
+  .ranked .vc:nth-child(4) .vm{padding-top:12px}
+  .ranked .vc:nth-child(4) h3{font-size:16px}
+}
+/* list rows: the title's cap height on the top edge of the thumbnail (half-leading + ascender: 4.2-4.5px in
+   Roboto, Inter and SF) [fix-17] */
+@media (max-width:900px){.ranked .vc:nth-child(n+4) .vm{margin-top:-4px}}
+@media (min-width:901px){.ranked .vc:nth-child(n+5) .vm{margin-top:-4px}}
+
+/* -- thumbnail overlays: rank and duration share one geometry (20px, radius 6, 8px inset, tabular figures);
+   on 120px list thumbnails they step down to 16px at 6px [fix-07] -- */
+.du,.rk{font-size:12px;line-height:16px;font-weight:600;padding:2px 6px;border-radius:6px;font-variant-numeric:tabular-nums}
+.du{right:8px;bottom:8px}
+.rk{left:8px;top:8px;font-weight:700}
+.lb{right:8px;top:8px}
+@media (max-width:900px){
+  .ranked .vc:nth-child(n+4) .du,.ranked .vc:nth-child(n+4) .rk,.plist .du{font-size:11px;line-height:14px;padding:1px 5px;border-radius:4px}
+  .ranked .vc:nth-child(n+4) .du,.plist .du{right:6px;bottom:6px}
+  .ranked .vc:nth-child(n+4) .rk{left:6px;top:6px}
+}
+/* the award chip #1 stays gold in dark mode (the dark .rk rule overrode it) [fix-02] */
+:root[data-theme=dark] .rk.g1{background:#C8A24A;color:#0B3D2C}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .rk.g1{background:#C8A24A;color:#0B3D2C}}
+
+/* -- video cards: no one-word last line in titles [fix-10]; the line clamp cut the focus ring of the title link,
+   so focus shows as a 2px accent underline [fix-03] -- */
+.vc h3{text-wrap:pretty}
+.vc h3 a:focus-visible{outline:none;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:2px;text-underline-offset:2px}
+/* "fixed it" check: drawn with the geometry of the wordmark check (markup CK in build.py and app.js), sized in em
+   so it follows the text; the U+2713 glyph came from a different fallback font on every device [fix-15] */
+.ck{display:inline-block;width:.66em;height:.73em;margin-right:.28em;vertical-align:-.04em;fill:none;stroke:currentColor;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+
+/* -- quotes: padding on the grid; the opening quote mark hangs so all lines share one left edge
+   (Safari hangs it natively, elsewhere a negative indent) [fix-16, watch-08] -- */
+blockquote.tq{padding:12px 16px;text-indent:-.42em}
+blockquote.tq cite{text-indent:0;line-height:1.4}
+.sl li{padding-left:16px;text-indent:-.42em}
+@supports (hanging-punctuation:first){blockquote.tq,.sl li{text-indent:0;hanging-punctuation:first}}
+
+/* -- problem page below the ranking: one rhythm (24 to the button, 32 to the disclosure row, sections 32 on phones /
+   48 from 601px like the home page) and one H2 (20/1.3/700) [fix-06] -- */
+.ranked+p.more{margin:24px 0 0}
+.slbox,.ask{margin:32px 0 0}
+.seo{margin-top:32px;padding-top:0}
+@media (min-width:601px){.slbox,.ask,.seo{margin-top:48px}}
+.slbox h2,.ask h2{font-size:20px;line-height:1.3;margin:0 0 4px}
+.slbox .dim{font-size:14px;line-height:1.4;margin:0 0 12px}
+.sl{gap:8px}
+.ask p{margin:0 0 12px}
+.seo>.dim{font-size:14px;line-height:1.4}
+
+/* -- long-form text (guides, about, privacy, the article on problem pages): about 72 characters per line,
+   H2 on a tight leading with 32 above / 8 below, lists that breathe [sec-07, coach-14] -- */
+.prose>p,.prose>ol,.prose>ul,.prose>h2,.prose>blockquote{max-width:576px}
+.prose p,.prose li{text-wrap:pretty}
+.prose h2{font-size:20px;line-height:1.3;font-weight:700;margin:32px 0 8px}
+.prose h2+p,.prose h2+ol,.prose h2+ul{margin-top:0}
+.prose ol{padding-left:28px}
+.prose ul{padding-left:20px}
+.prose li+li{margin-top:8px}
+.prose li::marker{color:var(--mut);font-variant-numeric:tabular-nums}
+.bshow{border-radius:12px}
+
+/* -- pills: capsules at any height (radius 18 on the 44px touch pill flattened the ends) [fix-08, watch-05, sec-04] -- */
+.pill{border-radius:999px}
+.seg .pill:first-child{border-radius:999px 0 0 999px}
+.seg .pill:last-child{border-radius:0 999px 999px 0}
+/* the "Done" state is mint in dark mode: dark text, like the green call-to-action (part 1) [sec-03] */
+:root[data-theme=dark] .pill.done.on{color:#0f0f0f}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pill.done.on{color:#0f0f0f}}
+
+/* -- tags: one component on every page: radius 6, 28px with a mouse; on touch a 32px chip with a 44px hit area
+   (they were 44px slabs), hover where the grey surface killed it, the "+N more" list keeps its gaps when opened,
+   404 links get the chip surface (white on white before) [sys-02, watch-15, coach-02, watch-01, sec-11] -- */
+.tag{border-radius:6px;line-height:20px}
+.tags .tmore>summary{font-size:13px;line-height:20px;padding:4px 8px}
+.tags .tmore[open]::details-content{display:contents}
+@media (pointer:coarse){
+  .tags{gap:12px 8px}
+  .tag,.tags .tmore>summary{position:relative;min-height:32px}
+  .tag::after,.tags .tmore>summary::after{content:"";position:absolute;inset:-6px 0}
+}
+.main>.tags .tag{background:var(--chip);color:var(--fg)}
+@media (hover:hover){.chead .tags .tag:hover,.sres .tags .tag:hover,.main>.tags .tag:hover{background:var(--chip2)}}
+
+/* -- watch page: title above the H2s (22px phones / 24px desktop, 700, balanced) [watch-06] -- */
+.vt{font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.2px;text-wrap:balance}
+@media (min-width:1001px){.vt{font-size:24px;letter-spacing:-.3px;margin-top:16px}}
+/* coach / award / stats rows on a fixed 24/20/20 rhythm, the seal can no longer open a line [watch-07] */
+.vch{line-height:24px}
+.vaw{margin:4px 0 0;line-height:20px}
+.vst{margin:4px 0 12px;line-height:20px;gap:0 12px}
+.vch .lau{margin-top:-6px;margin-bottom:-6px}
+.vaw .rctx.win .lau{margin:-6px 4px -6px 0;vertical-align:-5px}
+/* coach and rank links: 44px-ish touch areas that grow away from each other; underline on hover [watch-20, watch-21] */
+@media (pointer:coarse){
+  .vch a,.vaw a{position:relative}
+  .vch a::after{content:"";position:absolute;left:0;right:0;top:-14px;bottom:-3px}
+  .vaw a::after{content:"";position:absolute;left:0;right:0;top:-4px;bottom:-23px}
+}
+@media (hover:hover){.vaw a:hover{text-decoration:underline;text-underline-offset:3px}}
+/* award line follows the OS dark mode too [watch-02] */
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .rctx.win{color:#E3C16F}}
+/* action row stays one row on 360-380px phones [watch-17] */
+@media (max-width:380px){.acts .pill{padding:0 12px}}
+/* reading copy: one body size (16/24) for quote, summary and comments, 14/20 meta lines, 680px measure;
+   the base sets the comment meta with !important, so the override needs it too [watch-12] */
+.wl blockquote.tq{font-size:16px;line-height:24px}
+.desc{padding:16px;font-size:16px;line-height:24px}
+.desc>p.dim{font-size:14px;line-height:20px}
+.desc>p,.desc .tk{max-width:680px}
+.cm>p:not(.cmh):not(.cmf){font-size:16px;line-height:24px;max-width:680px}
+.cmh,.cmf{font-size:14px!important;line-height:20px}
+.desc p,.cm>p:not(.cmh):not(.cmf){text-wrap:pretty}
+/* summary box: 8 between paragraphs, label 12 above / 4 below its list, 12 around the note and the tags [watch-10] */
+.desc p{margin:0 0 8px}
+.desc .tkh{margin:12px 0 4px}
+.desc .tk{margin:0 0 12px}
+.tk li{margin:4px 0}
+.desc .tags{margin-top:12px}
+/* boxes share one text edge (16px; the vote box has a 1px border) [watch-08] */
+.vote{padding:15px}
+/* section spacing on the scale: 24 to the vote card, 32 before each section heading, subtitle 4 under its heading [watch-09] */
+.vote{margin:24px 0 0}
+.cms{margin-top:32px}
+.cms h2{margin:0 0 4px;line-height:1.3}
+.cms>p.dim{margin:12px 0 0}
+.cms>h2+p.dim{margin:0 0 8px}
+.cms>p.small{margin-top:8px}
+.morecm{margin-top:0}
+@media (max-width:1000px){.watch{gap:32px}}
+/* comment rows: 16 above and below the divider; the 44px touch area of "View on Reddit" no longer pushes the row [watch-11] */
+.cm{padding:16px 0}
+.cm p{margin:0}
+.cm .cmh{margin-bottom:4px}
+.cm .cmf{margin-top:8px}
+@media (pointer:coarse){.cmf a{margin-top:-12px;margin-bottom:-12px}}
+/* highlight never moves the text; "[this video]" stays on one line [watch-13] */
+.cm mark{margin:0 -2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.vl{white-space:nowrap}
+/* up next: whole-pixel 160x90 thumbnails, radius 12, card-title weight, 20px heading like the other H2s [watch-16] */
+.wr h2{font-size:20px;line-height:1.3;margin:0 0 12px}
+.un{grid-template-columns:160px minmax(0,1fr);gap:12px;margin-bottom:12px}
+.un:last-child{margin-bottom:0}
+.un .th{border-radius:12px}
+.un img{display:block;transition:transform .2s}
+.un b{font-size:15px;line-height:20px;font-weight:600;letter-spacing:-.1px}
+.un i{font-size:13px;line-height:18px}
+.un b+i{margin-top:2px}
+@media (hover:hover){.un:hover img{transform:scale(1.02)}}
+/* sticky plan bar on phones: a full-width strip under the header with a hairline (it was a grey card fusing with
+   the grey summary box) [watch-18] */
+@media (max-width:760px){.pbar{margin:-12px calc(-1*var(--gut)) 12px;padding:8px var(--gut);border-radius:0;background:var(--bg);border-bottom:1px solid var(--line)}}
+@media (max-width:600px){.pbar{margin-top:-8px}}
+/* plan box: both pills one size and style, padding 12, 12 to the text below [watch-19] */
+.inplan{padding:12px;margin:0 0 12px;font-size:14px;line-height:20px}
+.inplan p{margin:0 0 8px}
+.inplan p:last-child{margin:0}
+.inplan a.pill{color:var(--fg);font-weight:500;font-size:13px;height:32px;padding:0 12px;text-decoration:none}
+
+/* -- coach page header: rhythm 8 / 12 / 12 / 24, same top offset as the list pages [coach-05]; stats as units with
+   the numbers in text colour (markup .cst) [coach-06]; the mini seal scales with the H1 and never wraps alone
+   [coach-07, coach-08] -- */
+.chead{margin:8px 0 24px}
+.chead h1{margin:0}
+.chead .dim{margin:8px 0 0}
+.chead .tags{margin-top:12px}
+.chead .tags+p{margin:12px 0 0}
+.chead .cst{display:flex;flex-wrap:wrap;gap:2px 12px}
+.chead .dim b{color:var(--fg);font-weight:700}
+.chead h1:has(.lau){padding-right:calc(1em + 8px)}
+.chead h1 .lau{margin-right:calc(-1em - 8px);vertical-align:-.1em}
+.chead h1 .lau svg{width:1em;height:1em}
+/* "YouTube channel" reads as a link (text colour, accent underline like the home lede), 44px touch area [coach-12] */
+.chead .tags+p a{text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:1px;text-underline-offset:3px}
+@media (hover:hover){.chead .tags+p a:hover{color:var(--acc)}}
+@media (pointer:coarse){.chead .tags+p a{display:inline-block;line-height:20px;padding:6px 0 18px;margin:-6px 0 -18px}}
+/* seal row: runs to the screen edge so the cut reads as "swipe", first card on the gutter, no scrollbar,
+   radius and gap on the system, hover [coach-01]; the box is reserved before the 2:1 file loads [coach-04] */
+.awards{margin:0 0 24px}
+.awl{gap:12px;margin:0 calc(-1*var(--gut));padding:0 var(--gut);scroll-padding-inline:var(--gut);scrollbar-width:none}
+.awl::-webkit-scrollbar{display:none}
+.aw{border-radius:12px;padding:12px;transition:border-color .15s}
+@media (hover:hover){.aw:hover{border-color:var(--acc)}}
+.aw:focus-visible{outline-offset:-2px}
+.aw img,.bshow img{aspect-ratio:2/1}
+/* dark mode: the dark seal variant on a transparent card (the cards stayed glaring white); gold of the seals unchanged [coach-03] */
+.aw img.dk{display:none}
+.awd .aw span{color:var(--acc)}
+:root[data-theme=dark] .awd .aw{background:transparent}
+:root[data-theme=dark] .awd img.lt{display:none}
+:root[data-theme=dark] .awd img.dk{display:block}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]) .awd .aw{background:transparent}
+  :root:not([data-theme=light]) .awd img.lt{display:none}
+  :root:not([data-theme=light]) .awd img.dk{display:block}
+  :root:not([data-theme=light]) .bdg img{display:none}
+  :root:not([data-theme=light]) .bdg img.dk{display:block}
+}
+/* badge kit: one frame (cards become ruled sections), radius 12, 44px touch areas for the copy/download buttons [coach-13] */
+.bkit{border-radius:12px}
+.bkit .bcard{border:0;border-top:1px solid var(--line);border-radius:0;padding:16px 0 0;margin:16px 0 0}
+@media (pointer:coarse){
+  .bact a,.cbtn{position:relative}
+  .bact a::after,.cbtn::after{content:"";position:absolute;inset:-6px 0}
+  .bhow .cbtn::after{inset:-9px 0}
+}
+
+/* -- coaches list: rank on the page edge and on the name's baseline, name and award wrap as units,
+   the ranking number in text colour (markup) [coach-09, coach-10, coach-11] -- */
+.clist{margin-left:-12px;margin-right:-12px;max-width:924px}
+.crow{border-radius:12px;align-items:baseline}
+.crow .n{padding-top:0;align-self:baseline;font-variant-numeric:tabular-nums}
+.crow b{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+.crow .awt{margin-left:0}
+.crow span b{display:inline;font-size:inherit;font-weight:600;color:var(--fg)}
+
+/* -- fix plans list: the row anatomy of the ranked rows (thumbnail on the page edge, 16/600 title, 14px meta with a
+   green "fixed it", radius 12) [sec-01] -- */
+.plist{gap:8px;margin:0 -8px;max-width:916px}
+.plist .plc{grid-template-columns:120px minmax(0,1fr);grid-template-rows:auto 1fr;gap:4px 12px}
+.plist .plc .th{border-radius:12px}
+.plist .plc b{font-size:16px;line-height:1.3;font-weight:600;letter-spacing:-.1px}
+.plist .plc i{font-size:14px;line-height:20px;margin-top:0}
+@media (max-width:900px){.plist .du .dn{display:none}}
+/* fix plans list from 901px: two columns instead of one 450px column beside 800px of white. Separable. [sec-01] */
+@media (min-width:901px){.plist{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;max-width:none}.plist .plc{grid-template-columns:168px minmax(0,1fr);gap:4px 16px}}
+
+/* -- plan page: label and count on one line with the track below on phones, a visible empty track, pills that wrap
+   with a gap, 16px steps between bar, pills and list [sec-02]; steps grouped and separated (12 inside, 32 between
+   on phones), card-title weight, radius 12 [sec-05]; step label = the system caps label [sys-06] -- */
+.planbar{padding:12px 16px;margin:0 0 16px}
+.planbar .progt{font-size:14px;line-height:1.4}
+.planbar .prog{background:color-mix(in srgb,var(--fg) 16%,transparent)}
+@media (max-width:600px){.planbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px}.planbar .prog{grid-column:1 / -1;order:3;min-width:0}}
+.plan>p:not(.kick):not(.lead){display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.plan>p>.pill.inl{margin-right:0}
+.pll{margin:16px 0 0}
+.pli .th{border-radius:12px}
+.pli h3{line-height:1.3;font-weight:600;letter-spacing:-.1px}
+.pli .done{margin-top:8px}
+@media (max-width:600px){.pll{gap:32px}.pli{gap:12px}}
+.steplab{letter-spacing:1.4px;line-height:1.4;color:var(--mut)}
+
+/* -- problems index: rows read as links (text colour, drawn chevron) and are 36px (44px on touch), counts on the
+   title baseline [sec-08] -- */
+.box{padding:16px 16px 8px}
+.box h2{line-height:1.3;margin:0 0 4px;align-items:baseline}
+.box h2 span,.box a span{font-size:13px;white-space:nowrap}
+.box a{align-items:baseline;margin:0 -8px;padding:calc((36px - 1.3em)/2) 8px;border-radius:6px;color:var(--fg);font-size:15px;line-height:1.3}
+.box a::after{content:"";flex:none;align-self:center;width:6px;height:6px;margin:0 3px 0 auto;padding:0;border:solid var(--mut);border-width:0 1.5px 1.5px 0;transform:rotate(-45deg)}
+@media (hover:hover){.box a:hover{background:var(--chip2)}}
+@media (pointer:coarse){.box a{padding-block:calc((44px - 1.3em)/2)}}
+/* problems index: packed columns instead of a 4-column grid with holes up to 170px. Separable. [sec-08] */
+.boxes{display:block;columns:3 280px;column-gap:16px}
+.box{break-inside:avoid;margin:0 0 16px}
+
+/* -- search page: both section headings are H2s of the site scale [sec-09] (the title clearance is part 1, brand-14) -- */
+.sres h2{font-size:20px;line-height:1.3;margin:0 0 12px}
+.sres .tags{margin-top:0}
+@media (min-width:601px){.sres h2{margin-bottom:16px}}
+
+/* -- form controls: brand checkboxes (16px, as the finder toggle) with 44px rows on touch, filter values that fit
+   and are not bold, count on the grid [sec-10] -- */
+input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px;margin:0;flex:none}
+.set{gap:12px;margin:0;min-height:44px}
+form.filters label.cb{gap:8px;min-height:32px;margin-bottom:-6px}
+form.filters select{font-weight:400;padding:0 8px 0 12px}
+@media (pointer:coarse){form.filters label.cb{min-height:44px;margin:-4px 0 -12px}}
+@media (max-width:699px){form.filters label:nth-child(-n+2){grid-column:1 / -1}}
+#count{margin:16px 0}
+
+/* -- stats page: KPI numbers on the scale, bar labels on one line, 8px bars with a visible minimum [sec-12] -- */
+.kpis{gap:12px;margin:16px 0 32px}
+.kpis div{padding:16px;font-size:13px;line-height:1.4}
+.kpis b{font-size:28px;line-height:32px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.bars{gap:8px}
+.bar{gap:12px;line-height:1.4}
+.bar .b{height:8px;border-radius:4px;min-width:4px}
+.bar span:last-child{font-variant-numeric:tabular-nums}
+@media (max-width:600px){.bar{grid-template-columns:minmax(0,1fr) 30% 40px}}
+
+/* -- text links: one underline (1px, 3px offset) on every link in running text, the invisible "About" link becomes
+   visible, one hover (text colour, 2px underline) [sys-03] -- */
+.intro .meta a,.kick a,.prose p a,.desc a,.inplan a,.cmf a,.bnote a,.bkit>p a,.cms>p.dim a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.cms>p.dim a{color:var(--fg)}
+@media (hover:hover){
+  .intro .meta a:hover,.kick a:hover,.prose p a:hover,.desc a:hover,.inplan a:hover,.bnote a:hover,.bkit>p a:hover,.cms>p.dim a:hover{color:var(--fg);text-decoration-thickness:2px}
+  p.more a:hover,.fixes li a:hover,.ins a:hover,.morel li a:hover,.vthanks a:hover,.pbar a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+}
+/* small text links on touch screens: taller hit area through inline padding, no layout change [sys-07] */
+@media (pointer:coarse){
+  .vc .ch a{padding:4px 0}
+  .kick a,.intro .meta a,.cms>p.dim a,.bkit>p a{padding:12px 0}
+}
+/* -- controls: every button-like control answers hover with the same 150ms fade (mouse only; taps stay instant) [sys-04] -- */
+@media (hover:hover){
+  .chip,.pill,.tag,.tbtn,.icon,.tnav a,.crow,.plist .plc,.box a,.side>a,.sugg a,.morecm>summary,.bkit>summary,.fixes>summary,.morel>summary{transition:background-color .15s,color .15s}
+  .ask .pill:hover{background:color-mix(in srgb,var(--fg) 82%,var(--bg))}
+  .tbtn:hover{background:var(--chip2)}
+  .tags .tmore>summary:hover{text-decoration:underline;text-underline-offset:3px}
+}
+/* plan cards in the horizontal row (home, phones): the scroller cut the focus ring; it is drawn on the thumbnail [sys-05] */
+@media (max-width:760px){
+  .pgrid.row1 .plc:focus-visible{outline:none}
+  .pgrid.row1 .plc:focus-visible .th{outline:2px solid var(--acc);outline-offset:-2px}
+}
