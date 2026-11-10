@@ -211,6 +211,8 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 def thumb(vid, q="mq2"):
     """Preview images are self-hosted (static/thumbs, see build/fetch_thumbs.py) so visitors never contact Google
     just to see them. Other variants (og:image, JSON-LD) stay external: only crawlers fetch those."""
+    if q == "mq2" and vid not in MQ2 and vid in HQ2:
+        q = "hq2"  # no small picture yet (fetch_thumbs.py gets it on the next refresh): the large one, never a broken image
     if q in ("mq2", "hq2"):
         return f"{BASE}/static/thumbs/{q}/{vid}.webp"
     return f"https://i.ytimg.com/vi/{vid}/{q}.jpg"
@@ -269,6 +271,7 @@ def coach_mark(s, count=False):
 
 PKEY = {p["name"]: p["key"] for p in PROBLEMS}
 HQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "hq2"))}
+MQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
 HQ_SRCSET = ' srcset="{a} 320w, {b} 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"'
 RK4_SRCSET = ' srcset="{a} 320w, {b} 480w" sizes="(max-width:900px) 120px, 400px"'
 
@@ -314,9 +317,6 @@ def board(vs):
     rows = "".join(board_row(v, v["recs"], v.get("success", 0), i, mx) for i, v in enumerate(vs, 1))
     return (f'<section class="ldb" id="board"><div class="ldh"><h2 class="row">The leaderboard</h2>'
             f'<p>Top {len(vs)} of {len(WATCH):,} lessons, by recommendations</p></div>{LDK}<ol class="ldl">{rows}</ol></section>')
-
-
-MQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
 
 
 def problem_index(skip=None, only=None):

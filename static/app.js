@@ -389,12 +389,17 @@
   });
   planSync();
 
+  // A small preview picture that is missing: try the large one, and only hide the image if that fails too.
+  window.thumbFail = function (im) {
+    if (im.src.indexOf("/mq2/") > 0) { im.removeAttribute("srcset"); im.src = im.src.replace("/mq2/", "/hq2/"); }
+    else { im.onerror = null; im.style.visibility = "hidden"; }
+  };
   // ---------- index-driven views ----------
   var list = $("#list"), feed = $("#feed");
   if (!list && !feed) return;
   function card(v, hq) {
     var href = B + "/watch/" + v[0] + "/", t = TYPES[v[8]], th = B + "/static/thumbs/";
-    return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + th + "mq2/" + v[0] + '.webp"' + (hq ? ' srcset="' + th + "mq2/" + v[0] + ".webp 320w, " + th + "hq2/" + v[0] + '.webp 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"' : "") + ' alt="" onerror="this.onerror=null;this.style.visibility=\'hidden\'">' +
+    return '<article class="vc" data-vid="' + v[0] + '"><div class="thw" data-vid="' + v[0] + '"><a class="th" href="' + href + '"><img loading="lazy" src="' + th + "mq2/" + v[0] + '.webp"' + (hq ? ' srcset="' + th + "mq2/" + v[0] + ".webp 320w, " + th + "hq2/" + v[0] + '.webp 480w" sizes="(max-width:600px) 100vw, (max-width:1000px) 50vw, 33vw"' : "") + ' alt="" onerror="thumbFail(this)">' +
       (v[12] ? '<span class="du">' + dur(v[12]) + "</span>" : "") + '</a><button class="lb" aria-label="Watch later" title="Watch later"><svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button></div>' +
       '<div class="vm"><h3><a href="' + href + '">' + esc(v[1]) + '</a></h3><p class="ch">' + (v[3] ? '<a href="' + B + "/coach/" + v[3] + '/">' + esc(v[2]) + "</a>" : esc(v[2])) + (t ? " · " + t : "") +
       '</p><p class="st"><span><b>' + v[4] + "</b> recommend" + (v[4] == 1 ? "s" : "") + "</span>" + (v[5] ? '<span class="ok">' + CK + v[5] + " fixed it</span>" : "") + (v[6] ? '<span class="nw">' + esc(v[6]) + "</span>" : "") + "</p></div></article>";

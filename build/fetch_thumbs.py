@@ -1,5 +1,6 @@
 """Self-host the small video preview images the site shows (no request from visitors to Google/YouTube).
-Scans the built site (_site) for /static/thumbs/<q>/<vid>.webp references and downloads the missing ones.
+Scans the built site (_site) for /static/thumbs/<q>/<vid>.webp references, adds the small picture of every lesson in
+the search index, and downloads the missing ones.
 Run after `python3 build/build.py`; then rebuild. Needs Pillow (pip install pillow)."""
 import os, re, sys, glob, urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -12,6 +13,12 @@ refs = set()
 for f in glob.glob(os.path.join(ROOT, "_site", "**", "*.*"), recursive=True):
     if f.endswith((".html", ".json", ".js")):
         refs.update(re.findall(r"/static/thumbs/(mq2|hq2)/([A-Za-z0-9_-]{11})\.webp", open(f, encoding="utf-8", errors="ignore").read()))
+# Search, browse and the saved lists are drawn in the browser from index.json and show the small picture of every lesson,
+# so every lesson in the index needs one, not only those a built page points to.
+ix = os.path.join(ROOT, "_site", "static", "index.json")
+if os.path.exists(ix):
+    import json
+    refs.update(("mq2", v[0]) for v in json.load(open(ix, encoding="utf-8"))["v"])
 need = sorted(r for r in refs if not os.path.exists(os.path.join(OUT, r[0], r[1] + ".webp")))
 print(f"referenced {len(refs)}, missing {len(need)}")
 
