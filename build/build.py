@@ -188,9 +188,15 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 </nav>
 <div class="scrim" id="scrim"></div>
 <main class="main" id="main" tabindex="-1">{body}
-  <footer class="foot"><p class="fmsg"><span>Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></span> <span>Coaches: <a href="{BASE}/badges/">get your badges</a></span></p><p class="fthm"><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></p>{f'<a class="sub" href="{e(nl)}">Get the monthly top fixes</a>' if nl else ''}
-  <nav class="fnav" aria-label="Footer"><a href="{BASE}/report/">Stats</a><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a><a href="{BASE}/about/">About</a><a href="{BASE}/privacy/">Privacy</a><a href="{BASE}/imprint/">Imprint</a></nav>
-  <p class="fnote">Not affiliated with Reddit or YouTube.</p></footer>
+  <footer class="ft">
+  <div class="ftt"><div class="ftc"><p class="ftq">Golf lessons, ranked by golfers.</p>
+  <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
+  <nav class="ftn" aria-label="Footer"><div><h2>Explore</h2><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">All lessons</a></div>
+  <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/badges/">Badges for coaches</a></div>
+  <div><h2>GolfVotes</h2><a href="{BASE}/about/">How we rank</a><a href="{BASE}/report/">Stats</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a></div>
+  <div><h2>Legal</h2><a href="{BASE}/privacy/">Privacy</a><a href="{BASE}/imprint/">Imprint</a></div></nav></div>
+  <div class="ftw" aria-hidden="true">{WORDMARK.replace(' role="img" aria-label="GolfVotes"', '')}</div>
+  <div class="fte"><p>Not affiliated with Reddit or YouTube.</p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></div></footer>
 </main>
 <script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
 <script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
@@ -310,16 +316,19 @@ def board(vs):
             f'<p>Top {len(vs)} of {len(WATCH):,} lessons, by recommendations</p></div>{LDK}<ol class="ldl">{rows}</ol></section>')
 
 
-def chips(active=None):
-    order = ["slice", "shank", "early_extension", "over_the_top", "hook", "fat_thin", "driver_distance", "iron_contact", "chipping",
-             "putting", "casting_lag", "bunker", "wedges_pitching", "rotation_hips", "takeaway_backswing", "setup_posture", "grip"]
-    tops = sorted([q for q in PROBLEMS if q["video_count"] >= 5], key=lambda q: (q["key"] not in ("slice", "shank"), -q["video_count"]))[:14]
-    c = f'<a class="chip{" on" if not active else ""}" href="{BASE}/">All</a>'
-    c += "".join(f'<a class="chip{" on" if active == p["key"] else ""}" href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>' for p in tops)
-    return f'<div class="chips">{c}<a class="chip" href="{BASE}/categories/">All problems →</a></div>'
+MQ2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
 
 
-# ---------- pages ----------
+def problem_index(skip=None):
+    """Every problem as a word with its count; the picture of its top lesson floats beside the pointer on hover."""
+    def entry(p):
+        top1 = by_problem.get(p["key"]) or []
+        vid = top1[0][3]["vid"] if top1 and top1[0][3]["vid"] in MQ2 else ""
+        return (f'<a class="ix" href="{BASE}/fix/{p["slug"]}/"{f" data-vid={chr(34)}{e(vid)}{chr(34)}" if vid else ""}>'
+                f'{e(p["name"])}<sup>{p["total_recs"]:,}</sup></a>')
+    return "".join(entry(p) for p in sorted([p for p in PROBLEMS if p["video_count"] and p["key"] != skip], key=lambda p: -p["total_recs"]))
+
+
 MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
     ("slice", 262, 96, "Curves right", "Curves left", "M160 326C120 250 150 130 262 96", "That’s a slice."),
     ("hook", 58, 96, "Curves left", "Curves right", "M160 326C200 250 170 130 58 96", "That’s a hook."),
@@ -362,14 +371,7 @@ def finder():
 
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
-    mq2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
-
-    def entry(p):  # one word of the index; the picture of its top lesson floats beside the pointer on hover
-        top1 = by_problem.get(p["key"]) or []
-        vid = top1[0][3]["vid"] if top1 and top1[0][3]["vid"] in mq2 else ""
-        return (f'<a class="ix" href="{BASE}/fix/{p["slug"]}/"{f" data-vid={chr(34)}{e(vid)}{chr(34)}" if vid else ""}>'
-                f'{e(p["name"])}<sup>{p["total_recs"]:,}</sup></a>')
-    index = "".join(entry(p) for p in sorted([p for p in PROBLEMS if p["video_count"]], key=lambda p: -p["total_recs"]))
+    index = problem_index()
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">Golf lessons, ranked by golfers.<span>{TOTAL_RECS:,} Reddit recommendations for YouTube lessons.</span></h1>
 {finder()}
@@ -455,16 +457,23 @@ def build_problem(p):
     aids = LINKS.get("problem_aids", {}).get(p["key"], [])
     aid_html = ('<div class="aids"><b>Training aids golfers mention</b> <span class="ad">Ad</span> ' + " · ".join(
         f'<a href="{BASE}/go/{e(a["slug"])}/" rel="sponsored noopener">{e(a["name"])}</a>' for a in aids) + "</div>") if aids else ""
-    body = f"""{chips(p['key'])}
-<section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
-<p>{e(p['intro'])}</p>
-<p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}{fixes_list(p)}{aid_html}</section>
-<div class="grid ranked" id="ranked">{card(rows[0][3], rows[0][1], rows[0][2], 1, p['name'], top_quote(rows[0][3]))}</div>
-{f'<section class="ldb ldbp">{LDK}<ol class="ldl{" long" if len(rows) > 10 else ""}" id="rest" start="2">' + "".join(board_row(v, n, ok, i, rows[0][1]) for i, (s, n, ok, v) in enumerate(rows[1:], 2)) + '</ol></section>' if len(rows) > 1 else ''}
+    s0, n0, ok0, v0 = rows[0]
+    nprob = len([q for q in PROBLEMS if q["video_count"]])
+    body = f"""<nav class="pcrumb" aria-label="Breadcrumb"><a href="{BASE}/categories/">All {nprob} problems</a><span aria-hidden="true">/</span><span>{e(p['group'])}</span></nav>
+<section class="phero">
+<div class="pht"><h1>{e(p['q'])}</h1>
+<p class="phs">{p['total_recs']:,} recommendations for {p['video_count']} lesson{'s' if p['video_count'] != 1 else ''}.{f' {ok_total} golfers say it fixed it.' if ok_total > 1 else ''}</p>
+<p class="phi">{e(p['intro'])} Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}</div>
+<div class="phl"><p class="phk">Most recommended</p>{card(v0, n0, ok0, 1, p['name'], top_quote(v0), hq=True)}</div>
+</section>
+{fixes_list(p)}{aid_html}
+{f'<section class="ldb ldbp">{LDK}<ol class="ldl{" long" if len(rows) > 10 else ""}" id="rest" start="2">' + "".join(board_row(v, n, ok, i, n0) for i, (s, n, ok, v) in enumerate(rows[1:], 2)) + '</ol></section>' if len(rows) > 1 else ''}
 {f'<p class="more"><button class="pill inl" id="showall" aria-controls="rest">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
 {more_lessons(p, rows)}
 {sounds_like(p)}
 {ask_cta(p)}
+<section class="pix"><h2 class="pick">Other problems</h2><nav class="ixs" aria-label="Other problems">{problem_index(p['key'])}</nav>
+<p class="ixn"><a class="ixa" href="{BASE}/categories/">All {nprob} problems →</a></p></section>
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
     page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
          f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
@@ -517,8 +526,15 @@ def build_watch(v):
             break
     if len(rel) < 12:
         rel += [x for x in sorted(channels[v["cs"]]["videos"], key=lambda x: -x["recs"]) if x["vid"] != v["vid"] and x["page"] and x not in rel][: 12 - len(rel)]
-    upnext = "".join(f'<a class="un" href="{BASE}/watch/{x["vid"]}/"><span class="th"><img loading="lazy" src="{thumb(x["vid"])}" alt=""></span>'
-                     f'<span><b>{e(nice(x["title"]))}</b><i>{e(x["channel"])}</i><i>{x["recs"]} golfers recommend</i></span></a>' for x in rel)
+    unmx = max([x["recs"] for x in rel] + [1])
+    upnext = "".join(f'<a class="un" href="{BASE}/watch/{x["vid"]}/" style="--w:{100 * x["recs"] / unmx:.1f}%"><span class="th"><img loading="lazy" src="{thumb(x["vid"])}" alt=""></span>'
+                     f'<span><b>{e(nice(x["title"]))}</b><i>{e(x["channel"])}</i><i class="unr"><b>{x["recs"]}</b> recommend{"s" if x["recs"] == 1 else ""}</i>'
+                     f'<span class="ldbar"></span></span></a>' for x in rel)
+    rk = None  # position in the ranking of the lesson's main problem
+    if v.get("top") in PNAME:
+        ids = [r[3]["vid"] for r in by_problem.get(v["top"], [])]
+        if v["vid"] in ids:
+            rk = (ids.index(v["vid"]) + 1, PNAME[v["top"]])
     yrs = v.get("years") or []
     won = 'class="rctx win"' in rank_ctx(v)  # the winning lesson shows its seal in the rank line, not twice
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>{"" if won else coach_mark(v["cs"])}' if v["cs"] in COACH_SET else e(v["channel"])
@@ -527,7 +543,7 @@ def build_watch(v):
 <button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
-{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if rank_ctx(v) else ''}<p class="vst"><span><b>{v['recs']}</b> golfers recommend</span>{f'<span class="ok">{CK}{v["success"]} fixed it</span>' if v.get('success') else ''}{f'<span class="nw">last recommended {lastrec(v["vid"])}</span>' if lastrec(v["vid"]) else ''}</p>
+{f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if won else ''}<div class="vsb"><div><b data-cnt="{v['recs']}">{v['recs']}</b><span>golfer{'s' if v['recs'] != 1 else ''} recommend{'s' if v['recs'] == 1 else ''} it</span></div>{f'<div class="ok"><b data-cnt="{v["success"]}">{v["success"]}</b><span>say it fixed it</span></div>' if v.get('success') else ''}{f'<a href="{BASE}/fix/{rk[1]["slug"]}/"><b>#{rk[0]}</b><span>for {e(rk[1]["name"])}</span></a>' if rk and not won else ''}{f'<div class="nw"><b>{lastrec(v["vid"])}</b><span>last recommended</span></div>' if lastrec(v["vid"]) else ''}</div>
 {top_quote(v)}
 <div class="acts" data-vid="{e(v['vid'])}" data-t="{e(v['title'])}" data-c="{e(v['channel'])}">
 <button class="pill" data-act="liked">{svg('like')}<span>Like</span></button>

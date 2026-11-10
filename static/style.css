@@ -1371,3 +1371,81 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 @media (min-width:901px){.ldbp{margin-top:0}}
 .ldl.long:not(.showall)>li:nth-child(n+10){display:none}
 .ldbp+p.more{margin:24px 0 0}
+
+/* -- problem page head: the question on the left, the lesson golfers picked on the right (same idea as the home
+   hero). A one-line breadcrumb replaces the two chip rows; every other problem is listed as words at the foot.
+   The leader's picture is never wider than its 480px file, so it stays sharp. -- */
+.pcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px;margin:8px 0 12px;font-size:12px;line-height:20px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+.pcrumb a{color:inherit;text-decoration:none;padding:12px 0}
+.pcrumb a:hover{color:var(--fg)}
+.phero{margin:0 0 32px}
+.pht h1{margin:0 0 12px;font-size:32px;line-height:36px;font-weight:800;letter-spacing:-.03em;word-spacing:.06em;text-wrap:balance}
+.phs{margin:0 0 16px;font-size:20px;line-height:25px;font-weight:700;letter-spacing:-.3px;color:var(--mut);text-wrap:balance}
+.phi{margin:0 0 20px;max-width:560px;font-size:16px;line-height:24px;color:var(--mut);text-wrap:pretty}
+.phi a{color:inherit;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:1px;text-underline-offset:3px;white-space:nowrap}
+.phl{margin-top:32px;max-width:480px}
+.phk{margin:0 0 12px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+.phl .vc h3{font-size:20px;line-height:24px;font-weight:700;letter-spacing:-.01em}
+.phl .vc .tq{margin:12px 0 0}
+.phero~.fixes{margin-bottom:24px}
+@media (min-width:1000px){
+  .phero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,480px);column-gap:64px;align-items:start;margin-bottom:40px}
+  .pht h1{font-size:48px;line-height:52px}
+  .phs{font-size:24px;line-height:30px}
+  .phl{margin-top:0}
+}
+@media (min-width:1440px){.pht h1{font-size:56px;line-height:60px}}
+.pix{margin:48px 0 0}
+.pix .ix{font-size:20px;line-height:28px;padding:8px 0}
+.pix .ixn{margin:0}
+@media (min-width:601px){.pix .ix{font-size:28px;line-height:36px;padding:4px 0}.pix .ix sup{font-size:12px;top:-1em}}
+@media (min-width:1200px){.pix .ix{font-size:32px;line-height:44px}.pix .ix sup{font-size:13px;top:-1.1em}}
+.ldbp~.morel{max-width:760px;margin:32px 0 0}
+.pht a.plancta{text-decoration:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pht .plancta{color:#fff}}
+@media (min-width:601px) and (max-width:999px){.pht h1{font-size:40px;line-height:44px}}
+
+/* -- lesson page: the counts as a scoreboard under the title, "Up next" rows carry their count and bar -- */
+.vsb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0 16px;border-top:1px solid var(--line)}
+.vsb>*{display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 12px 12px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.vsb>:nth-child(even){padding-left:16px;border-left:1px solid var(--line)}
+.vsb b{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.vsb span{font-size:13px;line-height:16px;color:var(--mut)}
+.vsb .ok b{color:var(--ok)}
+.vsb .nw b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+@media (hover:hover){.vsb a:hover span{color:var(--fg);text-decoration:underline;text-underline-offset:3px}}
+@media (min-width:601px){
+  .vsb{display:flex;border-bottom:1px solid var(--line)}
+  .vsb>*{flex:0 1 auto;padding:12px 32px 12px 0;border-bottom:0}
+  .vsb>*+*{padding-left:24px;border-left:1px solid var(--line)}
+  .vsb b{font-size:28px;line-height:32px}.vsb .nw b{font-size:18px}
+}
+.un .unr{margin-top:2px}
+.un .unr b{display:inline;font-size:13px;line-height:18px;font-weight:700;letter-spacing:0;color:var(--fg);font-variant-numeric:tabular-nums}
+.un .ldbar{display:block;margin-top:6px;max-width:168px}
+/* -- footer as the closing statement: the claim, the ways on, and the wordmark as wide as the page. On scroll the
+   wordmark rises in and its check draws itself. -- */
+.ft{margin-top:64px;padding-top:32px;border-top:1px solid var(--line);font-size:14px;line-height:20px}
+.ftq{margin:0 0 8px;font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.03em;word-spacing:.06em;color:var(--fg)}
+.fts{margin:0 0 4px;color:var(--mut)}
+.fts a{color:var(--fg);font-weight:600;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px;white-space:nowrap}
+.ftn{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px;margin-top:32px}
+.ftn h2{margin:0 0 4px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+.ftn a{display:block;padding:6px 0;color:var(--fg);text-decoration:none}
+.ftw{margin:40px 0 0}
+.ftw .wm{display:block;width:100%;height:auto;color:var(--chip2);overflow:visible}
+.ftw .wmc{stroke:var(--acc)}
+.fte{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;color:var(--mut)}
+.fte p{margin:0}
+@media (hover:hover){.ftn a:hover{color:var(--acc)}}
+@media (pointer:coarse){.ftn a{padding:12px 0}}
+@media (min-width:761px){
+  .ft{margin-top:96px;padding-top:48px}
+  .ftt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px);column-gap:64px;align-items:start}
+  .ftq{font-size:32px;line-height:36px}
+  .ftn{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
+  .ftw{margin-top:64px}
+}
+.rv.ftw .wmc{stroke-dasharray:112;stroke-dashoffset:112}
+.rv.ftw.in .wmc{stroke-dashoffset:0;transition:stroke-dashoffset .9s cubic-bezier(.3,.7,.2,1) .25s}
+@media (max-width:600px){.vsb>:last-child:nth-child(odd){grid-column:1/-1}}
