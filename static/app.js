@@ -19,7 +19,7 @@
   var settings = load("settings", {});
   // touch screens: the chip row starts at "All"; bring the active chip into view once, without animation [fix-13]
   (function () { var o = $(".chips .chip.on"); if (!o || !window.matchMedia || !matchMedia("(pointer:coarse)").matches) return; var c = o.parentNode, r = o.getBoundingClientRect(), cr = c.getBoundingClientRect(); if (r.right > cr.right - 48 || r.left < cr.left) c.scrollLeft += r.left - cr.left - 48; })();
-  var CK = '<svg class="ck" viewBox="-6 -6 63.5 70.45" aria-hidden="true"><path d="M0 31.56L18.5 58.45L51.5 0"/></svg>';
+  var CK = '<svg class="ck" viewBox="0 0 74.91 72.75" aria-hidden="true"><path d="M0 38.56L24.84 72.75L37.84 72.75L74.91 0L54.94 0L29.81 49.31L22 38.56Z"/></svg>';
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
@@ -278,7 +278,7 @@
   // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
   // Leaderboard rows also grow their bar and run their count up.
   if (!calm && "IntersectionObserver" in window) {
-    var rvs = $$(".ldi, .un, .ftw, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
+    var rvs = $$(".ldi, .un, .ftw, .pgrid.row1, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
     if (rvs.length) {
       var rio = new IntersectionObserver(function (es) {
         var i = 0;
