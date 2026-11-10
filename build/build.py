@@ -667,7 +667,7 @@ def comments_html(v):
         st = STANCE.get(c.get("st"), (None, 0))[0]
         tag = f'<span class="lab st-{c["st"]}">{st}</span>' if st and c.get("st") in ("critical",) else ""
         return (f"""<div class="cm{' cm-praise' if c.get('st') in ('praise', 'joke') else ''}"><p class="cmh"><b>r/{e(c['sub'])}</b> · {c['y']}{f' · <span class="up">▲ {c["s"]}</span>' if c.get("s", 0) >= 5 else ''}{f' · in “{e(clean_title(c["pt"]))}”' if c.get('pt') else ''}</p>
-<p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
+<p>{body}</p><p class="cmf">{tag}<span class="lab{' fix' if c['l'] == 'Says it fixed it' else ''}">{CK if c['l'] == 'Says it fixed it' else ''}{e(c['l'])}</span> <a href="{e(c['u'])}" target="_blank" rel="noopener nofollow">View on Reddit</a></p></div>""")
     main = [c for c in cs if c.get("st") not in ("praise", "joke")]
     rest = [c for c in cs if c.get("st") in ("praise", "joke")]
     nu = sum(1 for c in cs if c.get("st") == "useful"); ncrit = sum(1 for c in cs if c.get("st") == "critical")
