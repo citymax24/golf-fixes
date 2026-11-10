@@ -412,7 +412,7 @@ def build_home():
 {board(top[:10])}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
 <h2 class="row">More lessons golfers recommend</h2>
-<div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:34])}</div>
+<div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:16])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",

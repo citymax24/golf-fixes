@@ -429,7 +429,7 @@
         return [s, v];
       }).sort(function (a, b) { return b[0] - a[0]; }).map(function (x) { return x[1]; });
       var onBoard = {}; $$("#board .ldr").forEach(function (r) { onBoard[r.dataset.vid] = 1; });
-      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.filter(function (v) { return !onBoard[v[0]]; }).slice(0, 24)); }
+      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.filter(function (v) { return !onBoard[v[0]]; }).slice(0, 6)); }
       return;
     }
 

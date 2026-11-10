@@ -1384,3 +1384,9 @@ form.filters select{border:1px solid var(--line);background-color:var(--bg)}
 .plist .plc{padding:12px 0;border-radius:0;border-bottom:1px solid var(--line)}
 .plist .plc:hover{background:none}
 @media (hover:hover){.plist .plc:hover b{text-decoration:underline;text-underline-offset:3px}}
+
+/* -- home: section headings carry the page (larger, heavier), and the long wall of cards at the end is a short
+   teaser of six lessons (four on phones) before the link to all lessons. -- */
+h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;word-spacing:.04em}
+@media (min-width:1000px){h2.row{font-size:32px;line-height:36px;letter-spacing:-.025em}}
+@media (max-width:600px){#feed>.vc:nth-child(n+5){display:none}}
