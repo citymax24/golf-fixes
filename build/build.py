@@ -315,11 +315,11 @@ def finder():
                    f'<p class="bfy">Not playing? <a href="https://www.youtube.com/watch?v={e(v["vid"])}" target="_blank" rel="noopener">Open it on YouTube ↗</a></p>'
                    f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
                    f'<p class="bfs">{p["total_recs"]:,} recommendations from golfers for this miss.</p></div>')
-    return f"""<div class="bf" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
-<path class="bfw" d="M112 344C92 252 72 160 110 62C126 20 194 20 210 62C248 160 228 252 208 344Z"/><circle class="bfg" cx="160" cy="46" r="24"/>
-<path class="bfpin" d="M160 46V22l14 6-14 6"/><rect class="bftee" x="150" y="324" width="20" height="5" rx="2.5"/>{lines}</svg>{dots}</div>
+    return f"""<div class="bf" id="bf"><div><p class="bfq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10l5.2 1.1a2 2 0 0 1 1.6 2.3l-.7 4.3A3 3 0 0 1 15.1 20H11a3 3 0 0 1-2.4-1.2L5 14l.7-.7a1.6 1.6 0 0 1 2.1-.2L9 14"/></svg>Tap where your ball usually ends up</p><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
+<path class="bfw" d="M112 344C92 252 72 160 110 62C126 20 194 20 210 62C248 160 228 252 208 344Z"/><circle class="bfg" cx="160" cy="46" r="26"/><circle class="bfcup" cx="160" cy="46" r="5"/>
+<text class="bftx" x="160" y="24" text-anchor="middle">TARGET</text>{lines}<circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="348" text-anchor="middle">YOU</text></svg>{dots}</div>
 <label class="bfh"><input type="checkbox" id="bflh"> I play left-handed</label></div>
-<div class="bfr" aria-live="polite"><div class="bfp" id="bf-0"><h2>Where does your ball end up?</h2><p>Tap the spot. We name the miss and show what golfers recommend for it.</p></div>{panels}</div></div>"""
+<div class="bfr" aria-live="polite"><div class="bfp bf0" id="bf-0"><h2>Six misses. One tap.</h2><p>Pick the spot on the course where your shots usually end up. We name the miss and play the lesson golfers recommend most for it.</p></div>{panels}</div></div>"""
 
 
 def build_home():

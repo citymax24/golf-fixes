@@ -204,6 +204,7 @@
         ev.preventDefault();
         var k = a.dataset.k;
         if (a.classList.contains("on")) return;
+        bff.classList.add("used");
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
         $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
         $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
