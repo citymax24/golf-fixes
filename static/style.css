@@ -515,3 +515,15 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 [data-theme=dark] .bftr{fill:#2F5E36}[data-theme=dark] .bfsh{fill:#000;opacity:.3}
 [data-theme=dark] .bfcup{fill:#0B1710}[data-theme=dark] .bftx{fill:#E8F1EA}[data-theme=dark] .bfl{stroke:#F1EEE4}[data-theme=dark] .bfball{stroke:#0B1710}
 [data-theme=dark] .bfd::before{border-color:#F1EEE4;background:#12251A}[data-theme=dark] .bfd::after{border-color:#F1EEE4}[data-theme=dark] .bfd.on::before{background:#3ECF8E;border-color:#3ECF8E}
+/* finder course v2: layered cuts, bunker lips, tree clusters */
+.bfcut{fill:#BEDCA2;stroke:#BEDCA2;stroke-width:12;stroke-linejoin:round}
+.bfw{fill:#CDE5B3}.bfsp{opacity:.13}
+.bfgc{fill:#B3D698;stroke:#B3D698;stroke-width:9;stroke-linejoin:round}.bfg2{fill:#E0F2CA}
+.bfs{fill:#F5ECD4;stroke:none}.bflip{fill:#8FB878}
+.bfm1{fill:#fff;opacity:.09}.bfm2{fill:#0B3D2C;opacity:.05}
+.bftr{fill:#4F8C4A}.bftr2{fill:#6BAA60}.bftr3{fill:#5C9B53}.bfsh{opacity:.14}
+[data-theme=dark] .bfcut{fill:#183321;stroke:#183321}[data-theme=dark] .bfgc{fill:#1E3F29;stroke:#1E3F29}
+[data-theme=dark] .bfs{fill:#A99C78}[data-theme=dark] .bflip{fill:#0A1810}
+[data-theme=dark] .bfm1{opacity:.03}[data-theme=dark] .bfm2{fill:#000;opacity:.15}
+[data-theme=dark] .bftr{fill:#285230}[data-theme=dark] .bftr2{fill:#356A3D}[data-theme=dark] .bftr3{fill:#2E5E36}
+.bfm2{display:none}.bfm1{opacity:.07}
