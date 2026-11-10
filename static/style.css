@@ -541,3 +541,12 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 [data-theme=dark] .bfgo{stroke:#1A3824}[data-theme=dark] .bfgc{fill:#21462D;stroke:#21462D}[data-theme=dark] .bfg2{fill:#2D5D3B}
 [data-theme=dark] .bfhi{opacity:.12}[data-theme=dark] .bfn{mix-blend-mode:normal;opacity:.5}[data-theme=dark] .bfsp{opacity:.04}
 .bfc svg g{filter:none}.bfsp{opacity:.16}[data-theme=dark] .bfsp{opacity:.05}.bfsh{opacity:.16}
+/* finder course v4: lobed bunkers, tree lines, pond, cart path (learned from aerial references) */
+.bfs{fill:#F6EEDB}.bflip{fill:#7FA968}.bfhi{fill:#fff;opacity:.55}
+.bfwd{fill:#8DB673}.bfpath{fill:none;stroke:#E9E1C6;stroke-width:2.4;stroke-linecap:round;opacity:.85}
+.bfpl{fill:#8DB673}.bfpw{fill:#6FA3BD}
+.bftr{fill:#417F43}.bftr2{fill:#5C9C55}.bftr3{fill:#6FAE63}.bfsh{fill:#0B3D2C;opacity:.22}
+[data-theme=dark] .bfwd{fill:#0C1C13}[data-theme=dark] .bfpath{stroke:#6E6A55;opacity:.6}[data-theme=dark] .bfpl{fill:#0C1C13}[data-theme=dark] .bfpw{fill:#27495A}
+[data-theme=dark] .bftr{fill:#1F4428}[data-theme=dark] .bftr2{fill:#2B5A33}[data-theme=dark] .bftr3{fill:#346A3C}[data-theme=dark] .bfsh{fill:#000;opacity:.35}
+[data-theme=dark] .bfs{fill:#B3A682}[data-theme=dark] .bflip{fill:#091610}
+[data-theme=dark] .bfs{stroke:none}
