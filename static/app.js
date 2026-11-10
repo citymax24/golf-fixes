@@ -434,7 +434,7 @@
 
     var kind = list.dataset.list, arr = [], extra = "";
     if (kind === "search") {
-      var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase();
+      var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase().replace(/\u2019/g, "'");
       $("#q").value = q; $("#ltitle").textContent = q ? "Results for \u201c" + q + "\u201d" : "Search";
       if (q) {
         var SYN = { slicing: "slice", sliced: "slice", slices: "slice", hooking: "hook", hooks: "hook", shanking: "shanks", shank: "shanks", shanked: "shanks",
@@ -443,8 +443,9 @@
           bunker: "bunker", sand: "bunker", ott: "over the top", "over-the-top": "over the top", ee: "early extension", casting: "casting", lag: "lag", speed: "speed" };
         var words = q.split(/\s+/).map(function (w) { return SYN[w] || w; });
         var rx = words.map(function (w) { return new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); });
-        var hit = function (s) { s = s.toLowerCase(); return rx.every(function (r) { return r.test(s); }); };
-        var hitAny = function (s) { s = s.toLowerCase(); return rx.some(function (r) { return r.test(s); }); };
+        var low = function (s) { return s.toLowerCase().replace(/\u2019/g, "'"); };  // titles carry typographic apostrophes
+        var hit = function (s) { s = low(s); return rx.every(function (r) { return r.test(s); }); };
+        var hitAny = function (s) { s = low(s); return rx.some(function (r) { return r.test(s); }); };
         var ps = ix.p.filter(function (p) { return hitAny(p[1] + " " + p[0].replace(/-/g, " ")); }), cs = ix.c.filter(function (c) { return hit(c[1]); });
         if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + " recommendations</a>"; }).join("") + "</div></div>";
         if (cs.length) extra += '<div class="sres"><h2>Coaches</h2><div class="tags">' + cs.slice(0, 12).map(function (c) { return '<a class="tag" href="' + B + "/coach/" + c[0] + '/">' + esc(c[1]) + "</a>"; }).join("") + "</div></div>";

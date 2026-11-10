@@ -1027,7 +1027,7 @@ def build_text():
 
 def build_index():
     """Compact client-side index for search, liked, history, later."""
-    idx = [[v["vid"], v["title"], v["channel"], v["cs"] if v["cs"] in COACH_SET else "", v["recs"], v.get("success", 0),
+    idx = [[v["vid"], nice(v["title"]), v["channel"], v["cs"] if v["cs"] in COACH_SET else "", v["recs"], v.get("success", 0),
             PNAME[v["top"]]["name"] if v["top"] in PNAME else "", [PNAME[t]["slug"] for t in (v.get("topic_counts") or {}) if t in PNAME],
             v.get("type") or "", v.get("level") or "", (v.get("years") or [0, 0])[1], (v.get("years") or [0, 0])[0], v.get("duration_s") or 0, v.get("views") or 0,
             {PNAME[t]["slug"]: n for t, n in (v.get("topic_counts") or {}).items() if t in PNAME}]
