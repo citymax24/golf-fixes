@@ -1295,3 +1295,35 @@ li:nth-child(-n+3)>.ldr .ldp{color:var(--fg)}
 .player img{view-transition-name:vtl}
 ::view-transition-group(vtl){animation-duration:.34s;animation-timing-function:cubic-bezier(.2,.7,.2,1)}
 @media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+/* -- desktop hero, second pass: no dead area beside the course. Before the first tap the left column lists the six
+   misses (a row and its dot light up together and the flight shows as a preview); the course grows with the screen
+   height so the whole hole always fits; the display headline gets real word spaces. -- */
+.welcome h1.hq{word-spacing:.06em}.welcome h1.hq span{word-spacing:0}
+.bfp>h2{word-spacing:.06em}
+.bfg,.bfis{display:none}
+@media (min-width:760px){
+  .bfis{display:block;list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+  .bfg,.bfi{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 144px;column-gap:16px;align-items:center}
+  .bfg{margin:16px 0 0;padding:0 0 8px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+  .bfg span:last-child,.bfi em{text-align:right}
+  .bfi{min-height:44px;padding:0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+  .bfi b{font-size:16px;line-height:24px;font-weight:600;display:flex;align-items:center;gap:12px}
+  .bfi b::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--fg);box-sizing:border-box;transition:background .15s,border-color .15s,transform .15s}
+  .bfi i{font-style:normal;font-size:14px;line-height:20px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bfi em{font-style:normal;font-size:14px;line-height:20px;font-weight:600;font-variant-numeric:tabular-nums}
+  .bfi .l,.lh .bfi .r{display:none}.lh .bfi .l{display:inline}
+  .bfi.hot b::before,.bfi:focus-visible b::before{background:var(--acc);border-color:var(--acc);transform:scale(1.25)}
+  .bfi.hot b,.bfi.hot i{color:var(--acc)}
+  .bfd.hot::before{transform:scale(1.25)}.bfd.hot span{border-color:var(--acc);color:var(--acc)}
+  .bfl.pre:not(.on){animation:bfdraw .32s ease-out forwards;opacity:.45}
+}
+@media (min-width:760px) and (max-width:1199px){.bfg span:nth-child(2),.bfi i{display:none}.bfg,.bfi{grid-template-columns:minmax(0,1fr) 144px}}
+@media (min-width:1200px){
+  .welcome{grid-template-columns:minmax(0,1fr) clamp(400px,min(calc((100vh - 232px)*.8889),38vw),560px)}
+}
+@media (min-width:1440px){
+  .welcome h1.hq{font-size:64px;letter-spacing:-.035em}
+  .welcome h1.hq span{font-size:28px;line-height:36px;margin-top:12px;letter-spacing:-.01em}
+}
+@media (prefers-reduced-motion:reduce){.bfl.pre:not(.on){animation:none;stroke-dashoffset:0}}

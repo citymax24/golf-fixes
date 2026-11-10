@@ -221,6 +221,20 @@
         if (still || !line || !line.getTotalLength) land(); else shot(line, land);
       });
     });
+    // The list of misses beside the course: a row and its dot light up together, the flight shows as a preview, a click plays it.
+    function hot(k, on) {
+      $$('.bfd[data-k="' + k + '"], .bfi[data-k="' + k + '"]', bff).forEach(function (x) { x.classList.toggle("hot", on); });
+      $$('.bfl[data-k="' + k + '"]', bff).forEach(function (x) { x.classList.toggle("pre", on); });
+    }
+    $$(".bfd, .bfi", bff).forEach(function (x) {
+      x.addEventListener("mouseenter", function () { hot(x.dataset.k, true); });
+      x.addEventListener("mouseleave", function () { hot(x.dataset.k, false); });
+      x.addEventListener("focus", function () { hot(x.dataset.k, true); });
+      x.addEventListener("blur", function () { hot(x.dataset.k, false); });
+    });
+    $$(".bfi", bff).forEach(function (x) {
+      x.addEventListener("click", function (ev) { ev.preventDefault(); hot(x.dataset.k, false); var d = $('.bfd[data-k="' + x.dataset.k + '"]', bff); if (d) d.click(); });
+    });
     var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0;
     // The shot: a ball leaves the tee and flies the line of this miss, the tracer draws behind it. The ball is an HTML
     // element above the labels (it is in the air), its shadow stays in the drawing, on the ground.
