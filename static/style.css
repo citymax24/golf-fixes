@@ -1216,3 +1216,30 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 @media (max-width:1199px){.welcome>.bf{margin-bottom:12px}.welcome>.lede{margin:0 0 32px;font-size:14px;line-height:20px}}
 @media (min-width:601px) and (max-width:1199px){.welcome>.lede{margin-bottom:48px}}
 @media (min-width:1200px){.bf>div:first-child{margin-top:8px}}
+
+/* -- finder, the shot: on a tap a ball flies the line of the miss (driven by app.js), lands with one ripple,
+   then the lesson rises in and its vote count runs up. Without motion (prefers-reduced-motion) the line simply shows. -- */
+.bfl.fly{animation:none}
+.bfgs{fill:#0B3D2C}
+.bfball{transition:opacity .25s}
+.bfb{position:absolute;z-index:3;width:3.75%;aspect-ratio:1;border-radius:50%;background:#fff;border:1.5px solid #0B3D2C;box-sizing:border-box;pointer-events:none;transition:opacity .22s}
+.bffly.out{opacity:0}
+.bfd.hit::after{animation:bfping .7s ease-out 1}
+.bfp.in{animation:bfin .36s cubic-bezier(.2,.7,.2,1) both}
+@keyframes bfin{from{opacity:0;transform:translateY(10px)}}
+.bfs b{font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.bfp.in,.bfd.hit::after{animation:none}}
+/* -- desktop hero: every lesson panel shares one grid cell and the hidden ones still take up their height, so the hero
+   is as tall as its tallest state and a tap can never move the page, whatever the font. The video is 340px wide below
+   1440px so that this tallest state is no taller than the course beside it. -- */
+@media (min-width:1200px){
+  .bf>.bfr{display:grid}
+  .bfr>.bfp{grid-area:1/1}
+  .bfr>.bfp[hidden]{display:block;visibility:hidden}
+  .bfr>.bfp[hidden]:not(.bf0){display:grid;grid-template-columns:minmax(0,420px) minmax(200px,1fr);column-gap:24px;align-items:start}
+  .welcome>.lede{margin-bottom:24px}
+}
+@media (min-width:1200px) and (max-width:1439px){
+  .bfr>.bfp:not(.bf0),.bfr>.bfp[hidden]:not(.bf0){grid-template-columns:minmax(0,340px) minmax(200px,1fr)}
+  .welcome h1.hq span{font-size:24px}
+}

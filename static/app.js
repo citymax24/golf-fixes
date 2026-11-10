@@ -208,13 +208,53 @@
         var k = a.dataset.k;
         if (a.classList.contains("on")) return;
         bff.classList.add("used");
-        $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
-        $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
+        $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.classList.remove("hit"); x.setAttribute("aria-pressed", String(x === a)); });
+        var line = null;
+        $$(".bfl", bff).forEach(function (p) { var on = p.dataset.k === k; p.classList.toggle("on", on); p.classList.remove("fly"); p.style.strokeDashoffset = ""; if (on) line = p; });
         $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
-        $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
-        if (window.innerWidth < 760) setTimeout(function () { $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 650);  // let the flight draw first
+        var land = function () {  // the ball is down: show the lesson for this miss
+          a.classList.add("hit");
+          $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; p.classList.toggle("in", !p.hidden); });
+          var c = $("#bf-" + k + " [data-cnt]", bff); if (c && !still) countUp(c);
+          if (window.innerWidth < 760) setTimeout(function () { $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 120);
+        };
+        if (still || !line || !line.getTotalLength) land(); else shot(line, land);
       });
     });
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0;
+    function countUp(el) {
+      var n = +el.dataset.cnt, t0 = performance.now();
+      (function step(now) {
+        var t = Math.min(1, (now - t0) / 700);
+        el.textContent = Math.round(n * (1 - Math.pow(1 - t, 3))).toLocaleString("en-US");
+        if (t < 1) requestAnimationFrame(step);
+      })(t0);
+    }
+    // The shot: a ball leaves the tee and flies the line of this miss, the tracer draws behind it. The ball is an HTML
+    // element above the labels (it is in the air), its shadow stays in the drawing, on the ground.
+    function shot(line, done) {
+      var svg = line.ownerSVGElement, box = svg.parentNode, tee = $("circle.bfball", svg), ns = "http://www.w3.org/2000/svg";
+      cancelAnimationFrame(raf); $$(".bffly", box).forEach(function (n) { n.remove(); });
+      var len = line.getTotalLength(), ms = Math.max(480, Math.min(1000, len * 3.3)), top = Math.min(24, len * .085);
+      var sh = document.createElementNS(ns, "ellipse"), ball = document.createElement("i"), lh = bff.classList.contains("lh");
+      sh.setAttribute("class", "bffly bfgs"); ball.className = "bffly bfb";
+      svg.appendChild(sh); box.appendChild(ball);
+      line.classList.add("fly"); line.style.strokeDashoffset = 1; tee.style.opacity = 0;
+      var t0 = performance.now();
+      (function step(now) {
+        var t = Math.min(1, Math.max(0, (now - t0) / ms)), e = 1 - Math.pow(1 - t, 2.4);  // fast off the club, slower as it comes down
+        var p = line.getPointAtLength(len * e), h = Math.sin(Math.PI * e) * top;
+        ball.style.left = (lh ? 320 - p.x : p.x) / 3.2 + "%"; ball.style.top = p.y / 3.6 + "%";
+        ball.style.transform = "translate(-50%,-50%) scale(" + (1 + h * .022) + ")";
+        sh.setAttribute("cx", p.x + h * .45); sh.setAttribute("cy", p.y + h * .6); sh.setAttribute("rx", 5 + h * .1); sh.setAttribute("ry", 2.6 + h * .05);
+        sh.style.opacity = .3 - h * .007;
+        line.style.strokeDashoffset = 1 - e;
+        if (t < 1) { raf = requestAnimationFrame(step); return; }
+        sh.remove(); ball.classList.add("out"); tee.style.opacity = "";
+        setTimeout(function () { ball.remove(); }, 260);
+        done();
+      })(t0);
+    }
   }
 
   // ---------- badges page: find your channel, select-all on focus ----------
