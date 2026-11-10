@@ -187,12 +187,22 @@
     var lh = $("#bflh");
     if (load("lefty", false) === true) { lh.checked = true; bff.classList.add("lh"); }
     lh.onchange = function () { bff.classList.toggle("lh", lh.checked); save("lefty", lh.checked); };
+    bff.addEventListener("click", function (ev) {
+      var pb = ev.target.closest(".bfplay"); if (!pb) return;
+      var f = document.createElement("iframe");
+      f.className = "bfvid"; f._btn = pb;
+      f.src = "https://www.youtube-nocookie.com/embed/" + pb.dataset.vid + "?autoplay=1&rel=0&modestbranding=1";
+      f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen"; f.allowFullscreen = true;
+      f.referrerPolicy = "strict-origin-when-cross-origin"; f.title = "Video: " + pb.dataset.t;
+      pb.replaceWith(f); f.setAttribute("tabindex", "0"); f.focus();
+    });
     $$(".bfd", bff).forEach(function (a) {
       a.addEventListener("click", function (ev) {
         ev.preventDefault();
         var k = a.dataset.k;
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
         $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
+        $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
         $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
         if (window.innerWidth < 760) $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" });
       });
