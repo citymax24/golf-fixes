@@ -467,7 +467,7 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 
 /* header: wordmark only (the V is the check mark) */
 .brand .wm{display:block;width:auto;height:23px;color:var(--fg);overflow:visible}
-.brand .wmc{stroke:var(--acc)}
+.brand .wmc{fill:var(--acc)}
 @media (max-width:600px){.brand .wm{height:21px}}
 
 /* ===== polish pass ===== */
@@ -783,7 +783,7 @@ h2.row{margin:48px 0 16px;line-height:1.3}
 .vc h3 a:focus-visible{outline:none;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:2px;text-underline-offset:2px}
 /* "fixed it" check: drawn with the geometry of the wordmark check (markup CK in build.py and app.js), sized in em
    so it follows the text; the U+2713 glyph came from a different fallback font on every device [fix-15] */
-.ck{display:inline-block;width:.66em;height:.73em;margin-right:.28em;vertical-align:-.04em;fill:none;stroke:currentColor;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.ck{display:inline-block;width:.75em;height:.73em;margin-right:.26em;vertical-align:baseline;fill:currentColor;stroke:none}
 
 /* -- quotes: padding on the grid; the opening quote mark hangs so all lines share one left edge
    (Safari hangs it natively, elsewhere a negative indent) [fix-16, watch-08] -- */
@@ -1266,7 +1266,7 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 .ftn a{display:block;padding:6px 0;color:var(--fg);text-decoration:none}
 .ftw{margin:40px 0 0}
 .ftw .wm{display:block;width:100%;height:auto;color:var(--chip2);overflow:visible}
-.ftw .wmc{stroke:var(--acc)}
+.ftw .wmc{fill:var(--acc)}
 .fte{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;color:var(--mut)}
 .fte p{margin:0}
 @media (hover:hover){.ftn a:hover{color:var(--acc)}}
@@ -1278,8 +1278,8 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
   .ftn{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
   .ftw{margin-top:64px}
 }
-.rv.ftw .wmc{stroke-dasharray:112;stroke-dashoffset:112}
-.rv.ftw.in .wmc{stroke-dashoffset:0;transition:stroke-dashoffset .9s cubic-bezier(.3,.7,.2,1) .25s}
+.rv.ftw .wmc{clip-path:inset(0 100% 0 0)}
+.rv.ftw.in .wmc{clip-path:inset(0 0 0 0);transition:clip-path .8s cubic-bezier(.3,.7,.2,1) .25s}
 @media (max-width:600px){.vsb>:last-child:nth-child(odd){grid-column:1/-1}}
 
 /* -- the same head and board language on the list pages: coaches as a leaderboard (no pictures), the coach page with
