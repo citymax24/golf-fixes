@@ -1431,3 +1431,8 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .side>a:nth-child(1){--i:1}.side>a:nth-child(2){--i:2}.side>a:nth-child(3){--i:3}.side>a:nth-child(4){--i:4}.side>a:nth-child(5){--i:5}
   .side>a:nth-child(6){--i:6}.side>a:nth-child(7){--i:7}.side>a:nth-child(8){--i:8}.side>a:nth-child(9){--i:9}
 }
+
+/* -- card titles of one line were 20px high next to the channel link's enlarged touch area: 3px of padding on the
+   inline link makes the target taller than 24px (WCAG 2.2, 2.5.8) without moving anything. -- */
+.vc h3 a{padding:3px 0}
+@media (pointer:fine){.vc .ch a{padding:1px 0 6px}}   /* same for the channel link with a mouse: 17px + 7px, downwards, away from the title */
