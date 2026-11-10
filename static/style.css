@@ -1349,3 +1349,38 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 @media (min-width:601px) and (max-width:999px){.ptitle{font-size:40px;line-height:44px}}
 @media (min-width:1000px){.ptitle{font-size:48px;line-height:52px}.lead{font-size:24px;line-height:30px}}
 @media (min-width:1440px){.ptitle{font-size:56px;line-height:60px}}
+
+/* -- the last grey boxes: numbers on About / Data / Report as a scoreboard with hairlines, the browse filters as a
+   plain row between two lines. The browse and search lists reserve a screen of height while they load, so the
+   footer does not jump. -- */
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:16px 0 32px;border-top:1px solid var(--line)}
+.kpis div{background:none;border-radius:0;padding:12px 12px 12px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:16px;color:var(--mut)}
+.kpis div:nth-child(even){padding-left:16px;border-left:1px solid var(--line)}
+@media (min-width:601px){
+  .kpis{display:flex;border-bottom:1px solid var(--line)}
+  .kpis div{flex:0 1 auto;padding:12px 32px 12px 0;border-bottom:0}
+  .kpis div:nth-child(n+2){padding-left:24px;border-left:1px solid var(--line)}
+}
+form.filters{background:none;border-radius:0;padding:12px 0;margin:0 0 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+form.filters label{letter-spacing:1.2px;text-transform:uppercase}
+form.filters label.chk,form.filters label:has(input[type=checkbox]){letter-spacing:0;text-transform:none}
+form.filters select{border:1px solid var(--line);background-color:var(--bg)}
+#list[data-list=browse],#list[data-list=search]{min-height:100vh}
+.kpis b{white-space:nowrap}
+@media (max-width:600px){.kpis b{font-size:24px;line-height:28px}}
+
+/* -- fix plans in the board language: hairlines instead of grey boxes, a large step number beside each step from
+   900px, the plans list as rows between lines. -- */
+.planbar{background:none;border-radius:0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pll{counter-reset:pst;gap:0;border-top:1px solid var(--line)}
+.pli{counter-increment:pst;padding:16px 0;border-bottom:1px solid var(--line)}
+@media (max-width:600px){.pll{gap:0}.pli{padding:20px 0}}
+@media (min-width:900px){
+  .pli{position:relative;padding-left:60px}
+  .pli::before{content:counter(pst);position:absolute;left:0;top:16px;font-size:28px;line-height:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--fg)}
+  .pli.isdone::before{color:var(--mut)}
+}
+.plist{gap:0 32px;margin:0;max-width:none;border-top:1px solid var(--line)}
+.plist .plc{padding:12px 0;border-radius:0;border-bottom:1px solid var(--line)}
+.plist .plc:hover{background:none}
+@media (hover:hover){.plist .plc:hover b{text-decoration:underline;text-underline-offset:3px}}
