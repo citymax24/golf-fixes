@@ -1,10 +1,12 @@
 // Share images (1200x630) for link previews (WhatsApp, Reddit, X, Slack). Run: node build/og.js
 // Writes static/og4/*.png in the look of the site: wordmark, the question in display type, the top three lessons as
 // leaderboard rows. Pictures come from static/thumbs, so no network is needed. Needs Playwright and the Inter font.
-// The folder name is part of the image URL: bump it (og4 -> og5, also in build.py) when the design changes, because
-// networks cache preview images by URL.
+// The folder name is part of the image URL: bump it (og4 -> og5, here, in build.py and in .github/workflows/share-images.yml)
+// when the design changes, because networks cache preview images by URL.
+// Only images whose content changed are drawn again (build/og-hashes.json remembers what each one was drawn from), so a
+// data update commits the few images whose numbers moved, not all fifty. `node build/og.js --all` draws everything.
 const { chromium } = require('playwright');
-const fs = require('fs'); const path = require('path');
+const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const root = path.join(__dirname, '..');
 const OUT = 'og4';
 const J = f => JSON.parse(fs.readFileSync(path.join(root, 'data', f)));
@@ -69,8 +71,20 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
 
 (async () => {
   const out = path.join(root, 'static', OUT); fs.mkdirSync(out, { recursive: true });
+  const hashFile = path.join(root, 'build/og-hashes.json');
+  const old = fs.existsSync(hashFile) && !process.argv.includes('--all') ? JSON.parse(fs.readFileSync(hashFile)) : {};
+  const hashes = {}; let drawn = 0;
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
-  const shot = async (name, html) => { await p.setContent(html, { waitUntil: 'load' }); await p.evaluate(() => document.fonts.ready); await p.screenshot({ path: path.join(out, name + '.png') }); };
+  await p.setContent('<body style="font:800 20px Inter">x</body>'); await p.evaluate(() => document.fonts.ready);
+  if (!(await p.evaluate(() => document.fonts.check('800 20px Inter') && document.fonts.check('500 20px Inter')))) {
+    console.error('The Inter font is not installed: the images would be drawn in a fallback font. Nothing written.'); await b.close(); process.exit(1);
+  }
+  const shot = async (name, html) => {
+    const h = crypto.createHash('sha1').update(html).digest('hex'); hashes[name] = h;
+    const file = path.join(out, name + '.png');
+    if (old[name] === h && fs.existsSync(file)) return;
+    await p.setContent(html, { waitUntil: 'load' }); await p.evaluate(() => document.fonts.ready); await p.screenshot({ path: file }); drawn++;
+  };
   const top = [...videos].sort((a, b) => (b.recs + 0.75 * (b.success || 0)) - (a.recs + 0.75 * (a.success || 0)));
   const all = top.map(v => ({ v, n: v.recs, ok: v.success || 0 }));
   await shot('default', tpl('', 'Golf lessons, ranked by golfers.', `${n(totalRecs)} Reddit recommendations for YouTube lessons.`, all));
@@ -87,5 +101,7 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
     await shot('plan-' + pr.slug, tpl('Fix plan · ' + pr.name, pl.title, `${items.length} videos${mins ? `, ${mins} minutes` : ''}, in the order that makes sense.`,
       items.map(v => ({ v, n: (v.topic_counts || {})[pl.key] || v.recs, ok: 0 }))));
   }
-  await b.close(); console.log('og images written to static/' + OUT);
+  await b.close();
+  fs.writeFileSync(hashFile, JSON.stringify(hashes, Object.keys(hashes).sort(), 1) + '\n');
+  console.log(`share images: ${drawn} drawn, ${Object.keys(hashes).length - drawn} unchanged (static/${OUT})`);
 })();
