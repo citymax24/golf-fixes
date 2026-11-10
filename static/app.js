@@ -182,19 +182,19 @@
   }
 
   // ---------- ball-flight finder ----------
-  var bf = $("#bf");
-  if (bf) {
+  var bff = $("#bf");
+  if (bff) {
     var lh = $("#bflh");
-    if (load("lefty", false) === true) { lh.checked = true; bf.classList.add("lh"); }
-    lh.onchange = function () { bf.classList.toggle("lh", lh.checked); save("lefty", lh.checked); };
-    $$(".bfd", bf).forEach(function (a) {
+    if (load("lefty", false) === true) { lh.checked = true; bff.classList.add("lh"); }
+    lh.onchange = function () { bff.classList.toggle("lh", lh.checked); save("lefty", lh.checked); };
+    $$(".bfd", bff).forEach(function (a) {
       a.addEventListener("click", function (ev) {
         ev.preventDefault();
         var k = a.dataset.k;
-        $$(".bfd", bf).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
-        $$(".bfl", bf).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
-        $$(".bfp", bf).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
-        if (window.innerWidth < 760) $(".bfr", bf).scrollIntoView({ block: "nearest", behavior: "smooth" });
+        $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.setAttribute("aria-pressed", String(x === a)); });
+        $$(".bfl", bff).forEach(function (p) { p.classList.toggle("on", p.dataset.k === k); });
+        $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; });
+        if (window.innerWidth < 760) $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" });
       });
     });
   }

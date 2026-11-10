@@ -285,8 +285,8 @@ def chips(active=None):
 
 # ---------- pages ----------
 MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
-    ("slice", 262, 96, "Curves right", "Curves left", "M160 326C146 230 176 130 262 96", "That’s a slice."),
-    ("hook", 58, 96, "Curves left", "Curves right", "M160 326C174 230 144 130 58 96", "That’s a hook."),
+    ("slice", 262, 96, "Curves right", "Curves left", "M160 326C120 250 150 130 262 96", "That’s a slice."),
+    ("hook", 58, 96, "Curves left", "Curves right", "M160 326C200 250 170 130 58 96", "That’s a hook."),
     ("over_the_top", 92, 44, "Pulled left", "Pulled right", "M160 326L92 44", "That’s a pull. Usually over the top."),
     ("shank", 276, 236, "Shoots right", "Shoots left", "M160 326L276 236", "That’s a shank."),
     ("driver_distance", 160, 150, "Straight, but short", "Straight, but short", "M160 326L160 150", "You’re leaving distance out there."),
