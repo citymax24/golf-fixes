@@ -1327,3 +1327,4 @@ li:nth-child(-n+3)>.ldr .ldp{color:var(--fg)}
   .welcome h1.hq span{font-size:28px;line-height:36px;margin-top:12px;letter-spacing:-.01em}
 }
 @media (prefers-reduced-motion:reduce){.bfl.pre:not(.on){animation:none;stroke-dashoffset:0}}
+@media (min-width:1440px){.bf>div:first-child{margin-top:10px}}   /* cap heights of the 64px headline and the question line up */
