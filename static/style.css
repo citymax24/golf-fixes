@@ -1478,3 +1478,35 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 .pix .pick{margin:0 0 8px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
 .phi .pill{display:inline-flex}
 .pht h1 svg{vertical-align:middle}
+
+/* -- the hole as a yardage-book drawing (replaces the coloured illustration): ink outlines on paper, fairway and
+   green lightly tinted, sand stippled, water lined, one green for flag and flight. --ink / --t1 / --t2 follow the
+   theme through --acc2, --acc and --bg, so light, dark and system dark need no extra rules. -- */
+#bf .bfc{--ink:var(--acc2);--paper:var(--bg);--t1:#EEF6F2;--t2:#D9ECE3;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
+@supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{--t1:color-mix(in srgb,var(--acc) 7%,var(--bg));--t2:color-mix(in srgb,var(--acc) 17%,var(--bg))}}
+#bf .ybp{fill:var(--paper)}
+#bf .ybd{fill:var(--ink);fill-opacity:.5}
+#bf .ybl{fill:none;stroke:var(--ink);stroke-opacity:.4;stroke-width:.7}
+#bf .ybo{fill:var(--paper);stroke:var(--ink);stroke-linejoin:round}
+#bf .ybi{stroke:none}
+#bf .ybt.ybo{stroke-width:1.6;stroke-opacity:.3}
+#bf .ybt.ybi{fill:var(--paper)}
+#bf .ybs.ybo{stroke-width:2.2;stroke-opacity:.85}
+#bf .ybs.ybi{fill:url(#ybsand)}
+#bf .ybf{fill:var(--t1);stroke:var(--ink);stroke-width:1.1;stroke-opacity:.85}
+#bf .ybg{fill:var(--t2);stroke:var(--ink);stroke-width:1.1;stroke-opacity:.85}
+#bf .ybw{fill:url(#ybwat);stroke:var(--ink);stroke-width:1.1;stroke-opacity:.85}
+#bf .ybb{fill:var(--paper);stroke:var(--ink);stroke-width:1.1;stroke-opacity:.85}
+#bf .bfcup{fill:var(--ink);fill-opacity:1}
+#bf .bffp{stroke:var(--ink);stroke-width:1.4;fill:none}
+#bf .bfff{fill:var(--acc);stroke:none}
+#bf .bftx{fill:var(--mut);opacity:1}
+#bf .bfl{stroke:var(--acc);stroke-width:2.6}
+#bf .bfball{fill:var(--paper);stroke:var(--fg)}
+#bf .bfgs{fill:var(--fg)}
+#bf .bfb{background:var(--bg);border-color:var(--fg)}
+#bf .bfd::before{background:var(--bg);border:2px solid var(--fg);box-shadow:none}
+#bf .bfd::after{border-color:var(--fg)}
+#bf .bfd.on::before{background:var(--acc);border-color:var(--acc)}
+#bf .bfd span{background:var(--bg);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
+#bf .bfd:hover span,#bf .bfd.on span,#bf .bfd.hot span{box-shadow:inset 0 0 0 1px var(--acc);color:var(--acc)}
