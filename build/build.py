@@ -357,29 +357,22 @@ def finder():
 
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
-    def best(k):
-        for sc, n, ok, v in by_problem.get(k, []):
-            if v.get("top") == k and n >= 3:
-                return sc, n, ok, v
-        return None
-    pick = [PNAME[k] for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "driver_distance", "iron_contact", "chipping",
-                               "putting", "casting_lag", "fat_thin", "bunker"] if k in PNAME and best(k)][:7]
+    mq2 = {f.rsplit(".", 1)[0] for f in os.listdir(os.path.join(ROOT, "static", "thumbs", "mq2"))}
 
-    def tile(p):
-        sc, n, ok, v = best(p["key"])
-        proof = f'✓ {ok} say{"s" if ok == 1 else ""} it fixed it' if ok else f'{n} golfers recommend it'
-        return (f'<a class="ptile" href="{BASE}/fix/{p["slug"]}/"><span class="pth"><img loading="lazy" src="{thumb(v["vid"])}" alt="">'
-                f'</span><span class="pnm2">{e(p["name"])}</span><span class="ptop">Top pick: {e(trunc(nice(v["title"]), 44))}</span>'
-                f'<span class="pok{" fx" if ok else ""}">{proof}</span></a>')
-    tiles = "".join(tile(p) for p in pick)
+    def entry(p):  # one word of the index; the picture of its top lesson floats beside the pointer on hover
+        top1 = by_problem.get(p["key"]) or []
+        vid = top1[0][3]["vid"] if top1 and top1[0][3]["vid"] in mq2 else ""
+        return (f'<a class="ix" href="{BASE}/fix/{p["slug"]}/"{f" data-vid={chr(34)}{e(vid)}{chr(34)}" if vid else ""}>'
+                f'{e(p["name"])}<sup>{p["total_recs"]:,}</sup></a>')
+    index = "".join(entry(p) for p in sorted([p for p in PROBLEMS if p["video_count"]], key=lambda p: -p["total_recs"]))
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">Golf lessons, ranked by golfers.<span>{TOTAL_RECS:,} Reddit recommendations for YouTube lessons.</span></h1>
 {finder()}
 <p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and <a href="{BASE}/about/">counted</a> which YouTube lessons golfers recommend for each problem.</p>
 <h2 class="pick">Or pick it by name</h2>
-<div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
+<nav class="ixs" aria-label="All problems">{index}</nav>
+<p class="ixn">The small number is how many recommendations we counted for it. <a class="ixa" href="{BASE}/categories/">All {len([p for p in PROBLEMS if p["video_count"]])} problems →</a></p>
 </section>
-{chips()}
 {board(top[:10])}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
 <h2 class="row">More lessons golfers recommend</h2>

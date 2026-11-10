@@ -291,6 +291,32 @@
       rvs.forEach(function (el) { el.classList.add("rv"); rio.observe(el); });
     }
   }
+  // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
+  var ixs = $(".ixs");
+  if (ixs && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    var pv = document.createElement("img"), tx = 0, ty = 0, cx = 0, cy = 0, pr = 0;
+    pv.className = "ixp"; pv.alt = ""; document.body.appendChild(pv);
+    var follow = function () {
+      var k = calm ? 1 : .2; cx += (tx - cx) * k; cy += (ty - cy) * k;
+      pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
+      pr = pv.classList.contains("on") || Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(follow) : 0;
+    };
+    ixs.addEventListener("mousemove", function (ev) {
+      var x = ev.clientX + 24, y = ev.clientY + 24;
+      if (x + 248 > window.innerWidth) x = ev.clientX - 264;
+      if (y + 143 > window.innerHeight) y = ev.clientY - 159;
+      tx = x; ty = y; if (!pr) pr = requestAnimationFrame(follow);
+    });
+    $$(".ix", ixs).forEach(function (a) {
+      a.addEventListener("mouseenter", function () {
+        if (!a.dataset.vid) { pv.classList.remove("on"); return; }
+        pv.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
+        if (!pv.classList.contains("on")) { cx = tx; cy = ty; }
+        pv.classList.add("on");
+      });
+    });
+    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); });
+  }
   // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
   document.addEventListener("click", function (ev) {
     var a = ev.target.closest && ev.target.closest('a[href*="/watch/"]'); if (!a) return;

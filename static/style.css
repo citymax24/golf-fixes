@@ -1328,3 +1328,34 @@ li:nth-child(-n+3)>.ldr .ldp{color:var(--fg)}
 }
 @media (prefers-reduced-motion:reduce){.bfl.pre:not(.on){animation:none;stroke-dashoffset:0}}
 @media (min-width:1440px){.bf>div:first-child{margin-top:10px}}   /* cap heights of the 64px headline and the question line up */
+
+/* -- home index: every problem as a word, largest type on the page, its count as a small number. One complete index
+   replaces the picture tiles and the chip row. With a mouse the other words step back and the top lesson's picture
+   floats beside the pointer. -- */
+.ixs{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 16px;margin:0}
+.ix{padding:6px 0;font-size:24px;line-height:32px;font-weight:800;letter-spacing:-.025em;color:var(--fg);text-decoration:none;white-space:nowrap;transition:color .2s,opacity .2s}
+.ix sup{margin-left:3px;font-size:11px;line-height:1;font-weight:600;letter-spacing:0;color:var(--mut);font-variant-numeric:tabular-nums;vertical-align:baseline;position:relative;top:-.95em;transition:color .2s}
+.ixn{margin:12px 0 0;font-size:14px;line-height:20px;color:var(--mut)}
+@media (max-width:359px){.ix{font-size:21px;white-space:normal}}
+@media (min-width:601px){.ixs{gap:0 24px}.ix{padding:4px 0;font-size:36px;line-height:44px}.ix sup{font-size:13px;top:-1.3em}}
+@media (min-width:1200px){.ixs{gap:0 32px}.ix{font-size:48px;line-height:60px;letter-spacing:-.03em}.ix sup{font-size:14px;top:-1.7em;margin-left:4px}}
+@media (hover:hover){
+  .ixs:has(.ix:hover) .ix:not(:hover){opacity:.28}
+  .ix:hover,.ix:hover sup{color:var(--acc)}
+}
+.ix:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.ixp{position:fixed;left:0;top:0;z-index:30;width:240px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:var(--ph);box-shadow:0 12px 32px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .18s;will-change:transform}
+.ixp.on{opacity:1}
+/* -- the hole is alive: the flag moves in the wind and the six spots drop in one after the other when the page opens,
+   which also shows that they can be tapped. Only for people who have not asked for less motion. -- */
+@media (prefers-reduced-motion:no-preference){
+  .bfff{transform-box:fill-box;transform-origin:0 50%;animation:bfwave 3.4s ease-in-out infinite}
+  .bf:not(.used) .bfd{animation:bfpop .5s cubic-bezier(.3,1.5,.5,1) both}
+  .bf:not(.used) .bfd:nth-of-type(1){animation-delay:.2s}.bf:not(.used) .bfd:nth-of-type(2){animation-delay:.27s}
+  .bf:not(.used) .bfd:nth-of-type(3){animation-delay:.34s}.bf:not(.used) .bfd:nth-of-type(4){animation-delay:.41s}
+  .bf:not(.used) .bfd:nth-of-type(5){animation-delay:.48s}.bf:not(.used) .bfd:nth-of-type(6){animation-delay:.55s}
+}
+@keyframes bfwave{0%,100%{transform:skewY(0deg) scaleX(1)}50%{transform:skewY(-6deg) scaleX(.92)}}
+@keyframes bfpop{from{opacity:0;scale:.3}}
+.ixa{display:none}
+@media (max-width:600px){.ix:nth-child(n+13){display:none}.ixa{display:block;margin-top:8px;padding:12px 0;font-size:16px;line-height:20px;font-weight:600;color:var(--acc);text-decoration:none}}
