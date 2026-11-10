@@ -25,14 +25,18 @@
   // ---------- chrome ----------
   function closeMenu(focusBack) {
     if (!document.body.classList.contains("open")) return;
-    document.body.classList.remove("open"); $("#menu").setAttribute("aria-expanded", "false");
+    document.body.classList.remove("open"); $("#menu").setAttribute("aria-expanded", "false"); $("#menu").setAttribute("aria-label", "Menu");
     if (focusBack) $("#menu").focus();
   }
   $("#menu").onclick = function () {
     if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) {
       document.body.classList.toggle("mini"); $("#menu").setAttribute("aria-expanded", String(!document.body.classList.contains("mini")));
     } else if (document.body.classList.contains("open")) closeMenu(true);
-    else { document.body.classList.add("open"); $("#menu").setAttribute("aria-expanded", "true"); var f = $("#side a"); if (f) setTimeout(function () { f.focus(); }, 50); }
+    else {
+      document.body.classList.add("open"); $("#menu").setAttribute("aria-expanded", "true"); $("#menu").setAttribute("aria-label", "Close menu");
+      var sd = $("#side"); sd.style.touchAction = sd.scrollHeight <= sd.clientHeight ? "none" : "";  // a menu that fits does not drag the page behind it
+      var f = $("#side a"); if (f) setTimeout(function () { f.focus({ preventScroll: true }); }, 50);
+    }
   };
   if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) $("#menu").setAttribute("aria-expanded", "true");
   $("#scrim").onclick = function () { closeMenu(true); };

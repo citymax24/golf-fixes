@@ -1413,7 +1413,18 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .side>a:nth-child(n+6){min-height:44px;border-bottom:0;font-size:18px;line-height:24px;font-weight:600;letter-spacing:-.01em;word-spacing:0;color:var(--mut)}
   .side>a:nth-child(n+6).on{color:var(--acc);font-weight:600}
 }
-@media (max-width:1000px) and (pointer:coarse){body.open{overflow:hidden}}
+/* While the menu is open the header is fixed, so it is on screen wherever the page was scrolled to (the body keeps the
+   header's 56px, nothing moves), and the menu button shows a cross. No overflow:hidden on the body: with the page
+   scrolled that took the sticky header off screen and left no way to close the menu. */
+@media (max-width:1000px){
+  body.open{padding-top:56px}
+  body.open .top{position:fixed;top:0;left:0;right:0}
+  #menu{position:relative}
+  body.open #menu svg{opacity:0}
+  body.open #menu::before,body.open #menu::after{content:"";position:absolute;left:50%;top:50%;width:20px;height:2px;margin:-1px 0 0 -10px;border-radius:1px;background:currentColor}
+  body.open #menu::before{transform:rotate(45deg)}
+  body.open #menu::after{transform:rotate(-45deg)}
+}
 @media (max-width:1000px) and (prefers-reduced-motion:no-preference){
   .side>a{opacity:0;transform:translateY(12px)}
   body.open .side>a{opacity:1;transform:none;transition:opacity .35s cubic-bezier(.2,.7,.2,1) calc(var(--i)*35ms),transform .35s cubic-bezier(.2,.7,.2,1) calc(var(--i)*35ms)}
