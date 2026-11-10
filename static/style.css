@@ -1395,3 +1395,28 @@ form.filters select{border:1px solid var(--line);background-color:var(--bg)}
 h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;word-spacing:.04em}
 @media (min-width:1000px){h2.row{font-size:32px;line-height:36px;letter-spacing:-.025em}}
 @media (max-width:600px){#feed>.vc:nth-child(n+5){display:none}}
+
+/* -- menu on phones and tablets: a full page of words in the display type instead of a small drawer with icons.
+   The five places first, then the personal lists and "How we rank" smaller. Opens with a short fade, the words rise
+   in one after the other. From 1001px the drawer of the lesson page stays as it is. -- */
+@media (max-width:1000px){
+  .side{left:0;right:0;width:auto;padding:8px var(--gut) 32px;border-right:0;display:flex;flex-direction:column;transform:none;opacity:0;overscroll-behavior:contain}
+  body:not(.open) .side{transform:none;visibility:hidden;opacity:0;transition:opacity .18s,visibility 0s .18s}
+  body.open .side{transform:none;visibility:visible;opacity:1;box-shadow:none;transition:opacity .18s}
+  body.open .scrim{display:none}
+  .side>a{flex:none;height:auto;min-height:60px;padding:0;gap:0;border-radius:0;background:none;border-bottom:1px solid var(--line);
+    font-size:32px;line-height:40px;font-weight:800;letter-spacing:-.03em;word-spacing:.06em}
+  .side>a svg{display:none}
+  .side>a:hover,.side>a:active,.side>a.on{background:none}
+  .side>a.on{color:var(--acc);font-weight:800}
+  .side>a:nth-child(5){margin-bottom:16px}
+  .side>a:nth-child(n+6){min-height:44px;border-bottom:0;font-size:18px;line-height:24px;font-weight:600;letter-spacing:-.01em;word-spacing:0;color:var(--mut)}
+  .side>a:nth-child(n+6).on{color:var(--acc);font-weight:600}
+}
+@media (max-width:1000px) and (pointer:coarse){body.open{overflow:hidden}}
+@media (max-width:1000px) and (prefers-reduced-motion:no-preference){
+  .side>a{opacity:0;transform:translateY(12px)}
+  body.open .side>a{opacity:1;transform:none;transition:opacity .35s cubic-bezier(.2,.7,.2,1) calc(var(--i)*35ms),transform .35s cubic-bezier(.2,.7,.2,1) calc(var(--i)*35ms)}
+  .side>a:nth-child(1){--i:1}.side>a:nth-child(2){--i:2}.side>a:nth-child(3){--i:3}.side>a:nth-child(4){--i:4}.side>a:nth-child(5){--i:5}
+  .side>a:nth-child(6){--i:6}.side>a:nth-child(7){--i:7}.side>a:nth-child(8){--i:8}.side>a:nth-child(9){--i:9}
+}
