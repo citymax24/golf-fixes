@@ -1243,3 +1243,55 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
   .bfr>.bfp:not(.bf0),.bfr>.bfp[hidden]:not(.bf0){grid-template-columns:minmax(0,340px) minmax(200px,1fr)}
   .welcome h1.hq span{font-size:24px}
 }
+
+/* -- home leaderboard: the ten most recommended lessons as a tournament board. The bar is each lesson's share of the
+   leader's count. Phones: position, picture, text, bar below. From 900px: one line per lesson with column heads. -- */
+.ldb{margin:0}
+.ldh{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:0 16px}
+.ldh p{margin:0 0 12px;font-size:14px;line-height:20px;color:var(--mut)}
+.ldk{display:none}
+.ldl{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.ldr{display:grid;grid-template-columns:24px 112px minmax(0,1fr);grid-template-areas:"p t n" "p t s" ". b b";column-gap:12px;align-items:start;
+  padding:12px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.ldp{grid-area:p;align-self:center;font-size:20px;line-height:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--mut)}
+li:nth-child(-n+3)>.ldr .ldp{color:var(--fg)}
+.ldt{grid-area:t;position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--ph)}
+.ldt img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+.ldt .du{position:absolute;right:4px;bottom:4px}
+.ldn{grid-area:n;min-width:0;display:flex;flex-direction:column}
+.ldn b{font-size:16px;line-height:20px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ldn i{font-style:normal;font-size:14px;line-height:20px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lds{grid-area:s;display:flex;flex-wrap:wrap;gap:0 12px;font-size:14px;line-height:20px;color:var(--mut)}
+.ldv b{color:var(--fg);font-weight:700;font-variant-numeric:tabular-nums}
+.ldv i,.ldo i{font-style:normal}
+.ldo{color:var(--ok);white-space:nowrap}
+.ldbar{grid-area:b;height:3px;margin-top:10px;border-radius:2px;background:var(--chip2);overflow:hidden}
+.ldbar::after{content:"";display:block;height:100%;width:var(--w);border-radius:2px;background:var(--acc);transform-origin:0 50%}
+@media (hover:hover){.ldr:hover .ldn b{text-decoration:underline;text-underline-offset:3px}.ldr:hover .ldt img{transform:scale(1.03)}}
+@media (min-width:900px){
+  .ldk,.ldr{display:grid;grid-template-columns:40px 128px minmax(0,1fr) 220px 104px;column-gap:20px}
+  .ldk{padding:0 0 8px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+  .ldk span:nth-child(2){grid-column:2/4}
+  .ldr{grid-template-areas:"p t n v o" "p t n b o";align-items:center;padding:12px 0}
+  .ldp{font-size:28px;line-height:32px}
+  .ldn{align-self:center}
+  .lds{display:contents}
+  .ldv{grid-area:v;align-self:end;font-size:14px;line-height:20px;color:var(--mut)}
+  .ldv b{font-size:20px;line-height:24px;font-weight:800;letter-spacing:-.02em;margin-right:4px}
+  .ldo{grid-area:o;font-size:16px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums}
+  .ldv i,.ldo i{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}   /* the column heads say it; kept for screen readers */
+  .ldbar{align-self:start;height:4px;margin-top:6px}
+}
+/* -- motion: reveal on scroll (app.js marks only what starts below the fold with .rv) -- */
+.rv{opacity:0;transform:translateY(14px)}
+.rv.in{opacity:1;transform:none;transition:opacity .5s cubic-bezier(.2,.7,.2,1) var(--d,0ms),transform .5s cubic-bezier(.2,.7,.2,1) var(--d,0ms)}
+.rv .ldbar::after{transform:scaleX(0)}
+.rv.in .ldbar::after{transform:none;transition:transform .9s cubic-bezier(.2,.7,.2,1) calc(var(--d,0ms) + .15s)}
+/* -- page transitions: a short cross-fade between pages, the header stays put, and the picture you pick turns into
+   the player of the lesson page. Browsers without cross-document view transitions simply navigate. -- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.2s}
+.top{view-transition-name:top}
+.player img{view-transition-name:vtl}
+::view-transition-group(vtl){animation-duration:.34s;animation-timing-function:cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}

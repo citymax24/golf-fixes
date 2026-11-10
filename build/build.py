@@ -284,6 +284,27 @@ def card(v, n=None, ok=None, rank=None, pname=None, extra="", hq=False):
 </article>"""
 
 
+def board(vs):
+    """Home leaderboard: the most recommended lessons as a tournament board, the bar is the share of the leader's count."""
+    mx = max(v["recs"] for v in vs)
+    rows = []
+    for i, v in enumerate(vs, 1):
+        href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"https://www.youtube.com/watch?v={v['vid']}"
+        ok, dur = v.get("success", 0), fmt_dur(v.get("duration_s"))
+        ty = f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ""
+        rows.append(f'<li><a class="ldr" href="{href}" data-vid="{e(v["vid"])}" style="--w:{100 * v["recs"] / mx:.1f}%">'
+                    f'<span class="ldp">{i}</span>'
+                    f'<span class="ldt"><img loading="lazy" src="{thumb(v["vid"], "mq2")}" alt="">{f"<span class=du>{dur}</span>" if dur else ""}</span>'
+                    f'<span class="ldn"><b>{e(nice(v["title"]))}</b><i>{e(v["channel"])}{ty}</i></span>'
+                    f'<span class="lds"><span class="ldv"><b data-cnt="{v["recs"]}">{v["recs"]}</b> <i>recommend</i></span>'
+                    f'{f"<span class=ldo>{CK}{ok} <i>fixed it</i></span>" if ok else "<span class=ldo></span>"}</span>'
+                    f'<span class="ldbar"></span></a></li>')
+    return (f'<section class="ldb" id="board"><div class="ldh"><h2 class="row">The leaderboard</h2>'
+            f'<p>Top {len(vs)} of {len(WATCH):,} lessons, by recommendations</p></div>'
+            f'<div class="ldk" aria-hidden="true"><span>Pos</span><span>Lesson</span><span>Recommend</span><span>Fixed it</span></div>'
+            f'<ol class="ldl">{"".join(rows)}</ol></section>')
+
+
 def chips(active=None):
     order = ["slice", "shank", "early_extension", "over_the_top", "hook", "fat_thin", "driver_distance", "iron_contact", "chipping",
              "putting", "casting_lag", "bunker", "wedges_pitching", "rotation_hips", "takeaway_backswing", "setup_posture", "grip"]
@@ -357,8 +378,10 @@ def build_home():
 <div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
 </section>
 {chips()}
-{('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p><h2 class="row">Most recommended</h2>') if PLAN_CARDS else ''}
-<div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[:24])}</div>
+{board(top[:10])}
+{('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
+<h2 class="row">More lessons golfers recommend</h2>
+<div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:34])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
