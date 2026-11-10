@@ -1482,7 +1482,7 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
 /* -- the hole as a yardage-book drawing (replaces the coloured illustration): ink outlines on paper, fairway and
    green lightly tinted, sand stippled, water lined, one green for flag and flight. --ink / --t1 / --t2 follow the
    theme through --acc2, --acc and --bg, so light, dark and system dark need no extra rules. -- */
-#bf .bfc{--ink:var(--acc2);--paper:var(--bg);--t1:#EEF6F2;--t2:#D9ECE3;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
+#bf .bfc{--ink:var(--acc2);--paper:var(--bg);--t1:#EEF6F2;--t2:#D9ECE3;background:var(--paper);border-radius:0}
 @supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{--t1:color-mix(in srgb,var(--acc) 7%,var(--bg));--t2:color-mix(in srgb,var(--acc) 17%,var(--bg))}}
 #bf .ybp{fill:var(--paper)}
 #bf .ybd{fill:var(--ink);fill-opacity:.5}
