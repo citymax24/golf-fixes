@@ -429,24 +429,47 @@ def fixes_list(p):
             + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></details>")
 
 
+_tkey = lambda t: re.sub(r"\W+", " ", (t or "").lower()).strip()
+THREADS = {}  # post title -> its thread on Reddit, taken from the comment permalinks (the same URL without the comment id)
+for _rows in COMMENTS.values():
+    for _c in _rows:
+        _m = re.match(r"https://www\.reddit\.com/r/[A-Za-z0-9_]+/comments/[a-z0-9]+/", _c.get("u") or "")
+        if _m and _c.get("pt"):
+            THREADS.setdefault(_tkey(_c["pt"]), _m.group(0))
+
+
+def sl_quotes(p):
+    """The post titles quoted on a problem page, each with the link to its thread. A title whose thread is not in the
+    public data is left out: the site quotes nothing from Reddit without a link to the original."""
+    out = []
+    for t in (REDDIT.get(p["key"]) or {}).get("sounds_like", []):
+        u = THREADS.get(_tkey(t))
+        if u:
+            out.append((BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t), u))
+    return out[:4]
+
+
+def sl_items(sl):
+    return "".join(f'<li>“{e(t)}” <a href="{e(u)}" target="_blank" rel="noopener nofollow">View on Reddit</a></li>' for t, u in sl)
+
+
 def sounds_like(p):
-    r = REDDIT.get(p["key"]) or {}
-    sl = [BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t) for t in r.get("sounds_like", [])][:4]
+    sl = sl_quotes(p)
     if not sl:
         return ""
     return ('<section class="slbox"><h2>Sounds like you?</h2><p class="dim">How golfers described it when they asked for help:</p><ul class="sl">'
-            + "".join(f"<li>“{e(t)}”</li>" for t in sl) + "</ul></section>")
+            + sl_items(sl) + "</ul></section>")
 
 
 def reddit_block(p):
     r = REDDIT.get(p["key"]) or {}
     vmap = {v["vid"]: v for v in VIDEOS}
-    sl = [BAD.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), t) for t in r.get("sounds_like", [])][:4]
+    sl = sl_quotes(p)
     ins = [i for i in r.get("insights", []) if i.get("vid") in vmap][:3]
     if not sl and not ins:
         return ""
     left = ('<div class="rb"><h2>Sounds like you?</h2><p class="dim">How golfers described it when they asked for help:</p><ul class="sl">'
-            + "".join(f"<li>“{e(t)}”</li>" for t in sl) + "</ul></div>") if sl else ""
+            + sl_items(sl) + "</ul></div>") if sl else ""
     right = ('<div class="rb"><h2>What golfers say fixed it</h2><ol class="ins">'
              + "".join(f'<li>{e(i["text"])} <a href="{BASE}/watch/{i["vid"]}/">Watch</a></li>' for i in ins) + "</ol></div>") if ins else ""
     return f'<section class="rblock">{left}{right}</section>'
@@ -990,6 +1013,8 @@ def build_report():
 
 def build_text():
     st = SITE["stats"]
+    subs = ["r/" + s for s, _ in Counter(c["sub"] for rows in COMMENTS.values() for c in rows if c.get("sub")).most_common()]
+    subs = e(", ".join(subs[:-1]) + " and " + subs[-1] if len(subs) > 1 else subs[0] if subs else "golf communities on Reddit")
     about = f"""<div class="prose"><h1 class="ptitle">{e(SITE['name'])}</h1><p class="lead">The YouTube golf lessons golfers keep telling each other to watch.</p>
 <div class="kpis"><div><b>{len(WATCH):,}</b>lessons</div><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{len([p for p in PROBLEMS if p['video_count']])}</b>problems</div><div><b>{st['period']}</b>years</div></div>
 <h2>Why</h2><p>YouTube's recommendations are tuned for watch time, not for fixing your slice. Meanwhile golfers in online communities answer each other's swing questions every day with a link to the one lesson that finally helped them. Those answers are scattered across years of threads. {e(SITE['name'])} collects and counts them.</p>
@@ -999,10 +1024,10 @@ def build_text():
 <li><b>Count independent golfers.</b> Each golfer counts once per video. A lesson needs at least {MIN} different golfers recommending it for a problem.</li>
 <li><b>Add context.</b> An AI model labels each lesson's type (drill, explainer, live lesson, pro swing …), level and a one-line summary, and builds short fix plans from the top lessons.</li>
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
-<h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Ask and we'll remove yours.</p>
+<h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments and problem pages quote a few post titles, without usernames, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
 <h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20creator%20request">max@fassia.io</a>; it will be removed in the next update.</p>
-<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment. It will be removed in the next update.</p>
+<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Problem pages quote a few post titles the same way. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment or post. It will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
@@ -1016,7 +1041,9 @@ def build_text():
 <h2>Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and to object to processing based on legitimate interests (Art. 15–21 GDPR). Because we do not store personal data about visitors, there is usually nothing to hand out or delete, but write to the address below and we will check. You can also complain to a data protection authority, for example the Hessian Commissioner for Data Protection and Freedom of Information (Wiesbaden).</p>
 <h2>Reddit comments</h2>
-<p>Video pages quote short excerpts of public Reddit comments without usernames and with a link to the original. Authors can ask for removal by email or on GitHub; see <a href="{BASE}/about/#removal">About</a>.</p>
+<p>Video pages quote short excerpts of public Reddit comments, and problem pages quote a few titles of public Reddit posts, from {subs}. With each comment we show the year, the community, the title of its thread and, for popular comments, the number of upvotes. Every quote links to the original. We publish no usernames. The link leads to the original on Reddit, where the author's username is visible, so we treat these quotes as personal data.</p>
+<p>The quotes come from the public pages of Reddit, not from the authors themselves. An AI model read each comment to decide whether it recommends a lesson, which problem it is about and whether the golfer says it fixed it; see <a href="{BASE}/about/">About</a>. We use the quotes to show which lessons golfers recommend to each other and to let you check every recommendation at its source. Legal basis is our legitimate interest in that (Art. 6(1)(f) GDPR). The quotes are published on this website and in its public data repository, both hosted by GitHub, and stay online until the author asks for removal or we take the page down.</p>
+<p>If you wrote one of them, you can object and ask for removal at any time (Art. 17 and 21 GDPR), by email or on GitHub; see <a href="{BASE}/about/#removal">About</a>. It will be removed in the next update. The rights listed above apply to you as well. We publish this notice here because writing to every author individually would take a disproportionate effort (Art. 14(5)(b) GDPR).</p>
 <p>{e(SITE.get('privacy_contact', ''))}</p></div>""")
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
     for slug, nav, title, empty in [("liked", "liked", "Liked", "Videos you like show up here."), ("history", "history", "History", "Videos you open show up here."),
