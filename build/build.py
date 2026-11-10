@@ -284,6 +284,41 @@ def chips(active=None):
 
 
 # ---------- pages ----------
+MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
+    ("slice", 262, 96, "Curves right", "Curves left", "M160 326C146 230 176 130 262 96", "That’s a slice."),
+    ("hook", 58, 96, "Curves left", "Curves right", "M160 326C174 230 144 130 58 96", "That’s a hook."),
+    ("over_the_top", 92, 44, "Pulled left", "Pulled right", "M160 326L92 44", "That’s a pull. Usually over the top."),
+    ("shank", 276, 236, "Shoots right", "Shoots left", "M160 326L276 236", "That’s a shank."),
+    ("driver_distance", 160, 150, "Straight, but short", "Straight, but short", "M160 326L160 150", "You’re leaving distance out there."),
+    ("fat_thin", 160, 262, "Fat or thin", "Fat or thin", "M160 326L160 262", "Fat or thin contact."),
+]
+
+
+def finder():
+    """Ball-flight finder: tap where the ball ends up, get the miss by name and what golfers recommend for it.
+    Dots are real links to the problem page, so it works without JavaScript too."""
+    ms = [m for m in MISSES if m[0] in PNAME and by_problem.get(m[0])]
+    if len(ms) < 4:
+        return ""
+    dots = "".join(f'<a class="bfd" role="button" aria-pressed="false" href="{BASE}/fix/{PNAME[k]["slug"]}/" data-k="{k}" style="--x:{x / 3.2:.1f}%;--y:{y / 3.6:.1f}%">'
+                   f'<span class="r">{e(lr)}</span><span class="l">{e(ll)}</span></a>' for k, x, y, lr, ll, d, h in ms)
+    lines = "".join(f'<path class="bfl" data-k="{k}" d="{d}" pathLength="1"/>' for k, x, y, lr, ll, d, h in ms)
+    panels = ""
+    for k, x, y, lr, ll, d, h in ms:
+        p = PNAME[k]; sc, n, ok, v = by_problem[k][0]
+        href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"{BASE}/fix/{p['slug']}/"
+        panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(p["intro"])}</p>'
+                   f'<a class="bft" href="{href}"><img loading="lazy" src="{thumb(v["vid"])}" alt=""><span><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
+                   f'<em>{n} recommend{"s" if n == 1 else ""}{f" · ✓ {ok} fixed it" if ok else ""}</em></span></a>'
+                   f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
+                   f'<p class="bfs">{p["total_recs"]:,} recommendations from golfers for this miss.</p></div>')
+    return f"""<div class="bf" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
+<path class="bfw" d="M112 344C92 252 72 160 110 62C126 20 194 20 210 62C248 160 228 252 208 344Z"/><circle class="bfg" cx="160" cy="46" r="24"/>
+<path class="bfpin" d="M160 46V22l14 6-14 6"/><rect class="bftee" x="150" y="324" width="20" height="5" rx="2.5"/>{lines}</svg>{dots}</div>
+<label class="bfh"><input type="checkbox" id="bflh"> I play left-handed</label></div>
+<div class="bfr" aria-live="polite"><div class="bfp" id="bf-0"><h2>Where does your ball end up?</h2><p>Tap the spot. We name the miss and show what golfers recommend for it.</p></div>{panels}</div></div>"""
+
+
 def build_home():
     top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
     def best(k):
@@ -304,7 +339,8 @@ def build_home():
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">What’s your miss?<span>Other golfers already picked the lesson.</span></h1>
 <p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and <a href="{BASE}/about/">counted</a> which YouTube lessons golfers recommend for each problem.</p>
-<h2 class="pick">Pick your miss</h2>
+{finder()}
+<h2 class="pick">Or pick it by name</h2>
 <div class="ptiles">{tiles}<a class="ptile more" href="{BASE}/categories/"><b>All {len([p for p in PROBLEMS if p["video_count"]])} problems →</b><span>{e(", ".join(q["name"] for q in sorted([q for q in PROBLEMS if q["video_count"] and q not in pick], key=lambda q: -q["video_count"])[:4]))} and more</span></a></div>
 </section>
 {chips()}
