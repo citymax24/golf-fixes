@@ -265,13 +265,14 @@
 
   // ---------- motion ----------
   var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function countUp(el, wait) {  // a number runs up to its value
-    var n = +el.dataset.cnt, t0 = performance.now() + (wait || 0);
+  function countUp(el, wait) {  // a number runs up to its value; it keeps the width of the final number, so nothing beside it moves
+    var n = +el.dataset.cnt, t0 = performance.now() + (wait || 0), w = el.getBoundingClientRect().width;
+    if (w) { el.style.display = "inline-block"; el.style.minWidth = w + "px"; }
     el.textContent = "0";
     (function step(now) {
       var t = Math.min(1, Math.max(0, (now - t0) / 700));
       el.textContent = Math.round(n * (1 - Math.pow(1 - t, 3))).toLocaleString("en-US");
-      if (t < 1) requestAnimationFrame(step);
+      if (t < 1) requestAnimationFrame(step); else { el.style.display = ""; el.style.minWidth = ""; }
     })(performance.now());
   }
   // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
