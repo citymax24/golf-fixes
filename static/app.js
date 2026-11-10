@@ -19,7 +19,7 @@
   var settings = load("settings", {});
   // touch screens: the chip row starts at "All"; bring the active chip into view once, without animation [fix-13]
   (function () { var o = $(".chips .chip.on"); if (!o || !window.matchMedia || !matchMedia("(pointer:coarse)").matches) return; var c = o.parentNode, r = o.getBoundingClientRect(), cr = c.getBoundingClientRect(); if (r.right > cr.right - 48 || r.left < cr.left) c.scrollLeft += r.left - cr.left - 48; })();
-  var CK = '<svg class="ck" viewBox="-6 -6 63.5 70.45" aria-hidden="true"><path d="M0 31.56L18.5 58.45L51.5 0"/></svg>';
+  var CK = '<svg class="ck" viewBox="0 0 74.91 72.75" aria-hidden="true"><path d="M0 38.56L24.84 72.75L37.84 72.75L74.91 0L54.94 0L29.81 49.31L22 38.56Z"/></svg>';
   var TYPES = { drill: "Drill", explainer: "Explainer", lesson: "Live lesson", pro_swing: "Pro swing", quick_tip: "Quick tip", practice_plan: "Practice plan", fitness: "Fitness" };
 
   // ---------- chrome ----------
@@ -265,19 +265,20 @@
 
   // ---------- motion ----------
   var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function countUp(el, wait) {  // a number runs up to its value
-    var n = +el.dataset.cnt, t0 = performance.now() + (wait || 0);
+  function countUp(el, wait) {  // a number runs up to its value; it keeps the width of the final number, so nothing beside it moves
+    var n = +el.dataset.cnt, t0 = performance.now() + (wait || 0), w = el.getBoundingClientRect().width;
+    if (w) { el.style.display = "inline-block"; el.style.minWidth = w + "px"; }
     el.textContent = "0";
     (function step(now) {
       var t = Math.min(1, Math.max(0, (now - t0) / 700));
       el.textContent = Math.round(n * (1 - Math.pow(1 - t, 3))).toLocaleString("en-US");
-      if (t < 1) requestAnimationFrame(step);
+      if (t < 1) requestAnimationFrame(step); else { el.style.display = ""; el.style.minWidth = ""; }
     })(performance.now());
   }
   // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
   // Leaderboard rows also grow their bar and run their count up.
   if (!calm && "IntersectionObserver" in window) {
-    var rvs = $$(".ldi, .un, .ftw, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
+    var rvs = $$(".ldi, .un, .ftw, .pgrid.row1, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
     if (rvs.length) {
       var rio = new IntersectionObserver(function (es) {
         var i = 0;
@@ -428,13 +429,13 @@
         return [s, v];
       }).sort(function (a, b) { return b[0] - a[0]; }).map(function (x) { return x[1]; });
       var onBoard = {}; $$("#board .ldr").forEach(function (r) { onBoard[r.dataset.vid] = 1; });
-      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.filter(function (v) { return !onBoard[v[0]]; }).slice(0, 24)); }
+      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.filter(function (v) { return !onBoard[v[0]]; }).slice(0, 6)); }
       return;
     }
 
     var kind = list.dataset.list, arr = [], extra = "";
     if (kind === "search") {
-      var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase();
+      var q = (new URLSearchParams(location.search).get("q") || "").trim().toLowerCase().replace(/\u2019/g, "'");
       $("#q").value = q; $("#ltitle").textContent = q ? "Results for \u201c" + q + "\u201d" : "Search";
       if (q) {
         var SYN = { slicing: "slice", sliced: "slice", slices: "slice", hooking: "hook", hooks: "hook", shanking: "shanks", shank: "shanks", shanked: "shanks",
@@ -443,8 +444,9 @@
           bunker: "bunker", sand: "bunker", ott: "over the top", "over-the-top": "over the top", ee: "early extension", casting: "casting", lag: "lag", speed: "speed" };
         var words = q.split(/\s+/).map(function (w) { return SYN[w] || w; });
         var rx = words.map(function (w) { return new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); });
-        var hit = function (s) { s = s.toLowerCase(); return rx.every(function (r) { return r.test(s); }); };
-        var hitAny = function (s) { s = s.toLowerCase(); return rx.some(function (r) { return r.test(s); }); };
+        var low = function (s) { return s.toLowerCase().replace(/\u2019/g, "'"); };  // titles carry typographic apostrophes
+        var hit = function (s) { s = low(s); return rx.every(function (r) { return r.test(s); }); };
+        var hitAny = function (s) { s = low(s); return rx.some(function (r) { return r.test(s); }); };
         var ps = ix.p.filter(function (p) { return hitAny(p[1] + " " + p[0].replace(/-/g, " ")); }), cs = ix.c.filter(function (c) { return hit(c[1]); });
         if (ps.length) extra += '<div class="sres"><h2>Problems</h2><div class="tags">' + ps.map(function (p) { return '<a class="tag" href="' + B + "/fix/" + p[0] + '/">' + esc(p[1]) + " · " + p[3] + " recommendations</a>"; }).join("") + "</div></div>";
         if (cs.length) extra += '<div class="sres"><h2>Coaches</h2><div class="tags">' + cs.slice(0, 12).map(function (c) { return '<a class="tag" href="' + B + "/coach/" + c[0] + '/">' + esc(c[1]) + "</a>"; }).join("") + "</div></div>";
