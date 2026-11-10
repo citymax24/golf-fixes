@@ -355,12 +355,17 @@ def course_svg():
         return f'<g class="{cls} ybo">{c}</g><g class="{cls} ybi">{c}</g>'
     return ('<defs><pattern id="ybsand" width="5" height="5" patternUnits="userSpaceOnUse"><rect class="ybp" width="5" height="5"/>'
             '<circle class="ybd" cx="1.2" cy="1.3" r=".55"/><circle class="ybd" cx="3.7" cy="3.8" r=".55"/></pattern>'
-            '<pattern id="ybwat" width="8" height="4" patternUnits="userSpaceOnUse"><rect class="ybp" width="8" height="4"/><path class="ybl" d="M0 2h8"/></pattern></defs>'
+            '<pattern id="ybwat" width="8" height="4" patternUnits="userSpaceOnUse"><rect class="ybp" width="8" height="4"/><path class="ybl" d="M0 2h8"/></pattern>'
+            '<linearGradient id="ybgh"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".09" stop-color="#fff"/><stop offset=".91" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            '<linearGradient id="ybgv" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".04" stop-color="#fff"/><stop offset=".95" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            '<mask id="ybmh" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgh)"/></mask>'
+            '<mask id="ybmv" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgv)"/></mask></defs>'
+            '<g mask="url(#ybmh)"><g mask="url(#ybmv)">'  # no frame: the drawing runs out softly at the edges
             + blob(COURSE_TREES, "ybt")
             + f'<path class="ybf" d="{COURSE_FAIRWAY}"/><path class="ybw" d="{COURSE_POND}"/>'
             + '<rect class="ybb" x="145" y="315" width="30" height="24" rx="4" transform="rotate(-5 160 327)"/>'
             + f'<path class="ybg" d="{COURSE_GREEN}"/>'
-            + blob(COURSE_BUNKERS, "ybs")
+            + blob(COURSE_BUNKERS, "ybs") + '</g></g>'
             + '<ellipse class="bfcup" cx="160" cy="46.5" rx="4" ry="1.8"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>\n')
 
 
