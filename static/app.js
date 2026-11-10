@@ -277,7 +277,7 @@
   // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
   // Leaderboard rows also grow their bar and run their count up.
   if (!calm && "IntersectionObserver" in window) {
-    var rvs = $$(".ldr, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
+    var rvs = $$(".ldi, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
     if (rvs.length) {
       var rio = new IntersectionObserver(function (es) {
         var i = 0;
@@ -348,7 +348,7 @@
   // ---------- review 3: plan bar, show all, saved menu, search page ----------
   var pp = new URLSearchParams(location.search).get("plan");
   $$(".pbar[data-plan]").forEach(function (b) { if (b.dataset.plan === pp) b.hidden = false; });
-  var sa = $("#showall"); if (sa) sa.onclick = function () { $("#ranked").classList.add("showall"); sa.parentNode.remove(); };
+  var sa = $("#showall"); if (sa) sa.onclick = function () { document.getElementById(sa.getAttribute("aria-controls")).classList.add("showall"); sa.parentNode.remove(); };
   [["liked", "/liked/"], ["later", "/later/"], ["history", "/history/"]].forEach(function (x) {
     var a = $('#side a[href="' + B + x[1] + '"]'); if (a && !load(x[0]).length && location.pathname !== B + x[1]) a.hidden = true;
   });

@@ -284,25 +284,30 @@ def card(v, n=None, ok=None, rank=None, pname=None, extra="", hq=False):
 </article>"""
 
 
+def board_row(v, n, ok, pos, mx):
+    """One line of a leaderboard: position, picture, lesson, count with its bar (share of the leader), fixed-it count."""
+    href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"https://www.youtube.com/watch?v={v['vid']}"
+    dur = fmt_dur(v.get("duration_s"))
+    ty = f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ""
+    return (f'<li class="ldi"><a class="ldr{" ld3" if pos <= 3 else ""}" href="{href}" data-vid="{e(v["vid"])}" style="--w:{100 * n / mx:.1f}%">'
+            f'<span class="ldp">{pos}</span>'
+            f'<span class="ldt"><img loading="lazy" src="{thumb(v["vid"], "mq2")}" alt="">{f"<span class=du>{dur}</span>" if dur else ""}</span>'
+            f'<span class="ldn"><b>{e(nice(v["title"]))}</b><i>{e(v["channel"])}{ty}</i></span>'
+            f'<span class="lds"><span class="ldv"><b data-cnt="{n}">{n}</b> <i>recommend{"s" if n == 1 else ""}</i></span>'
+            f'{f"<span class=ldo>{CK}{ok} <i>fixed it</i></span>" if ok else "<span class=ldo></span>"}</span>'
+            f'<span class="ldbar"></span></a>'
+            f'<span class="thw ldw" data-vid="{e(v["vid"])}"><button class="lb" aria-label="Watch later" title="Watch later">{svg("later")}</button></span></li>')
+
+
+LDK = '<div class="ldk" aria-hidden="true"><span>Pos</span><span>Lesson</span><span>Recommend</span><span>Fixed it</span></div>'
+
+
 def board(vs):
-    """Home leaderboard: the most recommended lessons as a tournament board, the bar is the share of the leader's count."""
+    """Home leaderboard: the most recommended lessons as a tournament board."""
     mx = max(v["recs"] for v in vs)
-    rows = []
-    for i, v in enumerate(vs, 1):
-        href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"https://www.youtube.com/watch?v={v['vid']}"
-        ok, dur = v.get("success", 0), fmt_dur(v.get("duration_s"))
-        ty = f' · {TYPES[v["type"]]}' if v.get("type") in TYPES and v["type"] != "other" else ""
-        rows.append(f'<li><a class="ldr" href="{href}" data-vid="{e(v["vid"])}" style="--w:{100 * v["recs"] / mx:.1f}%">'
-                    f'<span class="ldp">{i}</span>'
-                    f'<span class="ldt"><img loading="lazy" src="{thumb(v["vid"], "mq2")}" alt="">{f"<span class=du>{dur}</span>" if dur else ""}</span>'
-                    f'<span class="ldn"><b>{e(nice(v["title"]))}</b><i>{e(v["channel"])}{ty}</i></span>'
-                    f'<span class="lds"><span class="ldv"><b data-cnt="{v["recs"]}">{v["recs"]}</b> <i>recommend</i></span>'
-                    f'{f"<span class=ldo>{CK}{ok} <i>fixed it</i></span>" if ok else "<span class=ldo></span>"}</span>'
-                    f'<span class="ldbar"></span></a></li>')
+    rows = "".join(board_row(v, v["recs"], v.get("success", 0), i, mx) for i, v in enumerate(vs, 1))
     return (f'<section class="ldb" id="board"><div class="ldh"><h2 class="row">The leaderboard</h2>'
-            f'<p>Top {len(vs)} of {len(WATCH):,} lessons, by recommendations</p></div>'
-            f'<div class="ldk" aria-hidden="true"><span>Pos</span><span>Lesson</span><span>Recommend</span><span>Fixed it</span></div>'
-            f'<ol class="ldl">{"".join(rows)}</ol></section>')
+            f'<p>Top {len(vs)} of {len(WATCH):,} lessons, by recommendations</p></div>{LDK}<ol class="ldl">{rows}</ol></section>')
 
 
 def chips(active=None):
@@ -454,8 +459,9 @@ def build_problem(p):
 <section class="intro"><p class="kick">{e(p['group'])}</p><h1>{e(p['q'])}</h1>
 <p>{e(p['intro'])}</p>
 <p class="meta"><b>{p['total_recs']:,}</b> golfers pointed to these <b>{p['video_count']}</b> lessons{f' · <b>{ok_total}</b> say they fixed it' if ok_total else ''}. Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}{fixes_list(p)}{aid_html}</section>
-<div class="grid ranked{' long' if len(rows) > 10 else ''}" id="ranked">{''.join(card(v, n, ok, i + 1, p['name'], top_quote(v) if i == 0 else "") for i, (s, n, ok, v) in enumerate(rows))}</div>
-{f'<p class="more"><button class="pill inl" id="showall" aria-controls="ranked">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
+<div class="grid ranked" id="ranked">{card(rows[0][3], rows[0][1], rows[0][2], 1, p['name'], top_quote(rows[0][3]))}</div>
+{f'<section class="ldb ldbp">{LDK}<ol class="ldl{" long" if len(rows) > 10 else ""}" id="rest" start="2">' + "".join(board_row(v, n, ok, i, rows[0][1]) for i, (s, n, ok, v) in enumerate(rows[1:], 2)) + '</ol></section>' if len(rows) > 1 else ''}
+{f'<p class="more"><button class="pill inl" id="showall" aria-controls="rest">Show all {len(rows)} lessons</button></p>' if len(rows) > 10 else ''}
 {more_lessons(p, rows)}
 {sounds_like(p)}
 {ask_cta(p)}
