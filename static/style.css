@@ -566,3 +566,8 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .bffp{stroke:#0B3D2C;stroke-width:1.3;stroke-linecap:round;fill:none}
 .bfff{fill:#3ECF8E;stroke:#0B3D2C;stroke-width:.9;stroke-linejoin:round}
 [data-theme=dark] .bfcup{fill:#0B1710;fill-opacity:.5}[data-theme=dark] .bffs{stroke:#0B1710}[data-theme=dark] .bffp,[data-theme=dark] .bfff{stroke:#0B1710}[data-theme=dark] .bffh{stroke:#E8F1EA;stroke-opacity:.5}
+
+/* header: wordmark only (the V is the check mark) */
+.brand .wm{display:block;width:auto;height:23px;color:var(--fg);overflow:visible}
+.brand .wmc{stroke:var(--acc)}
+@media (max-width:600px){.brand .wm{height:21px}}
