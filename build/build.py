@@ -121,6 +121,8 @@ for p in PROBLEMS:
 TOTAL_RECS = sum(v["recs"] for v in VIDEOS)
 GROUPS = ["Ball flight", "Contact", "Swing faults", "Swing sequence", "Setup", "Clubs", "Short game", "Training", "On the course"]
 
+WORDMARK = open(os.path.join(ROOT, "static", "logo-word.svg")).read().strip().replace(' xmlns="http://www.w3.org/2000/svg"', "")
+
 # ---------- icons ----------
 I = {
     "menu": '<path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/>',
@@ -164,7 +166,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og3/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="{BASE}/static/favicon.svg?v=a" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=a">
+<link rel="icon" href="{BASE}/static/favicon.svg?v=c" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=c"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
@@ -173,7 +175,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <a class="skip" href="#main">Skip to content</a>
 <header class="top" id="top">
   <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
-  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home"><img src="{BASE}/static/logo-mark-24.svg?v=b" alt="" width="24" height="24"><span>GolfVotes</span></a></div>
+  <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home">{WORDMARK}</a></div>
   <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list"><kbd class="kh" aria-hidden="true">/</kbd><ul class="sugg" id="sugg" role="listbox" hidden></ul></form>
   <div class="right"><nav class="tnav" aria-label="Main"><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">Browse</a><a href="{BASE}/later/" id="tsaved" hidden>Saved</a><a href="{BASE}/about/">How we rank</a></nav><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
 </header>
