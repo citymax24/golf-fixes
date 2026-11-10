@@ -1206,3 +1206,13 @@ form.filters select{font-weight:400;padding:0 8px 0 12px}
   .pgrid.row1 .plc:focus-visible{outline:none}
   .pgrid.row1 .plc:focus-visible .th{outline:2px solid var(--acc);outline-offset:-2px}
 }
+
+/* -- home hero copy: the headline says what the site is, the question sits on the course as the call to action,
+   the source sentence follows the finder on stacked layouts (it keeps its place in the left column from 1200px). -- */
+.welcome h1.hq{text-wrap:balance}
+.bfq{flex-wrap:wrap;align-items:baseline;gap:0 10px}
+.bfq b{font-size:20px;line-height:28px;font-weight:800;letter-spacing:-.3px}
+.bfq span{font-size:15px;line-height:24px;font-weight:500}
+@media (max-width:1199px){.welcome>.bf{margin-bottom:12px}.welcome>.lede{margin:0 0 32px;font-size:14px;line-height:20px}}
+@media (min-width:601px) and (max-width:1199px){.welcome>.lede{margin-bottom:48px}}
+@media (min-width:1200px){.bf>div:first-child{margin-top:8px}}
