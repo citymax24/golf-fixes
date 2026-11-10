@@ -277,7 +277,7 @@
   // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
   // Leaderboard rows also grow their bar and run their count up.
   if (!calm && "IntersectionObserver" in window) {
-    var rvs = $$(".ldi, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
+    var rvs = $$(".ldi, .un, .ftw, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
     if (rvs.length) {
       var rio = new IntersectionObserver(function (es) {
         var i = 0;
@@ -291,6 +291,7 @@
       rvs.forEach(function (el) { el.classList.add("rv"); rio.observe(el); });
     }
   }
+  if (!calm) $$(".vsb [data-cnt]").forEach(function (el, i) { countUp(el, 150 + i * 120); });  // lesson page: the counts run up
   // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
   var ixs = $(".ixs");
   if (ixs && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
