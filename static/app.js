@@ -222,14 +222,6 @@
       });
     });
     var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0;
-    function countUp(el) {
-      var n = +el.dataset.cnt, t0 = performance.now();
-      (function step(now) {
-        var t = Math.min(1, (now - t0) / 700);
-        el.textContent = Math.round(n * (1 - Math.pow(1 - t, 3))).toLocaleString("en-US");
-        if (t < 1) requestAnimationFrame(step);
-      })(t0);
-    }
     // The shot: a ball leaves the tee and flies the line of this miss, the tracer draws behind it. The ball is an HTML
     // element above the labels (it is in the air), its shadow stays in the drawing, on the ground.
     function shot(line, done) {
@@ -256,6 +248,42 @@
       })(t0);
     }
   }
+
+  // ---------- motion ----------
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function countUp(el, wait) {  // a number runs up to its value
+    var n = +el.dataset.cnt, t0 = performance.now() + (wait || 0);
+    el.textContent = "0";
+    (function step(now) {
+      var t = Math.min(1, Math.max(0, (now - t0) / 700));
+      el.textContent = Math.round(n * (1 - Math.pow(1 - t, 3))).toLocaleString("en-US");
+      if (t < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+  // Reveal on scroll: only for what is below the fold when the page loads, so nothing visible ever blinks.
+  // Leaderboard rows also grow their bar and run their count up.
+  if (!calm && "IntersectionObserver" in window) {
+    var rvs = $$(".ldr, .pgrid.row1 > *, #feed > .vc").filter(function (el) { return el.getBoundingClientRect().top > window.innerHeight * .95; });
+    if (rvs.length) {
+      var rio = new IntersectionObserver(function (es) {
+        var i = 0;
+        es.forEach(function (x) {
+          if (!x.isIntersecting) return;
+          var el = x.target, d = Math.min(i++, 8) * 55; rio.unobserve(el);
+          el.style.setProperty("--d", d + "ms"); el.classList.add("in");
+          var c = $("[data-cnt]", el); if (c) countUp(c, d + 150);
+        });
+      }, { rootMargin: "0px 0px -6% 0px" });
+      rvs.forEach(function (el) { el.classList.add("rv"); rio.observe(el); });
+    }
+  }
+  // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
+  document.addEventListener("click", function (ev) {
+    var a = ev.target.closest && ev.target.closest('a[href*="/watch/"]'); if (!a) return;
+    var box = a.closest(".vc, .ldr, .bfp, .frow, li") || a, img = $("img", a) || $("img", box);
+    $$("img").forEach(function (x) { if (x.style.viewTransitionName) x.style.viewTransitionName = ""; });
+    if (img) img.style.viewTransitionName = "vtl";
+  }, true);
 
   // ---------- badges page: find your channel, select-all on focus ----------
   var bf = $("#bfind");
@@ -358,7 +386,8 @@
         var s = Math.log(1 + v[4]) + 0.4 * Math.log(1 + v[5]) + (personal ? 0.6 * aff : 0) - (seen[v[0]] ? 1.5 : 0) + 0.8 * rnd(seed + i);
         return [s, v];
       }).sort(function (a, b) { return b[0] - a[0]; }).map(function (x) { return x[1]; });
-      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.slice(0, 24)); }
+      var onBoard = {}; $$("#board .ldr").forEach(function (r) { onBoard[r.dataset.vid] = 1; });
+      if (personal || Object.keys(seen).length) { feed.innerHTML = ""; paint(feed, scored.filter(function (v) { return !onBoard[v[0]]; }).slice(0, 24)); }
       return;
     }
 
