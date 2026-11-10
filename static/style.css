@@ -481,3 +481,20 @@ form.filters label:last-child{flex-direction:row;align-items:center;font-size:14
 .bftt b{font-size:16px;line-height:1.3;font-weight:600}.bftt em{font-style:normal;font-size:14px;color:var(--ok);font-weight:600}
 @media (max-width:759px){.bfv,.bftt{max-width:none}}
 .bfp .bfy{font-size:13px;margin:-8px 0 16px}.bfy a{color:var(--acc);text-decoration:underline;text-underline-offset:2px}
+/* finder: make the tap obvious, top-down hole instead of a flag */
+.bfq{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:18px;line-height:1.3;font-weight:700;color:var(--fg)}
+.bfq svg{width:22px;height:22px;flex:none;fill:none;stroke:var(--acc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bfcup{fill:var(--fg)}.bfball{fill:#fff;stroke:var(--fg);stroke-width:1.6}
+.bftx{font:700 9px var(--font);letter-spacing:1.4px;fill:var(--mut)}
+.bfd::before{width:18px;height:18px;border:2.5px solid var(--acc);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.bfd::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid var(--acc);opacity:0;pointer-events:none}
+.bf:not(.used) .bfd::after{animation:bfping 2.4s ease-out infinite}
+.bf:not(.used) .bfd:nth-of-type(2)::after{animation-delay:.4s}.bf:not(.used) .bfd:nth-of-type(3)::after{animation-delay:.8s}
+.bf:not(.used) .bfd:nth-of-type(4)::after{animation-delay:1.2s}.bf:not(.used) .bfd:nth-of-type(5)::after{animation-delay:1.6s}.bf:not(.used) .bfd:nth-of-type(6)::after{animation-delay:2s}
+@keyframes bfping{0%{transform:scale(1);opacity:.7}60%,100%{transform:scale(2.6);opacity:0}}
+.bfd span{top:36px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.08);padding:2px 9px}
+.bfd:hover span,.bfd.on span{border-color:var(--acc);color:var(--acc)}
+.bfd{cursor:pointer}
+@media (max-width:759px){.bf0{display:none}}
+@media (prefers-reduced-motion:reduce){.bf:not(.used) .bfd::after{animation:none}}
+.lh .bftx{transform:scaleX(-1);transform-origin:160px 0;transform-box:view-box}
