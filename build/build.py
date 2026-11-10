@@ -150,6 +150,30 @@ CK = '<svg class="ck" viewBox="0 0 74.91 72.75" aria-hidden="true"><path d="M0 3
 
 
 # ---------- layout ----------
+# The phrase people type into a search box for each problem; it leads the page title and the description.
+KW = {"slice": "How to Fix a Slice", "hook": "How to Fix a Hook", "shank": "How to Stop Shanking", "fat_thin": "How to Stop Hitting Fat and Thin Shots",
+      "topping": "How to Stop Topping the Ball", "iron_contact": "How to Strike Your Irons Better", "early_extension": "How to Fix Early Extension",
+      "over_the_top": "How to Stop Coming Over the Top", "casting_lag": "How to Stop Casting and Create Lag", "sway_weight_shift": "How to Stop Swaying and Shift Your Weight",
+      "takeaway_backswing": "Golf Takeaway and Backswing", "transition_downswing": "Golf Transition and Downswing", "rotation_hips": "Hip Rotation in the Golf Swing",
+      "release_clubface": "Release and Clubface Control", "grip": "How to Grip a Golf Club", "setup_posture": "Golf Setup and Posture",
+      "driver_distance": "How to Hit Your Driver Longer and Straighter", "wedges_pitching": "How to Pitch and Hit Your Wedges", "chipping": "How to Chip in Golf",
+      "bunker": "How to Hit Bunker Shots", "putting": "How to Putt Better", "speed_training": "Golf Swing Speed Training", "mobility_fitness": "Golf Mobility and Fitness",
+      "practice_method": "How to Practice Golf", "course_management": "Golf Course Management", "mental": "The Mental Game of Golf", "fundamentals_general": "Golf Swing Fundamentals"}
+YEAR = VDATA["generated"][:4]
+UPDATED = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%B %Y")
+
+
+def fit(*options, limit=65):
+    """The first title that fits a search result (about 65 characters), else the shortest one."""
+    return next((o for o in options if len(o) <= limit), min(options, key=len))
+
+
+def crumbs(*items):
+    """BreadcrumbList for search results: (name, path) pairs from the home page down."""
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i, "name": n, "item": URL + u} for i, (n, u) in enumerate((("GolfVotes", "/"),) + items, 1)]}
+
+
 def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=""):
     full = URL + path
     title = title if len(title) <= 70 else trunc(title.rsplit(" | ", 1)[0], 57) + " | " + SITE["name"]
@@ -166,7 +190,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}</title><meta name="description" content="{e(desc)}">
-{f'<link rel="canonical" href="{e(full)}">' if canonical else ''}
+{f'<link rel="canonical" href="{e(full)}">' if canonical else '<meta name="robots" content="noindex,follow">'}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og4/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -175,7 +199,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
-{f'<script type="application/ld+json">{json.dumps(ld)}</script>' if ld else ''}
+{''.join(f'<script type="application/ld+json">{json.dumps(x)}</script>' for x in (ld if isinstance(ld, list) else [ld])) if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="top" id="top">
@@ -414,7 +438,8 @@ def build_home():
 <h2 class="row">More lessons golfers recommend</h2>
 <div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:16])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
-    page("/", f"{SITE['name']}: {SITE['tagline']}", SITE["description"], body, nav="home",
+    page("/", f"Best Golf Lessons on YouTube, Ranked by Golfers | {SITE['name']}",
+         f"The YouTube golf lessons golfers recommend most, counted from {TOTAL_RECS:,} Reddit recommendations and sorted by problem: slice, hook, shanks, chipping, putting and more.", body, nav="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
 
@@ -515,7 +540,7 @@ def build_problem(p):
 <section class="phero">
 <div class="pht"><h1>{e(p['q'])}</h1>
 <p class="phs">{p['total_recs']:,} recommendations for {p['video_count']} lesson{'s' if p['video_count'] != 1 else ''}.{f' {ok_total} golfers say it fixed it.' if ok_total > 1 else ''}</p>
-<p class="phi">{e(p['intro'])} Ranked by recommendations. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}</div>
+<p class="phi">{e(p['intro'])} Ranked by recommendations, updated {UPDATED}. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}</div>
 <div class="phl"><p class="phk">Most recommended</p>{card(v0, n0, ok0, 1, p['name'], top_quote(v0), hq=True)}</div>
 </section>
 {fixes_list(p)}{aid_html}
@@ -527,11 +552,16 @@ def build_problem(p):
 <section class="pix"><h2 class="pick">Other problems</h2><nav class="ixs" aria-label="Other problems">{problem_index(p['key'])}</nav>
 <p class="ixn"><a class="ixa" href="{BASE}/categories/">All {nprob} problems →</a></p></section>
 {f'<article class="prose seo">{SEO["problems"][p["key"]]}<p class="dim">Written with AI from the lessons and recommendations above. Not a substitute for a coach.</p></article>' if SEO.get("problems", {}).get(p["key"]) else ''}"""
-    page(f"/fix/{p['slug']}/", f"{p['q']} {p['video_count']} lessons golfers recommend | {SITE['name']}",
-         f"{p['intro']} Ranked by {p['total_recs']:,} independent recommendations from golfers.", body, nav="cat",
+    kw = KW.get(p["key"], p["name"])
+    n = p["video_count"]
+    page(f"/fix/{p['slug']}/", fit(f"{kw}: {n} Best Lessons, Ranked by Golfers ({YEAR})", f"{kw}: {n} Lessons Golfers Recommend ({YEAR})",
+                                   f"{kw}: Best Lessons ({YEAR})", f"{kw} ({YEAR})"),
+         f"{kw}: the {p['video_count']} YouTube lesson{'s' if p['video_count'] != 1 else ''} golfers recommend most, ranked by {p['total_recs']:,} Reddit recommendations."
+         + (f" {ok_total} golfers say it fixed it." if ok_total > 1 else "") + f" #1: {nice(v0['title'])}.", body, nav="cat",
          og=f"{URL}/static/og4/{p['slug']}.png",
-         ld={"@context": "https://schema.org", "@type": "ItemList", "name": p["q"], "itemListElement": [
-             {"@type": "ListItem", "position": i + 1, "url": f"{URL}/watch/{r[3]['vid']}/", "name": r[3]["title"]} for i, r in enumerate(rows[:10])]})
+         ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": f"{kw}: best lessons ranked by golfers", "numberOfItems": len(rows), "itemListElement": [
+             {"@type": "ListItem", "position": i + 1, "url": f"{URL}/watch/{r[3]['vid']}/", "name": nice(r[3]["title"])} for i, r in enumerate(rows[:10])]},
+             crumbs(("Problems", "/categories/"), (p["name"], f"/fix/{p['slug']}/"))])
 
 
 def other_lessons():
@@ -550,7 +580,8 @@ def build_categories():
         if ps:
             groups += f'<section class="cgrp"><h2 class="pick">{e(g)}</h2><nav class="ixs" aria-label="{e(g)}">{problem_index(only=ps)}</nav></section>'
     nprob = len([p for p in PROBLEMS if p["video_count"]])
-    page("/categories/", f"Golf problems | {SITE['name']}", "Every golf problem with the lessons golfers recommend for it.",
+    page("/categories/", f"Fix Your Golf Swing: {nprob} Common Problems and the Best Lessons",
+         f"Every common golf problem, from slice and hook to chipping and putting, with the YouTube lessons golfers recommend most for it.",
          f'<section class="phero pone"><div class="pht"><h1>What do you want to fix?</h1><p class="phs">{nprob} problems. The small number is how many recommendations we counted.</p></div></section>'
          f'<div class="pix cat">{groups}</div>{other_lessons()}', nav="cat")
 
@@ -620,10 +651,12 @@ def build_watch(v):
     page(f"/watch/{v['vid']}/", f"{tt} | {SITE['name']}",
          (f"{v['summary']} {rec}" if v.get("summary") and len(v["summary"]) + len(rec) < 158 else (v.get("summary") or f"{v['channel']} lesson. {rec}")) if v.get("summary") else f"{v['channel']} lesson. {rec}",
          body, cls="wpage", og=thumb(v["vid"], "hqdefault"),
-         ld={"@context": "https://schema.org", "@type": "VideoObject", "name": v["title"], "thumbnailUrl": thumb(v["vid"], "hqdefault"),
+         ld=[{"@context": "https://schema.org", "@type": "VideoObject", "name": nice(v["title"]), "thumbnailUrl": thumb(v["vid"], "hqdefault"),
              "uploadDate": (v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01") + "T00:00:00+00:00",
              "description": f"{v['recs']} golfers recommended this lesson.", "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}",
-             **({"duration": f"PT{v['duration_s'] // 60}M{v['duration_s'] % 60}S"} if v.get("duration_s") else {})})
+             **({"duration": f"PT{v['duration_s'] // 60}M{v['duration_s'] % 60}S"} if v.get("duration_s") else {})},
+             crumbs(*((("Problems", "/categories/"), (PNAME[v["top"]]["name"], f"/fix/{PNAME[v['top']]['slug']}/")) if v["top"] in PNAME and by_problem.get(v["top"]) else (("Browse", "/browse/"),)),
+                    (nice(v["title"]), f"/watch/{v['vid']}/"))])
 
 
 def card_desc(v, notes):
@@ -758,8 +791,11 @@ def build_plans():
 <div class="planbar" data-plan="{pl['slug']}" data-n="{len(items)}"><b>{len(items)} videos{f" · {mins} min total" if mins else ""}</b><span class="prog"><span></span></span><span class="progt">0 of {len(items)} done</span></div>
 <p><a class="pill inl start" id="startplan" href="{BASE}/watch/{items[0]['vid']}/?plan={pl['slug']}">{svg('play')}<span>Start step 1</span></a> <a class="pill inl" href="https://www.youtube.com/watch_videos?video_ids={ids}" target="_blank" rel="noopener nofollow">{svg('ext')}<span>Play all on YouTube</span></a></p>
 <ol class="pll">{steps}</ol>{f'<div class="nlbox"><b>Working on your {e(PNAME[pl["key"]]["name"].lower())}?</b> Get the newest top-voted fixes once a month. <a class="pill inl" href="{e(SITE["newsletter_url"])}">Subscribe</a></div>' if SITE.get("newsletter_url") else ''}</div>"""
-        page(f"/plan/{pl['slug']}/", f"{pl['title']} | {SITE['name']}", pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og4/plan-{PNAME[pl['key']]['slug']}.png")
-    page("/plans/", f"Fix plans | {SITE['name']}", "Short learning paths built from the golf lessons golfers recommend most.",
+        page(f"/plan/{pl['slug']}/", fit(f"{pl['title']}: Step-by-Step Lesson Plan | {SITE['name']}", f"{pl['title']}: Step-by-Step Lesson Plan", f"{pl['title']} | {SITE['name']}"), pl["intro"][:155], body, nav="plans", og=f"{URL}/static/og4/plan-{PNAME[pl['key']]['slug']}.png",
+             ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": pl["title"], "itemListOrder": "https://schema.org/ItemListOrderAscending", "itemListElement": [
+                 {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{x['vid']}/", "name": nice(vmap[x["vid"]]["title"])} for i, x in enumerate(items, 1)]},
+                 crumbs(("Fix plans", "/plans/"), (pl["title"], f"/plan/{pl['slug']}/"))])
+    page("/plans/", f"Golf Fix Plans: Short Video Playlists for Each Problem | {SITE['name']}", f"{len(PLANS)} short learning paths, 4 to 6 videos in order, built from the golf lessons golfers recommend most.",
          f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short playlists, 4–6 videos in order, built from the lessons golfers link most.</p><div class="plist">{cards}</div>', nav="plans")
     return cards
 
@@ -773,7 +809,7 @@ def build_client_pages():
 <label>Type <select name="type"><option value="">Any</option>{opt((k, x) for k, x in TYPES.items() if k != "other")}</select></label>
 <label>Level <select name="level"><option value="">Any</option>{opt(LEVELS.items())}</select></label>
 <label class="cb"><input type="checkbox" name="new" value="1"> Recommended in the past year</label></form>"""
-    page("/browse/", f"Browse all lessons | {SITE['name']}", "Browse and filter every golf lesson golfers recommended.",
+    page("/browse/", f"All {len(WATCH):,} Golf Lessons Golfers Recommend | {SITE['name']}", f"Browse and filter all {len(WATCH):,} YouTube golf lessons golfers recommended on Reddit, by problem, type and level.",
          f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<p class="dim" id="count"></p><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
     page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
 
@@ -830,10 +866,13 @@ def build_coaches():
                    f'<span class="ldn"><b>{e(c["name"])}{award_line(s)}</b><i>{e(", ".join(PNAME[t]["name"] for t, _ in c["topics"].most_common(3) if t in PNAME))}</i></span>'
                    f'<span class="lds"><span class="ldv"><b data-cnt="{c["recs"]}">{c["recs"]:,}</b> <i>recommendations</i></span>'
                    f'<span class="ldo cbl">{len(c["videos"])} <i>lesson{"s" if len(c["videos"]) != 1 else ""}</i></span></span><span class="ldbar"></span></a></li>' for i, (s, c) in enumerate(COACHES, 1))
-    page("/coaches/", f"Most recommended golf coaches on YouTube | {SITE['name']}",
-         "The YouTube golf instructors golfers recommend most, ranked by independent recommendations.",
+    page("/coaches/", f"Best Golf Instructors on YouTube ({YEAR}), Ranked by Golfers",
+         f"The {len(COACHES)} YouTube golf coaches golfers recommend most, ranked by {sum(c['recs'] for _, c in COACHES):,} recommendations on Reddit. #1: {COACHES[0][1]['name']}.",
          f'<section class="phero pone"><div class="pht"><h1>Most recommended coaches</h1><p class="phs">{len(COACHES)} YouTube coaches, ranked by how often golfers recommended their lessons.</p></div></section>'
-         f'<section class="ldb"><div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>Lessons</span></div><ol class="ldl">{rows}</ol></section>', nav="coaches")
+         f'<section class="ldb"><div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>Lessons</span></div><ol class="ldl">{rows}</ol></section>', nav="coaches",
+         ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": "Best golf instructors on YouTube, ranked by golfers", "itemListElement": [
+             {"@type": "ListItem", "position": i, "url": f"{URL}/coach/{s}/", "name": c["name"]} for i, (s, c) in enumerate(COACHES[:20], 1)]},
+             crumbs(("Coaches", "/coaches/"))])
 
 
 AWARDS = {}  # coach slug -> list of award dicts (persisted in data/awards.json, never removed: a badge stays valid for its year)
@@ -991,8 +1030,13 @@ def build_coach(s, c):
 {awards_strip(s)}{badge_kit(s, c)}
 <section class="ldb ldbp">{LDK}<ol class="ldl{" long10" if len(vids) > 12 else ""}" id="rest">{"".join(board_row(v, v["recs"], v.get("success", 0), i, mx) for i, v in enumerate(vids, 1))}</ol></section>
 {f'<p class="more"><button class="pill inl" id="showall" aria-controls="rest">Show all {len(vids)} lessons</button></p>' if len(vids) > 12 else ''}"""
-    page(f"/coach/{s}/", f"{c['name']}: most recommended lessons | {SITE['name']}",
-         f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} independent recommendations.", body, nav="coaches")
+    top3 = ", ".join(PNAME[t]["name"].lower() for t, _ in c["topics"].most_common(3) if t in PNAME)
+    page(f"/coach/{s}/", fit(f"{c['name']}: Best Golf Lessons, Ranked by Golfers | {SITE['name']}", f"{c['name']}: Best Lessons, Ranked by Golfers",
+                             f"{c['name']}: Best Golf Lessons", f"{c['name']} | {SITE['name']}"),
+         f"The {c['name']} lessons golfers recommend most, ranked by {c['recs']:,} Reddit recommendations" + (f", most often for {top3}" if top3 else "") + ".", body, nav="coaches",
+         ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": f"Best {c['name']} lessons, ranked by golfers", "itemListElement": [
+             {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{v['vid']}/", "name": nice(v["title"])} for i, v in enumerate(vids[:10], 1)]},
+             crumbs(("Coaches", "/coaches/"), (c["name"], f"/coach/{s}/"))])
 
 
 def build_report():
