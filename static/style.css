@@ -1436,3 +1436,17 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
    inline link makes the target taller than 24px (WCAG 2.2, 2.5.8) without moving anything. -- */
 .vc h3 a{padding:3px 0}
 @media (pointer:fine){.vc .ch a{padding:1px 0 6px}}   /* same for the channel link with a mouse: 17px + 7px, downwards, away from the title */
+
+/* -- comments on the lesson page in the board language: display heading, hairlines, the verdict as text with the
+   check instead of a grey pill (same as "fixed it" everywhere else). -- */
+.cms h2{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;word-spacing:.04em}
+@media (min-width:1000px){.cms h2{font-size:28px;line-height:32px}}
+.cms>h2+p.dim{margin:0 0 12px}
+.cms>.cm:first-of-type{border-top:1px solid var(--line)}
+.cmf .lab{background:none;padding:0;border-radius:0;font-size:inherit;font-weight:600;color:var(--mut)}
+.cmf .lab.fix{background:none;color:var(--ok)}
+.cmf .lab.st-critical{background:none;color:#b3261e}
+:root[data-theme=dark] .cmf .lab.st-critical{color:#f2b8b5}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .cmf .lab.st-critical{color:#f2b8b5}}
+.cmf .lab+.lab{margin-left:12px}
+.cmf a{margin-left:12px}
