@@ -101,7 +101,7 @@ h2.row{font-size:20px;margin:8px 0 12px}
 .plan{max-width:1000px}.kick{text-transform:uppercase;letter-spacing:.06em;font-size:12px;font-weight:600;color:var(--mut);margin:8px 0 0}.kick a{color:var(--acc)}
 .pll{list-style:none;padding:0;display:grid;gap:16px}.pli{display:grid;grid-template-columns:240px 1fr;gap:16px}
 .pli .th{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--ph)}.pli img{width:100%;height:100%;object-fit:cover}
-.pli h3{margin:0 0 4px;font-size:16px;font-weight:500}.pli p{margin:0 0 4px}
+.pli h2{margin:0 0 4px;font-size:16px;font-weight:500}.pli p{margin:0 0 4px}
 @media (max-width:600px){.pli{grid-template-columns:1fr}}
 .nlbox{background:var(--chip);border-radius:12px;padding:14px;margin-top:20px}
 .filters{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--chip);border-radius:12px;padding:10px 14px;margin-bottom:12px}
@@ -125,7 +125,7 @@ details.badges{margin:28px 0 0;font-size:13px;color:var(--mut)}details.badges su
 .progt{color:var(--mut);font-size:13px}
 .pill.start{background:var(--acc);color:#fff}.pill.start:hover{background:var(--acc2)}
 .pill.done.on{background:var(--ok);color:#fff}
-.pli.isdone h3 a{text-decoration:line-through;color:var(--mut)}
+.pli.isdone h2 a{text-decoration:line-through;color:var(--mut)}
 .pli .th{position:relative;display:block}
 .pprog{color:var(--ok)}
 .inplan p{margin:0 0 6px}
@@ -975,7 +975,7 @@ blockquote.tq cite{text-indent:0;line-height:1.4}
 .plan>p>.pill.inl{margin-right:0}
 .pll{margin:16px 0 0}
 .pli .th{border-radius:12px}
-.pli h3{line-height:1.3;font-weight:600;letter-spacing:-.1px}
+.pli h2{line-height:1.3;font-weight:600;letter-spacing:-.1px}
 .pli .done{margin-top:8px}
 @media (max-width:600px){.pll{gap:32px}.pli{gap:12px}}
 .steplab{letter-spacing:1.4px;line-height:1.4;color:var(--mut)}
