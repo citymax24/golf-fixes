@@ -3,6 +3,7 @@
 Usage: python3 build/build.py  -> writes _site/
 Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional)
 """
+import base64
 import hashlib, html, json, os, re, shutil, sys, urllib.parse
 from collections import Counter, defaultdict
 
@@ -32,7 +33,14 @@ e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
 PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
 _h = lambda f: hashlib.md5(open(os.path.join(ROOT, "static", f), "rb").read()).hexdigest()[:8]
-ASSET_V = {"css": _h("style.css"), "js": _h("app.js")}
+ASSET_V = {"css": _h("style.css"), "js": _h("app.js"), "count": _h("count.js")}
+# The one inline script (the theme, before first paint) is allowed by its hash; everything else a page may load is named
+# here. GitHub Pages cannot send headers, so the policy is a meta tag. static/count.js is GoatCounter's own script
+# (ISC licence, release 2.5.0), served from here so that no code from another host runs on the site.
+THEME_JS = 'try{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}'
+CSP = ("default-src 'self'; script-src 'self' 'sha256-" + base64.b64encode(hashlib.sha256(THEME_JS.encode()).digest()).decode() + "'; style-src 'self' 'unsafe-inline'; "
+       "img-src 'self' data: https://golfvotes.goatcounter.com; connect-src 'self' https://golfvotes.goatcounter.com; frame-src https://www.youtube-nocookie.com; "
+       "object-src 'none'; base-uri 'self'; form-action 'self'")
 
 
 def trunc(s, n):
@@ -188,7 +196,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
     tnav += f'<a href="{BASE}/later/" id="tsaved" hidden>Saved</a><a href="{BASE}/about/"' + (' class="on" aria-current="page"' if nav == "about" else "") + '>How we rank</a>'
     doc = f"""<!doctype html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="{CSP}"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}</title><meta name="description" content="{e(desc)}">
 {f'<link rel="canonical" href="{e(full)}">' if canonical else '<meta name="robots" content="noindex,follow">'}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}">
@@ -198,7 +206,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <link rel="icon" href="{BASE}/static/favicon.svg?v=e" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=e"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
-<script>try{{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
+<script>{THEME_JS}</script>
 {''.join(f'<script type="application/ld+json">{json.dumps(x)}</script>' for x in (ld if isinstance(ld, list) else [ld])) if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
@@ -223,7 +231,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <div class="fte"><p>Not affiliated with Reddit or YouTube.</p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></div></footer>
 </main>
 <script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
-<script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="{BASE}/static/count.js?v={ASSET_V['count']}"></script>
 </body></html>"""
     dest = os.path.join(OUT, path.strip("/"), "index.html") if not path.endswith(".html") else os.path.join(OUT, path.strip("/"))
     os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -1071,7 +1079,7 @@ def build_text():
 <p><b>YouTube:</b> The small preview images are copies stored on this site, so looking at a page sends nothing to Google or YouTube. Videos play only after you click; then your browser connects to youtube-nocookie.com under Google's privacy policy.</p>
 <p><b>Hosting:</b> {e(SITE.get('hosting_note', ''))}</p>
 <h2>Legal basis and recipients</h2>
-<p>When you open a page, your browser connects to GitHub (hosting) and to GoatCounter (visitor statistics, script from gc.zgo.at). Your IP address is necessarily transmitted to these services to deliver the content. Only when you click play does your browser also connect to Google/YouTube. We do not receive it and do not store it. Legal basis is our legitimate interest in running and improving a free website (Art. 6(1)(f) GDPR). GoatCounter stores no IP addresses and sets no cookies. GitHub and Google (after a click on play) may process data in the USA; both participate in the EU-US Data Privacy Framework.</p>
+<p>When you open a page, your browser connects to GitHub (hosting) and to GoatCounter (visitor statistics; the counting script itself is served from this site). Your IP address is necessarily transmitted to these services to deliver the content. Only when you click play does your browser also connect to Google/YouTube. We do not receive it and do not store it. Legal basis is our legitimate interest in running and improving a free website (Art. 6(1)(f) GDPR). GoatCounter stores no IP addresses and sets no cookies. GitHub and Google (after a click on play) may process data in the USA; both participate in the EU-US Data Privacy Framework.</p>
 <p>Features you use yourself (likes, history, watch later, theme, your “fixed it” answer) are saved only in your browser (localStorage) and are not sent to us. You can delete them in Settings or in your browser. The statistics we keep are anonymous counts; we have no log files of our own.</p>
 <h2>Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and to object to processing based on legitimate interests (Art. 15–21 GDPR). Because we do not store personal data about visitors, there is usually nothing to hand out or delete, but write to the address below and we will check. You can also complain to a data protection authority, for example the Hessian Commissioner for Data Protection and Freedom of Information (Wiesbaden).</p>
