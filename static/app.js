@@ -379,7 +379,10 @@
       if (st && d && d < n) { var nx = lis.filter(function (li) { return !li.classList.contains("isdone"); })[0]; if (nx) { st.href = $("a.th", nx).href; $("span", st).textContent = "Continue: step " + (lis.indexOf(nx) + 1); } }
       if (st && d >= n) $("span", st).textContent = "Watch again";
     });
-    $$(".plc[data-plan]").forEach(function (c) { var d = (plans[c.dataset.plan] || []).length; $(".pprog", c).textContent = d ? d + "/" + c.dataset.n + " done" : ""; });
+    $$(".plc[data-plan],.plr[data-plan]").forEach(function (c) {
+      var done = plans[c.dataset.plan] || [], d = done.length; $(".pprog", c).textContent = d ? d + "/" + c.dataset.n + " done" : "";
+      $$(".pt", c).forEach(function (t) { t.classList.toggle("dn", done.indexOf(t.dataset.v) >= 0); });
+    });
   }
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest("button.done[data-plan]"); if (!b) return;
@@ -490,6 +493,7 @@
     }
     paint(list, arr.slice(0, 48)); infinite(list, arr, 48);
     $("#empty").style.display = arr.length || extra ? "none" : "";
+    var ex = $("#emptyx"); if (ex) ex.hidden = !!(arr.length || extra);
     if (kind === "search" && !arr.length && !extra) $("#empty").textContent = "No results. Try a problem like slice, shanks or chipping.";
   });
 })();
