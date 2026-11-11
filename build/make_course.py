@@ -28,9 +28,9 @@ src = open(os.path.join(HERE, "build.py"), encoding="utf-8").read()
 grab = lambda name: eval(re.search(rf"^{name} = (.*)$", src, re.M).group(1))
 FAIRWAY, GREEN, POND = grab("COURSE_FAIRWAY"), grab("COURSE_GREEN"), grab("COURSE_POND")
 BUNKERS, TREES = grab("COURSE_BUNKERS"), grab("COURSE_TREES")
-TEE, CUP = (160, 327), (160, 46)
-YARDS = 380                       # tee to pin
-U = (TEE[1] - CUP[1]) / YARDS     # drawing units per yard
+TEE, CUP = (160, 326), (160, 46)   # the ball on the tee, the hole
+YARDS = 150                       # tee to pin: the plan is true to scale as a par 3 of 150 yards
+U = (TEE[1] - CUP[1]) / YARDS     # drawing units per yard (1.87): green 36 x 31 yd, approach 40 to 48 yd wide, tee 10 x 16 yd
 R = random.Random(11)
 LIGHT = (-0.7071, -0.7071)        # direction towards the light (north-west)
 
@@ -219,7 +219,15 @@ def stipple(poly, grid=1.42):
 
 
 fair, green, pond = (Polygon(path_pts(d)).buffer(0) for d in (FAIRWAY, GREEN, POND))
-tee = affinity.rotate(Polygon([(147, 316), (173, 316), (173, 338), (147, 338)]), -5, origin=TEE)
+# A par 3 has no fairway from the tee: the mown approach starts about 45 yards out and is a little narrower than the
+# shape the page used before. The tee is its own pad, longer than wide, square to the line of play.
+# Measures follow real holes: the approach is about as wide as the green (27 to 36 yards), the green is 33 x 28 yards,
+# the bunkers sit at the green and at the approach, the pond lies beside the approach on the left.
+fair = affinity.scale(fair, .6, 1, origin=(160, 0)).intersection(Polygon([(0, 0), (320, 0), (320, 246), (0, 246)])).buffer(-8, 16).buffer(8, 16)
+green = affinity.scale(green, .9, .9, origin=CUP)
+pond = affinity.rotate(affinity.scale(pond, 1.3, 2.05), -24)
+pond = affinity.translate(pond, 85 - pond.centroid.x, 215 - pond.centroid.y)
+tee = affinity.rotate(Polygon([(151, 311), (169, 311), (169, 341), (151, 341)]), -4, origin=TEE)
 # bunkers: one shape per group of circles, the edge made irregular like a real sand line
 sands = []
 for g in unary_union([Point(x, y).buffer(r, 16) for x, y, r in BUNKERS]).buffer(5, 12).buffer(-5.8, 12).geoms:
@@ -227,7 +235,7 @@ for g in unary_union([Point(x, y).buffer(r, 16) for x, y, r in BUNKERS]).buffer(
     nz = noise(((9, 1), (21, .9), (5, .35)))
     sands.append(Polygon([(p[0] + n[0] * .95 * nz(i * 2.2), p[1] + n[1] * .95 * nz(i * 2.2)) for i, (p, n) in enumerate(zip(pts, nr))]).buffer(0))
 # room for the title (bottom left) and the north arrow (bottom right)
-trees = [(x, y, r) for x, y, r in TREES if not (y > 306 and (x < 112 or x > 268))]
+trees = [(x, y, r) for x, y, r in TREES if not (y > 306 and (x < 112 or x > 268)) and not (abs(x - 262) < 20 and abs(y - 96) < 10)]
 
 MASK = ('<defs><linearGradient id="ybgh"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".09" stop-color="#fff"/><stop offset=".91" stop-color="#fff"/>'
         '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><linearGradient id="ybgv" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
@@ -293,7 +301,7 @@ for i in range(4):
     ux, uy = (b[0] - a[0]) / ln * 1.5, (b[1] - a[1]) / ln * 1.5
     ruled += f"M{f(a[0] - ux)} {f(a[1] - uy)}L{f(b[0] + ux)} {f(b[1] + uy)}"
 el.append(f'<path class="ywf" d="{ta}"/><path class="y2" d="{ruled}"/>'
-          f'<circle class="yi" cx="{f(c[0][0] + 4.2)}" cy="{f(c[0][1] + 3.6)}" r=".7"/><circle class="yi" cx="{f(c[1][0] - 3.8)}" cy="{f(c[1][1] + 3.9)}" r=".7"/>')
+          f'<circle class="yi" cx="{f(TEE[0] - 6.4)}" cy="{f(TEE[1] - 3.6)}" r=".7"/><circle class="yi" cx="{f(TEE[0] + 6.4)}" cy="{f(TEE[1] - 4.5)}" r=".7"/>')   # tee markers, the ball just behind them
 
 # 6 green: collar, two layers of marker, ink, contours that fall towards the front right
 el.append(f'<path class="y3" stroke-dasharray="1.6 1.5" d="{cr(resample(list(green.buffer(3.4, 12).exterior.coords)[:-1], 4, True), True)}"/>')
@@ -314,25 +322,24 @@ el.append('<path class="yst" d="' + "".join(stipple(s) for s in sands) + '"/>')
 el.append('<path class="y1" d="' + "".join(freehand(s, 3.0, .2, 2) for s in sands) + '"/>')
 el.append('<path class="ya" d="' + "".join(lit_side(s.buffer(-.25, 8), 2.6, 1, .35) for s in sands) + '"/>')
 
-# 8 construction: line of play (ruled) and distances to the pin (compass)
-el.append(f'<path class="yc" d="M{TEE[0]} {TEE[1] + 9}V{CUP[1] + 3}"/>')
-for yd in (100, 150, 200, 250):
+# 8 construction: line of play (ruled) and the distances to the pin (compass), the way course markers count
+el.append(f'<path class="yc" d="M{TEE[0]} {TEE[1] + 19}V{CUP[1] + 3}"/>')
+for yd in (50, 100):
     r = yd * U
-    arc = Point(CUP).buffer(r, 96).exterior.intersection(fair.buffer(5.5))
+    arc = Point(CUP).buffer(r, 128).exterior.intersection(fair.buffer(5.5))
     for g in getattr(arc, "geoms", [arc]):
-        cs = list(g.coords)
-        if len(cs) < 3 or min(y for _, y in cs) < CUP[1] + 10:
+        cs = sorted(g.coords)
+        if len(cs) < 3:
             continue
-        cs.sort()
         el.append(f'<path class="y3 yr" d="M{f(cs[0][0])} {f(cs[0][1])}A{f(r)} {f(r)} 0 0 0 {f(cs[-1][0])} {f(cs[-1][1])}"/>'
-                  f'<text class="yn" x="{f(cs[-1][0] + 2.6)}" y="{f(cs[-1][1] + 1.9)}">{yd}</text>')
+                  f'<text class="yn" x="{f(cs[0][0] - 2.6)}" y="{f(cs[0][1] + 1.9)}" text-anchor="end">{yd}</text>')
 
 # 9 title, scale bar, north arrow (outside the fade)
 el.append('</g></g><g class="yfix">')
-s50 = 50 * U
-el.append(f'<text class="yn ytl" x="10" y="325">HOLE 1</text><text class="yn" x="10" y="333.5">PAR 4 · {YARDS} YDS</text>'
+s50 = 25 * U
+el.append(f'<text class="yn ytl" x="10" y="325">HOLE 7</text><text class="yn" x="10" y="333.5">PAR 3 · {YARDS} YDS · HCP 15</text>'
           f'<g transform="translate(10 348)"><path class="y3" d="M0 0H{f(2 * s50)}M0 -2.6V0M{f(s50)} -2.6V0M{f(2 * s50)} -2.6V0"/><path class="yi" d="M0 -1.3H{f(s50)}V0H0Z"/>'
-          f'<text class="yn" x="0" y="-4.6">0</text><text class="yn" x="{f(s50)}" y="-4.6" text-anchor="middle">50</text><text class="yn" x="{f(2 * s50)}" y="-4.6" text-anchor="end">100 YDS</text></g>')
+          f'<text class="yn" x="0" y="-4.6">0</text><text class="yn" x="{f(s50)}" y="-4.6" text-anchor="middle">25</text><text class="yn" x="{f(2 * s50)}" y="-4.6" text-anchor="end">50 YDS</text></g>')
 el.append('<g transform="translate(296 336)"><circle class="y3" r="7.5"/><path class="y3" d="M0 9.5V-9.5M-9.5 0H-7.5M7.5 0H9.5"/><path class="yi" d="M0 -6.2L-2.5 2.6L0 1.2Z"/>'
           '<path class="y3" d="M0 -6.2L2.5 2.6L0 1.2Z"/><text class="yn" x="0" y="-12" text-anchor="middle">N</text></g>')
 
