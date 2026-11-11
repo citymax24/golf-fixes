@@ -29,7 +29,7 @@ function nice(t) {
 }
 
 function rankFor(key) {
-  return videos.filter(v => (v.topic_counts || {})[key] >= site.min_recs_per_problem)
+  return videos.filter(v => (v.topic_counts || {})[key] >= site.min_recs_per_problem && !(v.duration_s > 0 && v.duration_s < 30))  // clips under 30 s are not ranked (CLIP_S in build.py)
     .map(v => [v.topic_counts[key] + 0.75 * ((v.t_success || {})[key] || 0) + 0.02 * Math.min(v.recs, 50), v]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
 }
 function pic(vid) {  // the self-hosted preview picture as a data URI
@@ -96,7 +96,8 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
       r.map(v => ({ v, n: v.topic_counts[pr.key], ok: (v.t_success || {})[pr.key] || 0 }))));
   }
   for (const pl of plans) {
-    const items = pl.items.map(i => byId[i.vid]).filter(Boolean); if (!items.length) continue;
+    const items = pl.items.map(i => byId[i.vid]).filter(v => v && !(v.duration_s > 0 && v.duration_s < 30)); if (!items.length) continue;
+    pl.title = pl.title.replace(/in \d+ videos/, `in ${items.length} videos`);
     const pr = problems.find(x => x.key === pl.key); const mins = Math.round(items.reduce((a, v) => a + (v.duration_s || 0), 0) / 60);
     await shot('plan-' + pr.slug, tpl('Fix plan · ' + pr.name, pl.title, `${items.length} videos${mins ? `, ${mins} minutes` : ''}, in the order that makes sense.`,
       items.map(v => ({ v, n: (v.topic_counts || {})[pl.key] || v.recs, ok: 0 }))));
