@@ -759,7 +759,7 @@ def plan_box(pl, v):
 
 def build_plans():
     vmap = {v["vid"]: v for v in VIDEOS}
-    cards = ""
+    cards = rows = ""
     for pl in PLANS:
         items = [i for i in pl["items"] if i["vid"] in vmap]
         if not items:
@@ -769,6 +769,11 @@ def build_plans():
         mins = round(sum(vmap[i["vid"]].get("duration_s") or 0 for i in items) / 60)
         pl["mins"] = mins
         cards += f'<a class="plc" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="th"><img loading="lazy" src="{thumb(first["vid"])}" alt=""><span class="du">{f'<span class="dn">{len(items)} videos · </span>{mins} min' if mins else f"{len(items)} videos"}</span></span><b>{e(pl["title"])}</b><i><span>{sum((vmap[i["vid"]].get("topic_counts") or {}).get(pl["key"], 0) for i in items)} golfers recommend these</span>{('<span class="ok">' + CK + str(sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items)) + ' fixed it</span>') if sum((vmap[i["vid"]].get("t_success") or {}).get(pl["key"], 0) for i in items) else ""}<span class="pprog"></span></i></a>'
+        recs, fixed = (sum((vmap[i["vid"]].get(k) or {}).get(pl["key"], 0) for i in items) for k in ("topic_counts", "t_success"))
+        # the plans page shows a plan as what it is, a sequence: its videos as a strip, as long as the plan
+        rows += (f'<a class="plr" href="{BASE}/plan/{pl["slug"]}/" data-plan="{pl["slug"]}" data-n="{len(items)}"><span class="plrt"><b>{e(pl["title"])}</b><i>'
+                 f'{f"<span>{mins} min</span>" if mins else ""}<span>{recs} golfers recommend these</span>{f"""<span class="ok">{CK}{fixed} fixed it</span>""" if fixed else ""}<span class="pprog"></span></i></span>'
+                 f'<span class="plrs">{"".join(f"""<span class="pt" data-v="{i["vid"]}"><img loading="lazy" src="{thumb(i["vid"])}" alt=""></span>""" for i in items)}</span></a>')
         steps = "".join(f"""<li class="pli" data-vid="{i['vid']}"><a class="th" href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}"><img loading="lazy" src="{thumb(i['vid'])}" alt="">{f'<span class="du">{fmt_dur(vmap[i["vid"]].get("duration_s"))}</span>' if vmap[i['vid']].get('duration_s') else ''}</a>
 <div><p class="steplab">Step {n}{(' · ' + TYPES[vmap[i['vid']]['type']]) if vmap[i['vid']].get('type') in TYPES and vmap[i['vid']]['type'] != 'other' else ''}</p><h3><a href="{BASE}/watch/{i['vid']}/?plan={pl['slug']}">{e(nice(vmap[i['vid']]['title']))}</a></h3><p class="ch">{e(vmap[i['vid']]['channel'])} · {(vmap[i['vid']].get('topic_counts') or {}).get(pl['key'], 0)} golfers recommend</p><p>{e(i['note'])}</p><button class="pill inl done" data-plan="{pl['slug']}" data-vid="{i['vid']}">{svg('check')}<span>Mark as done</span></button></div></li>""" for n, i in enumerate(items, 1))
         ids = ",".join(i["vid"] for i in items)
@@ -782,7 +787,7 @@ def build_plans():
                  {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{x['vid']}/", "name": nice(vmap[x["vid"]]["title"])} for i, x in enumerate(items, 1)]},
                  crumbs(("Fix plans", "/plans/"), (pl["title"], f"/plan/{pl['slug']}/"))])
     page("/plans/", f"Golf Fix Plans: Short Video Playlists for Each Problem | {SITE['name']}", f"{len(PLANS)} short learning paths, 4 to 6 videos in order, built from the golf lessons golfers recommend most.",
-         f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short playlists, 4–6 videos in order, built from the lessons golfers link most.</p><div class="plist">{cards}</div>', nav="plans")
+         f'<h1 class="ptitle">Fix plans</h1><p class="lead">Short playlists, 4–6 videos in order, built from the lessons golfers link most.</p><div class="plrl">{rows}</div>', nav="plans")
     return cards
 
 
@@ -1078,7 +1083,8 @@ def build_text():
     page("/imprint/", f"Imprint | {SITE['name']}", "Legal notice and contact information for GolfVotes, an independent golf lesson ranking.", f'<div class="prose"><h1 class="ptitle">Imprint</h1>{SITE.get("imprint_html", "")}</div>')
     for slug, nav, title, empty in [("liked", "liked", "Liked", "Videos you like show up here."), ("history", "history", "History", "Videos you open show up here."),
                                     ("later", "later", "Watch later", "Save videos to watch later."), ("search", "", "Search", "")]:
-        page(f"/{slug}/", f"{title} | {SITE['name']}", title, f'<h1 class="ptitle" id="ltitle">{title}</h1><div class="grid" id="list" data-list="{slug}"></div><p class="dim" id="empty">{empty}</p>',
+        page(f"/{slug}/", f"{title} | {SITE['name']}", title, f'<h1 class="ptitle" id="ltitle">{title}</h1><div class="grid" id="list" data-list="{slug}"></div><p class="dim" id="empty">{empty}</p>'
+             + (f'<section class="pix nf" id="emptyx" hidden><h2 class="pick">Pick your problem</h2><nav class="ixs" aria-label="All problems">{problem_index()}</nav></section>' if empty else ""),
              nav=nav, canonical=False)
 
 

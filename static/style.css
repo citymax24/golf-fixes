@@ -1481,3 +1481,40 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .lh .yn{transform:scaleX(-1);transform-box:fill-box;transform-origin:center}
 .lh .yfix{transform:scaleX(-1);transform-box:view-box;transform-origin:160px 0}
 .lh .yfix .yn{transform:none}
+
+/* -- plans page: a plan is a row with its videos as a strip, so it reads as a sequence and the strip is as long as
+   the plan; steps marked as done fade and carry the check. Plan page from 900px: a rail joins the step numbers and
+   turns green step by step. Liked, History and Watch later offer the problems while they are empty. -- */
+.plrl{margin:24px 0 0;border-top:1px solid var(--line)}
+.plr{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:16px 0 18px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.plr b{display:block;font-size:18px;line-height:24px;font-weight:700;letter-spacing:-.2px}
+.plr i{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:4px;font-style:normal;font-size:14px;line-height:20px;color:var(--mut)}
+.plr i .ok{white-space:nowrap}
+.plr .pprog{color:var(--fg);font-weight:600}.plr .pprog:empty{display:none}
+.plrs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}
+.plrs .pt{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--ph)}
+.plrs .pt:first-child{border-radius:8px 0 0 8px}.plrs .pt:last-child{border-radius:0 8px 8px 0}
+.plrs img{display:block;width:100%;height:100%;object-fit:cover}
+.plrs .pt.dn img{opacity:.3}
+.plrs .pt.dn::after{content:"";position:absolute;inset:0;background:var(--acc);-webkit-mask:var(--ckm) center/26% auto no-repeat;mask:var(--ckm) center/26% auto no-repeat}
+:root{--ckm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 74.91 72.75'%3E%3Cpath d='M0 38.56L24.84 72.75L37.84 72.75L74.91 0L54.94 0L29.81 49.31L22 38.56Z'/%3E%3C/svg%3E")}
+@media (min-width:761px){
+  .plr{grid-template-columns:minmax(0,1fr) min(52%,564px);align-items:center;gap:32px;padding:14px 0}
+  .plr b{font-size:20px;line-height:26px}
+}
+@media (hover:hover){
+  .plr:hover b{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+  .plrs img{transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+  .plr:hover .plrs img{transform:scale(1.06)}
+  .plr:hover .pt:nth-child(2) img{transition-delay:40ms}.plr:hover .pt:nth-child(3) img{transition-delay:80ms}.plr:hover .pt:nth-child(4) img{transition-delay:120ms}
+  .plr:hover .pt:nth-child(5) img{transition-delay:160ms}.plr:hover .pt:nth-child(6) img{transition-delay:200ms}
+}
+.plr:focus-visible{outline-offset:4px}
+@media (prefers-reduced-motion:reduce){.plrs img{transition:none}.plr:hover .plrs img{transform:none}}
+@media (min-width:900px){
+  .pli:not(:last-child)::after{content:"";position:absolute;left:8px;top:56px;bottom:-8px;width:2px;border-radius:1px;background:var(--line);transition:background-color .3s}
+  .pli.isdone:not(:last-child)::after{background:var(--acc)}
+  .pli.isdone::before{color:var(--acc)}
+}
+#emptyx[hidden]{display:none}
+#emptyx{margin-top:32px}
