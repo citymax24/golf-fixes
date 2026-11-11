@@ -373,7 +373,7 @@ MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label
     ("over_the_top", 92, 44, "Pulled left", "Pulled right", "M160 326L92 44", "That’s a pull. Usually over the top."),
     ("shank", 252, 236, "Shoots right", "Shoots left", "M160 326L252 236", "That’s a shank."),
     ("driver_distance", 160, 158, "Straight, but short", "Straight, but short", "M160 326L160 158", "You’re leaving distance out there."),
-    ("fat_thin", 160, 262, "Fat or thin", "Fat or thin", "M160 326L160 262", "Fat or thin contact."),
+    ("iron_contact", 160, 262, "Fat or thin", "Fat or thin", "M160 326L160 262", "Fat or thin contact."),  # golfers file fat and thin shots under iron contact (133 recommendations, "fat & thin" has 9)
 ]
 
 
@@ -405,10 +405,11 @@ def finder():
     legend = "".join(f'<li><a class="bfi" href="{BASE}/fix/{PNAME[k]["slug"]}/" data-k="{k}"><b><span class="r">{e(lr)}</span><span class="l">{e(ll)}</span></b>'
                      f'<i>{e(PNAME[k]["name"])}</i><em>{PNAME[k]["total_recs"]:,}</em></a></li>' for k, x, y, lr, ll, d, h in ms)
     panels = ""
+    MISS_INTRO = {"iron_contact": PNAME["fat_thin"]["intro"]}  # the miss is described as the golfer sees it
     for k, x, y, lr, ll, d, h in ms:
         p = PNAME[k]; sc, n, ok, v = by_problem[k][0]
         href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"{BASE}/fix/{p['slug']}/"
-        panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(p["intro"])}</p>'
+        panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(MISS_INTRO.get(k) or p["intro"])}</p>'
                    f'<div class="bfv"><button class="bfplay" type="button" data-vid="{e(v["vid"])}" data-t="{e(nice(v["title"]))}" data-c="{e(v.get("channel") or "")}" aria-label="Play: {e(nice(v["title"]))}">'
                    f'<img loading="lazy" src="{thumb(v["vid"], "hq2" if v["page"] else "mq2")}" alt=""><span class="pb"></span></button></div>'
                    f'<a class="bftt" href="{href}"><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
@@ -1070,7 +1071,7 @@ def build_text():
 <h2>How it was built</h2><ol>
 <li><b>Read the threads.</b> {st['comments_scanned']} public comments from golf-instruction communities ({st['period']}) were scanned for YouTube links: {st['yt_comments']} comments.</li>
 <li><b>Read each comment with an AI model.</b> Is it a real lesson recommendation, not a meme, highlight or gear review? Which problem is it about? Does the golfer say it fixed it?</li>
-<li><b>Count independent golfers.</b> Each golfer counts once per video. A lesson needs at least {MIN} different golfers recommending it for a problem.</li>
+<li><b>Count independent golfers.</b> Each golfer counts once per video. A lesson needs at least {MIN} different golfers recommending it for a problem. Videos shorter than {CLIP_S} seconds are clips, not lessons: they keep their page but are not ranked.</li>
 <li><b>Add context.</b> An AI model labels each lesson's type (drill, explainer, live lesson, pro swing …), level and a one-line summary, and builds short fix plans from the top lessons.</li>
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments and problem pages quote a few post titles, without usernames, always linked to the original. Ask and we'll remove yours.</p>
