@@ -374,14 +374,9 @@ COURSE_PLAN = open(os.path.join(ROOT, "build", "course.svg"), encoding="utf-8").
 
 
 def course_svg():
-    """The hole as an architect's plan (build/course.svg), running out softly at the edges, then the flag."""
-    return ('<defs><pattern id="ybsand" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle class="ybd" cx=".8" cy=".9" r=".32"/><circle class="ybd" cx="2.4" cy="2.5" r=".32"/></pattern>'
-            '<linearGradient id="ybgh"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".09" stop-color="#fff"/><stop offset=".91" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
-            '<linearGradient id="ybgv" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".04" stop-color="#fff"/><stop offset=".95" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
-            '<mask id="ybmh" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgh)"/></mask>'
-            '<mask id="ybmv" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgv)"/></mask></defs>'
-            f'<g mask="url(#ybmh)"><g mask="url(#ybmv)">{COURSE_PLAN}</g></g>'
-            '<ellipse class="bfcup" cx="160" cy="46.5" rx="3.2" ry="1.4"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>\n')
+    """The hole as a hand-drafted plan (build/course.svg), then the flag."""
+    return (COURSE_PLAN + '<ellipse class="bfcup" cx="160" cy="46.5" rx="3.2" ry="1.4"/><path class="bffp" d="M160 46V16"/>'
+            '<path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>\n')
 
 
 def finder():
