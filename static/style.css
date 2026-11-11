@@ -1545,3 +1545,10 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .sugg .sgt>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vh{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media (pointer:coarse){.fs select{height:32px}}
+
+/* -- the typeface is part of the design, so the site brings it along: Inter 4 as one variable file (weights 400 to 800,
+   optical size fixed at text, Latin; 32 KB, SIL Open Font Licence in static/fonts/OFL.txt). Until it has loaded, Arial
+   is set to Inter's measures, so the text does not jump when the font arrives. -- */
+@font-face{font-family:"Inter";font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/inter.woff2) format("woff2")}
+@font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107.12%;ascent-override:90.44%;descent-override:22.52%;line-gap-override:0%}
+:root{--font:"Inter","Inter Fallback",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}

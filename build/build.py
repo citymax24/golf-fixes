@@ -205,7 +205,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{BASE}/static/favicon.svg?v=e" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=e"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
-<link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
+<link rel="preload" href="{BASE}/static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>{THEME_JS}</script>
 {''.join(f'<script type="application/ld+json">{json.dumps(x)}</script>' for x in (ld if isinstance(ld, list) else [ld])) if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
