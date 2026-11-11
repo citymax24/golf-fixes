@@ -423,7 +423,7 @@ def finder():
 
 
 def build_home():
-    top = sorted(WATCH.values(), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
+    top = sorted((v for v in WATCH.values() if not 0 < (v.get("duration_s") or 0) < CLIP_S), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
     index = problem_index()
     body = f"""<section class="welcome" id="welcome">
 <h1 class="hq">Golf lessons, ranked by golfers.<span>{TOTAL_RECS:,} Reddit recommendations for YouTube lessons.</span></h1>

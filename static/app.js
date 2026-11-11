@@ -441,7 +441,7 @@
       var personal = liked.length + load("disliked").length > 0;
       var seed = Math.floor(Date.now() / 36e5);
       var rnd = function (s) { var x = Math.sin(s) * 1e4; return x - Math.floor(x); };
-      var scored = ix.v.filter(ok).map(function (v, i) {
+      var scored = ix.v.filter(ok).filter(function (v) { return !(v[12] > 0 && v[12] < 30); }).map(function (v, i) {  // clips are not lessons (CLIP_S in build.py)
         var aff = v[7].reduce(function (a, p) { return a + (w[p] || 0); }, 0);
         var s = Math.log(1 + v[4]) + 0.4 * Math.log(1 + v[5]) + (personal ? 0.6 * aff : 0) - (seen[v[0]] ? 1.5 : 0) + 0.8 * rnd(seed + i);
         return [s, v];
