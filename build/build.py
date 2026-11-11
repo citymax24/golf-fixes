@@ -99,17 +99,23 @@ WATCH = {v["vid"]: v for v in VIDEOS if v["page"]}
 TITLE_COUNT = Counter(v["title"].lower() for v in WATCH.values())
 USED = Counter()
 
+CLIP_S = 30  # a video shorter than this is a clip, not a lesson: it keeps its page but is not ranked for a problem
 by_problem = {}
 for p in PROBLEMS:
     k, rows = p["key"], []
     for v in VIDEOS:
         n = (v.get("topic_counts") or {}).get(k, 0)
-        if n >= MIN:
+        if n >= MIN and not 0 < (v.get("duration_s") or 0) < CLIP_S:
             ok = (v.get("t_success") or {}).get(k, 0)
             rows.append((n + 0.001 * ok + 0.00001 * min(v["recs"], 50), n, ok, v))
     rows.sort(key=lambda r: -r[0])
     by_problem[k] = rows[: SITE.get("max_videos_per_problem", 60)]
     p["total_recs"], p["video_count"] = sum(r[1] for r in rows), len(rows)
+
+_dur = {v["vid"]: v.get("duration_s") or 0 for v in VIDEOS}
+for pl in PLANS:  # the same rule for fix plans: a clip is not a step, and the title counts what is left
+    pl["items"] = [i for i in pl["items"] if not 0 < _dur.get(i["vid"], 0) < CLIP_S]
+    pl["title"] = re.sub(r"in \d+ videos", f"in {len(pl['items'])} videos", pl["title"])
 
 channels = defaultdict(lambda: {"recs": 0, "success": 0, "videos": [], "topics": Counter(), "url": None, "name": None})
 for v in WATCH.values():
@@ -769,7 +775,7 @@ def build_plans():
     vmap = {v["vid"]: v for v in VIDEOS}
     cards = rows = ""
     for pl in PLANS:
-        items = [i for i in pl["items"] if i["vid"] in vmap]
+        items = [i for i in pl["items"] if i["vid"] in vmap and not 0 < (vmap[i["vid"]].get("duration_s") or 0) < CLIP_S]
         if not items:
             continue
         pl["slug"] = pl.get("slug") or PNAME[pl["key"]]["slug"]
