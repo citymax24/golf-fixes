@@ -370,27 +370,18 @@ COURSE_BUNKERS = [(62, 186, 13), (75, 197, 12), (66, 211, 12), (79, 223, 13), (6
 COURSE_TREES = [(22, 4, 7), (280.4, 4, 7), (16.8, 17, 12), (309.8, 17, 12), (25.6, 31, 11), (301, 31, 11), (24.2, 46, 10), (278.2, 46, 10), (19, 62, 9), (307.6, 62, 9), (27.8, 79, 8), (298.8, 79, 8), (26.4, 97, 7), (276, 97, 7), (21.2, 110, 12), (305.4, 110, 12), (30, 124, 11), (296.6, 124, 11), (28.6, 139, 10), (298, 139, 10), (23.4, 155, 9), (303.2, 155, 9), (294.4, 172, 8), (8, 172, 8), (30.8, 190, 7), (295.8, 190, 7), (25.6, 203, 12), (301, 203, 12), (292.2, 217, 11), (10.2, 217, 11), (33, 232, 10), (293.6, 232, 10), (27.8, 248, 9), (298.8, 248, 9), (290, 265, 8), (12.4, 265, 8), (291.4, 283, 7), (296.6, 296, 12), (312, 310, 11), (14.6, 310, 11), (289.2, 325, 10), (37.4, 325, 10), (294.4, 341, 9), (8, 341, 9), (16.8, 358, 8), (309.8, 358, 8)]
 
 
+COURSE_PLAN = open(os.path.join(ROOT, "build", "course.svg"), encoding="utf-8").read().strip()  # drawn by build/make_course.py
+
+
 def course_svg():
-    """The hole as a yardage-book drawing: outlines on paper, fairway and green lightly tinted, sand stippled, water
-    lined. Bunkers and tree lines are groups of circles; drawing them twice (outlined, then filled on top) leaves
-    only the outline of each group."""
-    def blob(cs, cls):
-        c = "".join(f'<circle cx="{x:g}" cy="{y:g}" r="{r:g}"/>' for x, y, r in cs)
-        return f'<g class="{cls} ybo">{c}</g><g class="{cls} ybi">{c}</g>'
-    return ('<defs><pattern id="ybsand" width="5" height="5" patternUnits="userSpaceOnUse"><rect class="ybp" width="5" height="5"/>'
-            '<circle class="ybd" cx="1.2" cy="1.3" r=".55"/><circle class="ybd" cx="3.7" cy="3.8" r=".55"/></pattern>'
-            '<pattern id="ybwat" width="8" height="4" patternUnits="userSpaceOnUse"><rect class="ybp" width="8" height="4"/><path class="ybl" d="M0 2h8"/></pattern>'
+    """The hole as an architect's plan (build/course.svg), running out softly at the edges, then the flag."""
+    return ('<defs><pattern id="ybsand" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle class="ybd" cx=".8" cy=".9" r=".32"/><circle class="ybd" cx="2.4" cy="2.5" r=".32"/></pattern>'
             '<linearGradient id="ybgh"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".09" stop-color="#fff"/><stop offset=".91" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
             '<linearGradient id="ybgv" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".04" stop-color="#fff"/><stop offset=".95" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
             '<mask id="ybmh" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgh)"/></mask>'
             '<mask id="ybmv" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="360"><rect width="320" height="360" fill="url(#ybgv)"/></mask></defs>'
-            '<g mask="url(#ybmh)"><g mask="url(#ybmv)">'  # no frame: the drawing runs out softly at the edges
-            + blob(COURSE_TREES, "ybt")
-            + f'<path class="ybf" d="{COURSE_FAIRWAY}"/><path class="ybw" d="{COURSE_POND}"/>'
-            + '<rect class="ybb" x="145" y="315" width="30" height="24" rx="4" transform="rotate(-5 160 327)"/>'
-            + f'<path class="ybg" d="{COURSE_GREEN}"/>'
-            + blob(COURSE_BUNKERS, "ybs") + '</g></g>'
-            + '<ellipse class="bfcup" cx="160" cy="46.5" rx="4" ry="1.8"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>\n')
+            f'<g mask="url(#ybmh)"><g mask="url(#ybmv)">{COURSE_PLAN}</g></g>'
+            '<ellipse class="bfcup" cx="160" cy="46.5" rx="3.2" ry="1.4"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>\n')
 
 
 def finder():
