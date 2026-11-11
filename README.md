@@ -32,4 +32,4 @@ Deployment: GitHub Actions builds `_site/` and publishes it to GitHub Pages on e
 - `static/`: CSS, JS, favicon, share images
 
 ## License
-Code: MIT. Video titles, thumbnails and players belong to their creators.
+Code: all rights reserved. Video titles, thumbnails and players belong to their creators.
