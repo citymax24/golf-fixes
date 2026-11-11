@@ -527,7 +527,7 @@ def build_problem(p):
 <div class="pht"><h1>{e(p['q'])}</h1>
 <p class="phs">{p['total_recs']:,} recommendations for {p['video_count']} lesson{'s' if p['video_count'] != 1 else ''}.{f' {ok_total} golfers say it fixed it.' if ok_total > 1 else ''}</p>
 <p class="phi">{e(p['intro'])} Ranked by recommendations, updated {UPDATED}. <a href="{BASE}/about/">How we rank</a></p>{plan_cta(p)}</div>
-<div class="phl"><p class="phk">Most recommended</p>{card(v0, n0, ok0, 1, p['name'], top_quote(v0), hq=True)}</div>
+<div class="phl"><h2 class="phk">Most recommended</h2>{card(v0, n0, ok0, 1, p['name'], top_quote(v0), hq=True)}</div>
 </section>
 {fixes_list(p)}{aid_html}
 {f'<section class="ldb ldbp">{LDK}<ol class="ldl{" long" if len(rows) > 10 else ""}" id="rest" start="2">' + "".join(board_row(v, n, ok, i, n0) for i, (s, n, ok, v) in enumerate(rows[1:], 2)) + '</ol></section>' if len(rows) > 1 else ''}
@@ -793,15 +793,15 @@ def build_plans():
 
 def build_client_pages():
     opt = lambda d: "".join(f'<option value="{k}">{e(x)}</option>' for k, x in d)
-    probs = opt(sorted(((p["slug"], p["name"]) for p in PROBLEMS if p["video_count"]), key=lambda x: x[1]))
-    filters = f"""<form class="filters" id="filters">
-<label>Sort <select name="sort"><option value="recs">Most recommended</option><option value="fixed">Most “fixed it”</option><option value="recent">Recently recommended</option><option value="oldest">Oldest first</option>{'<option value="views">View count</option><option value="hidden">Hidden gems</option>' if any(v.get("views") for v in VIDEOS) else ''}</select></label>
-<label>Problem <select name="p"><option value="">Any</option>{probs}</select></label>
-<label>Type <select name="type"><option value="">Any</option>{opt((k, x) for k, x in TYPES.items() if k != "other")}</select></label>
-<label>Level <select name="level"><option value="">Any</option>{opt(LEVELS.items())}</select></label>
-<label class="cb"><input type="checkbox" name="new" value="1"> Recommended in the past year</label></form>"""
+    # the filter reads as one sentence; every choice in it is a native select, so it stays a form without JavaScript
+    plural = {"drill": "Drills", "explainer": "Explainers", "lesson": "Live lessons", "pro_swing": "Pro swings", "quick_tip": "Quick tips", "practice_plan": "Practice plans", "fitness": "Fitness lessons"}
+    level = {"beginner": "beginner level", "intermediate": "intermediate level", "advanced": "advanced level", "all": "every level"}
+    sel = lambda name, label, opts: f'<span class="fq"><select name="{name}" aria-label="{label}">{opts}</select></span>'
+    filters = f"""<form class="fsent" id="filters" aria-label="Filter the lessons">
+<p class="fs">{sel("type", "Type of lesson", '<option value="">All lessons</option>' + opt((k, plural[k]) for k in TYPES if k in plural))} for {sel("p", "Problem", '<option value="">any problem</option>' + opt(sorted(((p["slug"], p["name"][0].lower() + p["name"][1:]) for p in PROBLEMS if p["video_count"]), key=lambda x: x[1])))} at {sel("level", "Level", '<option value="">any level</option>' + opt(level.items()))}, <span class="nw">{sel("sort", "Order", '<option value="recs">most recommended</option><option value="fixed">most “fixed it”</option><option value="recent">recently recommended</option><option value="oldest">oldest</option>' + ('<option value="views">most viewed</option><option value="hidden">hidden gems</option>' if any(v.get("views") for v in VIDEOS) else ''))} first.</span></p>
+<p class="fm"><label class="cb"><input type="checkbox" name="new" value="1"> Recommended in the past year</label><span class="dim" id="count" aria-live="polite"></span></p></form>"""
     page("/browse/", f"All {len(WATCH):,} Golf Lessons Golfers Recommend | {SITE['name']}", f"Browse and filter all {len(WATCH):,} YouTube golf lessons golfers recommended on Reddit, by problem, type and level.",
-         f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<p class="dim" id="count"></p><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
+         f'<h1 class="ptitle" id="ltitle">Browse all lessons</h1>{filters}<h2 class="vh">Lessons</h2><div class="grid" id="list" data-list="browse"></div><p class="dim" id="empty"></p>', nav="browse")
     page("/settings/", f"Settings | {SITE['name']}", "Settings.", f"""<div class="prose"><h1 class="ptitle">Settings</h1>
 
 <label class="set"><input type="checkbox" id="s-hidedis"> Hide disliked videos everywhere</label>

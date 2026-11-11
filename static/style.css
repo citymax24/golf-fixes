@@ -1518,3 +1518,30 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 }
 #emptyx[hidden]{display:none}
 #emptyx{margin-top:32px}
+
+/* -- browse: the filter is one sentence, each choice a native select set as an underlined word that is as wide as
+   what it says (app.js), the count beside the one checkbox. Search suggestions: the matched part of a title in
+   heavier type, lessons with their picture on the right so all text keeps one left edge. -- */
+.fsent{margin:0 0 20px;padding:0 0 12px;border-bottom:1px solid var(--line)}
+.fs{margin:0;font-size:20px;line-height:36px;font-weight:700;letter-spacing:-.3px;color:var(--mut);text-wrap:pretty}
+.fq{position:relative;display:inline-block;max-width:100%;vertical-align:baseline}
+.fq::after{content:"";position:absolute;right:4px;top:50%;width:6px;height:6px;margin-top:-6px;border-right:2px solid var(--fg);border-bottom:2px solid var(--fg);transform:rotate(45deg);pointer-events:none}
+.fs select{-webkit-appearance:none;appearance:none;display:block;max-width:100%;height:32px;margin:0;padding:0 22px 0 0;border:0;border-bottom:2px solid var(--fg);border-radius:0;background:none;
+  font:inherit;font-size:inherit!important;letter-spacing:inherit;color:var(--fg);cursor:pointer;text-overflow:ellipsis}
+.fs select:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+.fs select option{font-size:16px;font-weight:400;letter-spacing:0;color:var(--fg);background:var(--bg)}
+@media (hover:hover){.fq:hover select{border-bottom-color:var(--acc);color:var(--acc)}.fq:hover::after{border-color:var(--acc)}}
+.fm{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin:12px 0 0;font-size:14px;line-height:20px}
+.fm .cb{display:flex;align-items:center;gap:8px;min-height:32px;color:var(--fg);font-weight:500}
+.fm #count{margin:0;font-variant-numeric:tabular-nums}
+@media (pointer:coarse){.fm .cb{min-height:44px}.fs{line-height:44px}.fs select{height:36px}}
+@media (min-width:761px){.fs{font-size:26px;line-height:44px;letter-spacing:-.5px}.fs select{height:38px}.fq::after{width:7px;height:7px;margin-top:-7px}.fsent{margin-bottom:24px}}
+.sugg a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.sugg .sgt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sugg b{font-weight:500;color:var(--fg)}
+.sugg mark{background:none;color:inherit;font-weight:700}
+.sugg img{display:block;width:64px;height:36px;border-radius:6px;object-fit:cover;background:var(--ph)}
+.fs .nw{white-space:nowrap}
+.sugg .sgt>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vh{position:absolute;width:1px;height:1px;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (pointer:coarse){.fs select{height:32px}}
