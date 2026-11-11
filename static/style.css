@@ -1450,3 +1450,25 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .cmf .lab.st-critical{color:#f2b8b5}}
 .cmf .lab+.lab{margin-left:12px}
 .cmf a{margin-left:12px}
+
+/* -- footer: the wordmark at signature size instead of page width (it was too much) -- */
+.ftw{margin:48px 0 0}
+.ftw .wm{width:auto;height:24px;color:var(--fg)}
+@media (min-width:761px){.ftw{margin-top:64px}.ftw .wm{height:28px}}
+
+/* -- the hole as an architect's plan (build/course.svg): two pen weights, ink in the text colour, a light green wash
+   on fairway and green only, sand stippled, water and tee hatched. Flag and flight stay the one green. -- */
+#bf .bfc{--pen:var(--fg)}
+#bf .yt{fill:var(--paper);stroke:var(--pen);stroke-width:.35;stroke-opacity:.45}
+#bf .ytc{fill:var(--pen);fill-opacity:.45}
+#bf .yf{fill:var(--t1);stroke:var(--pen);stroke-width:.7}
+#bf .yg{fill:var(--t2);stroke:var(--pen);stroke-width:.7}
+#bf .yw,#bf .yb{fill:var(--paper);stroke:var(--pen);stroke-width:.7}
+#bf .ys{fill:url(#ybsand);stroke:var(--pen);stroke-width:.7}
+#bf .ybd{fill:var(--pen);fill-opacity:.7}
+#bf .yh{fill:none;stroke:var(--pen);stroke-width:.35;stroke-opacity:.7}
+#bf .yc{fill:none;stroke:var(--pen);stroke-width:.35;stroke-opacity:.6;stroke-dasharray:8 2 1.2 2}
+#bf .yfill{fill:var(--pen)}
+#bf .yn{fill:var(--mut);font:600 5.5px/1 Inter,system-ui,sans-serif;letter-spacing:.4px}
+#bf .bfcup{fill:var(--pen)}
+#bf .bffp{stroke:var(--pen);stroke-width:.9}
