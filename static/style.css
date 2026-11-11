@@ -1456,19 +1456,28 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .ftw .wm{width:auto;height:24px;color:var(--fg)}
 @media (min-width:761px){.ftw{margin-top:64px}.ftw .wm{height:28px}}
 
-/* -- the hole as an architect's plan (build/course.svg): two pen weights, ink in the text colour, a light green wash
-   on fairway and green only, sand stippled, water and tee hatched. Flag and flight stay the one green. -- */
+/* -- the hole as a hand-drafted plan (build/course.svg, drawn by build/make_course.py): black ink in three pen
+   weights, one green marker, a grey marker for shadow and water. Flag and ball flight stay the accent green. -- */
 #bf .bfc{--pen:var(--fg)}
-#bf .yt{fill:var(--paper);stroke:var(--pen);stroke-width:.35;stroke-opacity:.45}
-#bf .ytc{fill:var(--pen);fill-opacity:.45}
-#bf .yf{fill:var(--t1);stroke:var(--pen);stroke-width:.7}
-#bf .yg{fill:var(--t2);stroke:var(--pen);stroke-width:.7}
-#bf .yw,#bf .yb{fill:var(--paper);stroke:var(--pen);stroke-width:.7}
-#bf .ys{fill:url(#ybsand);stroke:var(--pen);stroke-width:.7}
-#bf .ybd{fill:var(--pen);fill-opacity:.7}
-#bf .yh{fill:none;stroke:var(--pen);stroke-width:.35;stroke-opacity:.7}
-#bf .yc{fill:none;stroke:var(--pen);stroke-width:.35;stroke-opacity:.6;stroke-dasharray:8 2 1.2 2}
-#bf .yfill{fill:var(--pen)}
-#bf .yn{fill:var(--mut);font:600 5.5px/1 Inter,system-ui,sans-serif;letter-spacing:.4px}
+#bf .y1,#bf .y2,#bf .y3,#bf .ya,#bf .yc{fill:none;stroke:var(--pen);stroke-linecap:round;stroke-linejoin:round}
+#bf .y1{stroke-width:.6}
+#bf .y2{stroke-width:.42}
+#bf .y3{stroke-width:.26;stroke-opacity:.8}
+#bf .ya{stroke-width:1.05}
+#bf .yc{stroke-width:.26;stroke-opacity:.75;stroke-linecap:butt;stroke-dasharray:9 2 1 2}
+#bf .yr{stroke-opacity:.55}
+#bf .yp{fill:var(--paper)}
+#bf .yi{fill:var(--pen)}
+#bf .ywf{fill:var(--acc);fill-opacity:.1}
+#bf .yws{fill:var(--acc);fill-opacity:.06}
+#bf .ywg{fill:var(--acc);fill-opacity:.12}
+#bf .ysh{fill:var(--pen);fill-opacity:.11}
+#bf .yst{fill:none;stroke:var(--pen);stroke-width:.5;stroke-linecap:round;stroke-opacity:.85}
+#bf .yn{fill:var(--mut);font:600 5.2px/1 Inter,system-ui,sans-serif;letter-spacing:.55px}
+#bf .ytl{fill:var(--pen);font-weight:800;font-size:6.6px;letter-spacing:.9px}
 #bf .bfcup{fill:var(--pen)}
 #bf .bffp{stroke:var(--pen);stroke-width:.9}
+/* left-handed: the plan is mirrored, its lettering is not; title, scale and north arrow stay where they are */
+.lh .yn{transform:scaleX(-1);transform-box:fill-box;transform-origin:center}
+.lh .yfix{transform:scaleX(-1);transform-box:view-box;transform-origin:160px 0}
+.lh .yfix .yn{transform:none}
