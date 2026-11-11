@@ -143,24 +143,29 @@
 
   // ---------- search suggestions ----------
   (function () {
-    var q = $("#q"), box = $("#sugg"), ix = null, items = [], sel = -1;
+    var q = $("#q"), box = $("#sugg"), ix = null, items = [], sel = -1, cur = "";
+    // the part of a title that matched, set in heavier type
+    function hl(t) {
+      var low = t.toLowerCase(), i = low.indexOf(cur); while (i > 0 && /[a-z0-9]/.test(low.charAt(i - 1))) i = low.indexOf(cur, i + 1);
+      return i < 0 || !cur ? esc(t) : esc(t.slice(0, i)) + "<mark>" + esc(t.slice(i, i + cur.length)) + "</mark>" + esc(t.slice(i + cur.length));
+    }
     var SYN = { slicing: "slice", sliced: "slice", shank: "shanks", shanking: "shanks", hooking: "hook", chunk: "fat", chunking: "fat", topped: "topping",
       chip: "chipping", putt: "putting", drive: "driver", irons: "iron", sand: "bunker", ott: "over the top", ee: "early extension" };
     function get(cb) { if (ix) return cb(ix); fetch(B + "/static/index.json").then(function (r) { return r.json(); }).then(function (d) { ix = d; cb(d); }); }
     function close() { box.hidden = true; q.setAttribute("aria-expanded", "false"); sel = -1; }
     function render() {
-      box.innerHTML = items.map(function (it, i) { return '<li role="option" id="sg' + i + '"' + (i === sel ? ' aria-selected="true" class="on"' : "") + '><a href="' + it.h + '"><b>' + esc(it.t) + "</b><span>" + esc(it.s) + "</span></a></li>"; }).join("");
+      box.innerHTML = items.map(function (it, i) { return '<li role="presentation"' + (i === sel ? ' class="on"' : "") + '><a role="option" id="sg' + i + '" aria-selected="' + (i === sel) + '" tabindex="-1" href="' + it.h + '"><span class="sgt"><b>' + hl(it.t) + "</b><span>" + esc(it.s) + "</span></span>" + (it.i ? '<img src="' + B + "/static/thumbs/mq2/" + it.i + '.webp" alt="" width="64" height="36">' : "") + "</a></li>"; }).join("");
       box.hidden = !items.length; q.setAttribute("aria-expanded", String(!!items.length));
       if (sel >= 0) q.setAttribute("aria-activedescendant", "sg" + sel); else q.removeAttribute("aria-activedescendant");
     }
     q.addEventListener("input", function () {
       var v = q.value.trim().toLowerCase(); if (v.length < 2) { items = []; return render(); }
-      v = SYN[v] || v;
+      v = SYN[v] || v; cur = v;
       get(function (d) {
         var m = function (s) { return s.toLowerCase().split(/[^a-z0-9]+/).some(function (w) { return w.indexOf(v) === 0; }) || s.toLowerCase().indexOf(v) === 0; };
         var ps = d.p.filter(function (p) { return m(p[1]) || m(p[2]); }).slice(0, 4).map(function (p) { return { h: B + "/fix/" + p[0] + "/", t: p[1], s: "Problem · " + p[3].toLocaleString() + " recommendations" }; });
         var cs = d.c.filter(function (c) { return m(c[1]); }).slice(0, 2).map(function (c) { return { h: B + "/coach/" + c[0] + "/", t: c[1], s: "Coach · " + c[2].toLocaleString() + " recommendations" }; });
-        var vs = d.v.filter(function (x) { return m(x[1]); }).slice(0, 3).map(function (x) { return { h: B + "/watch/" + x[0] + "/", t: x[1], s: x[2] + " · " + x[4] + " golfers recommend" }; });
+        var vs = d.v.filter(function (x) { return m(x[1]); }).slice(0, 3).map(function (x) { return { h: B + "/watch/" + x[0] + "/", t: x[1], s: x[2] + " · " + x[4] + " golfers recommend", i: x[0] }; });
         items = ps.concat(cs, vs).slice(0, 7); sel = -1; render();
       });
     });
@@ -472,7 +477,16 @@
       var f = $("#filters"), P = new URLSearchParams(location.search);
       ["sort", "p", "type", "level"].forEach(function (k) { if (P.get(k)) f.elements[k].value = P.get(k); });
       f.elements["new"].checked = P.get("new") === "1";
+      // every choice in the sentence is as wide as the words it shows
+      var fitSel = function () {
+        $$(".fs select", f).forEach(function (s) {
+          var m = document.createElement("span"); m.textContent = s.options[s.selectedIndex].text; m.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+          s.parentNode.appendChild(m); s.style.width = Math.ceil(m.getBoundingClientRect().width) + 22 + "px"; m.remove();
+        });
+      };
+      window.addEventListener("resize", fitSel); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSel);
       var run = function () {
+        fitSel();
         var o = {}; ["sort", "p", "type", "level"].forEach(function (k) { if (f.elements[k].value) o[k] = f.elements[k].value; }); if (f.elements["new"].checked) o["new"] = "1";
         history.replaceState(null, "", "?" + new URLSearchParams(o).toString());
         var a = ix.v.filter(ok).filter(function (v) {
