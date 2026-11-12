@@ -34,6 +34,11 @@ The sitemap is split by kind of page (`sitemap-pages.xml`, `-coaches`, `-lessons
 reports indexing per part. Lessons with fewer than three recommendations are the tail. `min_recs_indexed` in
 `data/site.json` sets from how many recommendations a lesson page asks to be indexed (default: every lesson page).
 
+`build/gsc_report.py` (workflow "Index report", twice a week) asks the Search Console API which sitemap URLs Google
+has indexed and commits the answer to `seo/index_report.md`: the indexed share per sitemap part, what changed, and
+what needs a fix. It needs the repository secret `GSC_SERVICE_ACCOUNT` (JSON key of a Google service account that is
+a user of the Search Console property).
+
 ## Structure
 - `data/site.json`: name, URLs, newsletter link, thresholds
 - `data/problems.json`: problem taxonomy and intro texts
