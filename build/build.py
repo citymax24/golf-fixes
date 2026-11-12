@@ -1,7 +1,7 @@
 """GolfVotes static site generator (HackerTube-style layout). Standard library only.
 
 Usage: python3 build/build.py  -> writes _site/
-Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional)
+Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional), data/years.json (optional)
 """
 import base64
 import hashlib, html, json, os, re, shutil, sys, urllib.parse
@@ -21,7 +21,8 @@ SEO = _opt("seo.json", {})
 CARDS = _opt("cards.json", {})
 RECENCY = _opt("recency.json", {})
 REDDIT = _opt("reddit.json", {})
-MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+YDATA = _opt("years.json", {}).get("videos", {})  # vid -> {year: [recs, fixed it, {topic: [recs, fixed it]}]}, same counting as videos.json
+MON =["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 lastrec = lambda vid: (MON[int(RECENCY[vid][5:7]) - 1] + " " + RECENCY[vid][:4]) if RECENCY.get(vid) else ""
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
          "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
@@ -180,6 +181,13 @@ KW = {"slice": "How to Fix a Slice", "hook": "How to Fix a Hook", "shank": "How 
       "practice_method": "How to Practice Golf", "course_management": "Golf Course Management", "mental": "The Mental Game of Golf", "fundamentals_general": "Golf Swing Fundamentals"}
 YEAR = VDATA["generated"][:4]
 UPDATED = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%B %Y")
+# Year pages: only finished calendar years with enough data. The Reddit archive is thin before mid-2021, so 2021 and
+# earlier stay out by the threshold, and the running year waits until it is over.
+YEAR_TOTAL = Counter()
+for _ys in YDATA.values():
+    for _y, _r in _ys.items():
+        YEAR_TOTAL[_y] += _r[0]
+YEARS = [y for y in sorted(YEAR_TOTAL) if y < YEAR and YEAR_TOTAL[y] >= 1000]
 
 
 def fit(*options, limit=65):
@@ -235,7 +243,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <div class="ftt"><div class="ftc"><p class="ftq">Golf lessons, ranked by golfers.</p>
   <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
   <nav class="ftn" aria-label="Footer"><div><h2>Explore</h2><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">All lessons</a></div>
-  <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/badges/">Badges for coaches</a></div>
+  <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a>{f'<a href="{BASE}/year/{YEARS[-1]}/">Best of {YEARS[-1]}</a>' if YEARS else ''}<a href="{BASE}/badges/">Badges for coaches</a></div>
   <div><h2>GolfVotes</h2><a href="{BASE}/about/">How we rank</a><a href="{BASE}/report/">Stats</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a></div>
   <div><h2>Legal</h2><a href="{BASE}/privacy/">Privacy</a><a href="{BASE}/imprint/">Imprint</a></div></nav></div>
   <div class="ftw" aria-hidden="true">{WORDMARK.replace(' role="img" aria-label="GolfVotes"', '')}</div>
@@ -440,6 +448,7 @@ def build_home():
 <p class="ixn">The small number is how many recommendations we counted for it. <a class="ixa" href="{BASE}/categories/">All {len([p for p in PROBLEMS if p["video_count"]])} problems →</a></p>
 </section>
 {board(top[:10])}
+{f'<p class="more"><a href="{BASE}/year/{YEARS[-1]}/">The most recommended lessons of {YEARS[-1]} →</a></p>' if YEARS else ''}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
 <h2 class="row">More lessons golfers recommend</h2>
 <div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:16])}</div>
@@ -1061,9 +1070,90 @@ def build_report():
 <div class="kpis"><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{st['yt_comments']}</b>with a YouTube link</div><div><b>{TOTAL_RECS:,}</b>lesson recommendations</div><div><b>{len(WATCH):,}</b>lessons ranked</div></div>
 <h2>Problems golfers ask about most</h2><div class="bars">{bars}</div><h2>Most recommended coaches</h2><div class="bars">{cb}</div>
 <p>Guides: <a href="{BASE}/guides/best-golf-youtube-channels/">Best golf instruction channels on YouTube</a> · <a href="{BASE}/guides/best-golf-drills/">Most recommended golf drills</a></p>
+{f'<p>By year: {" · ".join(f"<a href={chr(34)}{BASE}/year/{y}/{chr(34)}>{y}</a>" for y in YEARS)}</p>' if YEARS else ''}
 <p class="dim">Free to cite with a link to {e(SITE['name'])}. Method: <a href="{BASE}/about/">About</a>.</p></div>"""
     page("/report/", f"What golfers recommend to each other: the data | {SITE['name']}",
          f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og4/report.png")
+
+
+YEAR_MIN = 5  # a lesson needs this many recommendations in a year to be named the year's #1 for a problem
+VBY = {v["vid"]: v for v in VIDEOS}
+
+
+def year_coaches(y):
+    """Channels ranked by recommendations in year y: [(slug, name, recs)]."""
+    c, names = Counter(), {}
+    for vid, ys in YDATA.items():
+        v = VBY.get(vid)
+        if v and y in ys:
+            c[v["cs"]] += ys[y][0]; names[v["cs"]] = v.get("channel") or v["cs"]
+    return [(s, names[s], n) for s, n in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
+
+
+def build_year(y):
+    """One page per finished year: the lessons, coaches and #1 per problem golfers recommended in that year."""
+    lessons = sorted(((ys[y][0], ys[y][1], WATCH[vid], ys[y][2]) for vid, ys in YDATA.items()
+                      if y in ys and vid in WATCH and not 0 < (WATCH[vid].get("duration_s") or 0) < CLIP_S),
+                     key=lambda r: (-r[0], -r[1], -r[2]["recs"]))
+    recs = YEAR_TOTAL[y]
+    fixed = sum(ys[y][1] for ys in YDATA.values() if y in ys)
+    n_lessons = sum(1 for ys in YDATA.values() if y in ys)
+    top = lessons[:20]
+    mx = top[0][0]
+    board_html = "".join(board_row(v, n, ok, i, mx) for i, (n, ok, v, _) in enumerate(top, 1))
+
+    coaches = year_coaches(y)
+    py = str(int(y) - 1)
+    prev = {s: i for i, (s, _, _) in enumerate(year_coaches(py), 1)} if py in YEARS else {}
+    cmx = coaches[0][2]
+
+    def move(s, i):
+        if not prev:
+            return ""
+        if s not in prev:
+            return f'<span class="ldo cbl">new <i>vs {py}</i></span>'
+        d = prev[s] - i
+        return f'<span class="ldo cbl">{"▲ " + str(d) if d > 0 else "▼ " + str(-d) if d < 0 else "="} <i>vs {py}</i></span>'
+    crow = ""
+    for i, (s, name, n) in enumerate(coaches[:10], 1):
+        tag, href = ("a", f' href="{BASE}/coach/{s}/"') if s in COACH_SET else ("span", "")
+        crow += (f'<li class="ldi"><{tag} class="ldr cbr{" ld3" if i <= 3 else ""}"{href} style="--w:{100 * n / cmx:.1f}%">'
+                 f'<span class="ldp">{i}</span><span class="ldn"><b>{e(name)}</b></span>'
+                 f'<span class="lds"><span class="ldv"><b data-cnt="{n}">{n:,}</b> <i>recommendations</i></span>{move(s, i) or "<span class=ldo></span>"}</span>'
+                 f'<span class="ldbar"></span></{tag}></li>')
+
+    wins = []
+    for p in PROBLEMS:
+        k = p["key"]
+        cand = sorted(((t[k][0], t[k][1], v) for _, _, v, t in lessons if k in t), key=lambda r: -(r[0] + 0.001 * r[1] + 0.00001 * min(r[2]["recs"], 50)))
+        if cand and cand[0][0] >= YEAR_MIN:
+            wins.append((sum(r[0] for r in cand), p, cand[0]))
+    wins.sort(key=lambda w: -w[0])
+    win_html = "".join(f'<li><a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>: <a href="{BASE}/watch/{v["vid"]}/">{e(nice(v["title"]))}</a>'
+                       f' <span class="dim">· {e(v["channel"])} · {n} recommendation{"s" if n != 1 else ""}{f", {ok} fixed it" if ok else ""}</span></li>'
+                       for _, p, (n, ok, v) in wins)
+
+    new = [r for r in lessons if min(YDATA[r[2]["vid"]]) == y][:10]
+    new_html = "".join(board_row(v, n, ok, i, new[0][0]) for i, (n, ok, v, _) in enumerate(new, 1)) if new else ""
+
+    others = " · ".join(f'<a href="{BASE}/year/{o}/">{o}</a>' for o in YEARS if o != y)
+    c1 = coaches[0]
+    body = f"""<section class="phero pone"><div class="pht"><p class="kick">Year in review</p><h1>The most recommended golf lessons of {y}</h1>
+<p class="phs">{recs:,} times in {y}, a golfer on Reddit told another one which YouTube lesson to watch. These are the lessons, coaches and fixes they named most.</p></div></section>
+<div class="prose"><div class="kpis"><div><b>{recs:,}</b>recommendations</div><div><b>{n_lessons:,}</b>lessons recommended</div><div><b>{fixed:,}</b>said it fixed it</div><div><b>{len(coaches):,}</b>channels</div></div></div>
+<section class="ldb"><div class="ldh"><h2 class="row">Lessons of {y}</h2><p>Top {len(top)}, by recommendations in {y}</p></div>{LDK}<ol class="ldl">{board_html}</ol></section>
+<section class="ldb"><div class="ldh"><h2 class="row">Coaches of {y}</h2><p>{e(c1[1])} leads with {c1[2]:,} recommendations</p></div>
+<div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>{f"Change" if prev else ""}</span></div><ol class="ldl">{crow}</ol></section>
+<div class="prose"><h2>The #1 lesson for each problem in {y}</h2><p>Where at least {YEAR_MIN} golfers agreed in {y}.</p><ul>{win_html}</ul></div>
+{f'<section class="ldb"><div class="ldh"><h2 class="row">New in {y}</h2><p>First recommended in {y}</p></div>{LDK}<ol class="ldl">{new_html}</ol></section>' if new_html else ''}
+<div class="prose"><h2>How this is counted</h2><p>The same way as the <a href="{BASE}/">all-time ranking</a>: each golfer counts once per lesson, in the year of the comment we counted. Only lessons with a page on {e(SITE['name'])} are listed; clips under {CLIP_S} seconds are left out. The public Reddit archive we read is thin before mid-2021, so year pages start in {YEARS[0]}. <a href="{BASE}/about/">More on the method</a>.</p>
+{f'<p>Other years: {others}</p>' if others else ''}</div>"""
+    page(f"/year/{y}/", f"Best Golf Lessons of {y}, Ranked by Golfers | {SITE['name']}",
+         f"The YouTube golf lessons golfers recommended most in {y}: top 20 lessons, top coaches and the #1 fix per problem, from {recs:,} Reddit recommendations. #1 coach: {c1[1]}.",
+         body, nav="stats",
+         ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": f"Most recommended golf lessons of {y}", "itemListElement": [
+             {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{v['vid']}/", "name": nice(v["title"])} for i, (_, _, v, _) in enumerate(top, 1)]},
+             crumbs((f"Best of {y}", f"/year/{y}/"))])
 
 
 def build_text():
@@ -1161,5 +1251,7 @@ if __name__ == "__main__":
     build_coaches()
     for s, c in COACHES:
         build_coach(s, c)
+    for y in YEARS:
+        build_year(y)
     build_report(); build_text(); build_guides(); build_badges_page(); build_index(); build_misc()
     print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches -> {OUT}")
