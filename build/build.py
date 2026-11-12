@@ -22,7 +22,7 @@ CARDS = _opt("cards.json", {})
 RECENCY = _opt("recency.json", {})
 REDDIT = _opt("reddit.json", {})
 YDATA = _opt("years.json", {}).get("videos", {})  # vid -> {year: [recs, fixed it, {topic: [recs, fixed it]}]}, same counting as videos.json
-MON =["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 lastrec = lambda vid: (MON[int(RECENCY[vid][5:7]) - 1] + " " + RECENCY[vid][:4]) if RECENCY.get(vid) else ""
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
          "practice_plan": "Practice plan", "fitness": "Fitness", "other": "Other"}
@@ -182,12 +182,17 @@ KW = {"slice": "How to Fix a Slice", "hook": "How to Fix a Hook", "shank": "How 
 YEAR = VDATA["generated"][:4]
 UPDATED = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%B %Y")
 # Year pages: only finished calendar years with enough data. The Reddit archive is thin before mid-2021, so 2021 and
-# earlier stay out by the threshold, and the running year waits until it is over.
+# earlier stay out by the threshold. A year counts as finished from March on: the archive takes in late comments for
+# a while, and the monthly update runs early in the month.
+_VIDS = {v["vid"] for v in VIDEOS}
+YDATA = {vid: ys for vid, ys in YDATA.items() if vid in _VIDS}  # same base as the all-time totals
 YEAR_TOTAL = Counter()
 for _ys in YDATA.values():
     for _y, _r in _ys.items():
         YEAR_TOTAL[_y] += _r[0]
-YEARS = [y for y in sorted(YEAR_TOTAL) if y < YEAR and YEAR_TOTAL[y] >= 1000]
+_LAST_DONE = int(YEAR) - (1 if int(VDATA["generated"][5:7]) >= 3 else 2)
+YEARS = [y for y in sorted(YEAR_TOTAL) if int(y) <= _LAST_DONE and YEAR_TOTAL[y] >= 1000
+         and any(y in YDATA.get(vid, {}) and not 0 < (v.get("duration_s") or 0) < CLIP_S for vid, v in WATCH.items())]
 
 
 def fit(*options, limit=65):
@@ -1076,25 +1081,24 @@ def build_report():
          f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og4/report.png")
 
 
-YEAR_MIN = 5  # a lesson needs this many recommendations in a year to be named the year's #1 for a problem
+YEAR_MIN = 5  # a lesson needs this many recommendations in a year, and a clear lead, to be named most recommended for a problem
 VBY = {v["vid"]: v for v in VIDEOS}
 
 
 def year_coaches(y):
-    """Channels ranked by recommendations in year y: [(slug, name, recs)]."""
-    c, names = Counter(), {}
-    for vid, ys in YDATA.items():
-        v = VBY.get(vid)
-        if v and y in ys:
-            c[v["cs"]] += ys[y][0]; names[v["cs"]] = v.get("channel") or v["cs"]
-    return [(s, names[s], n) for s, n in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
+    """Channels ranked by recommendations in year y, over the same lessons as the all-time coach ranking: [(slug, name, recs)]."""
+    c = Counter()
+    for vid, v in WATCH.items():
+        if y in YDATA.get(vid, {}):
+            c[v["cs"]] += YDATA[vid][y][0]
+    return [(s, channels[s]["name"] or s, n) for s, n in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
 
 
 def build_year(y):
-    """One page per finished year: the lessons, coaches and #1 per problem golfers recommended in that year."""
+    """One page per finished year: the lessons, coaches and most recommended lesson per problem in that year."""
     lessons = sorted(((ys[y][0], ys[y][1], WATCH[vid], ys[y][2]) for vid, ys in YDATA.items()
                       if y in ys and vid in WATCH and not 0 < (WATCH[vid].get("duration_s") or 0) < CLIP_S),
-                     key=lambda r: (-r[0], -r[1], -r[2]["recs"]))
+                     key=lambda r: (-r[0], -r[1], -r[2]["recs"], r[2]["vid"]))
     recs = YEAR_TOTAL[y]
     fixed = sum(ys[y][1] for ys in YDATA.values() if y in ys)
     n_lessons = sum(1 for ys in YDATA.values() if y in ys)
@@ -1113,7 +1117,8 @@ def build_year(y):
         if s not in prev:
             return f'<span class="ldo cbl">new <i>vs {py}</i></span>'
         d = prev[s] - i
-        return f'<span class="ldo cbl">{"▲ " + str(d) if d > 0 else "▼ " + str(-d) if d < 0 else "="} <i>vs {py}</i></span>'
+        word = f"up {d} place{'s' if d > 1 else ''}" if d > 0 else f"down {-d} place{'s' if d < -1 else ''}" if d < 0 else "same place"
+        return f'<span class="ldo cbl" title="{word} vs {py}">{"▲ " + str(d) if d > 0 else "▼ " + str(-d) if d < 0 else "="} <i>vs {py}</i><span class="sr">{word}</span></span>'
     crow = ""
     for i, (s, name, n) in enumerate(coaches[:10], 1):
         tag, href = ("a", f' href="{BASE}/coach/{s}/"') if s in COACH_SET else ("span", "")
@@ -1125,31 +1130,31 @@ def build_year(y):
     wins = []
     for p in PROBLEMS:
         k = p["key"]
-        cand = sorted(((t[k][0], t[k][1], v) for _, _, v, t in lessons if k in t), key=lambda r: -(r[0] + 0.001 * r[1] + 0.00001 * min(r[2]["recs"], 50)))
-        if cand and cand[0][0] >= YEAR_MIN:
+        cand = sorted(((t[k][0], t[k][1], v) for _, _, v, t in lessons if k in t), key=lambda r: (-r[0], -r[1], -r[2]["recs"], r[2]["vid"]))
+        if cand and cand[0][0] >= YEAR_MIN and (len(cand) == 1 or cand[0][0] > cand[1][0]):  # a clear lead, as for awards
             wins.append((sum(r[0] for r in cand), p, cand[0]))
-    wins.sort(key=lambda w: -w[0])
+    wins.sort(key=lambda w: (-w[0], w[1]["key"]))
     win_html = "".join(f'<li><a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>: <a href="{BASE}/watch/{v["vid"]}/">{e(nice(v["title"]))}</a>'
                        f' <span class="dim">· {e(v["channel"])} · {n} recommendation{"s" if n != 1 else ""}{f", {ok} fixed it" if ok else ""}</span></li>'
                        for _, p, (n, ok, v) in wins)
 
-    new = [r for r in lessons if min(YDATA[r[2]["vid"]]) == y][:10]
-    new_html = "".join(board_row(v, n, ok, i, new[0][0]) for i, (n, ok, v, _) in enumerate(new, 1)) if new else ""
+    new = [r for r in lessons if (r[2].get("published") or "")[:4] == y][:10]  # lessons that came out that year
+    new_html = "".join(board_row(v, n, ok, i, new[0][0]) for i, (n, ok, v, _) in enumerate(new, 1)) if len(new) >= 3 else ""
 
     others = " · ".join(f'<a href="{BASE}/year/{o}/">{o}</a>' for o in YEARS if o != y)
     c1 = coaches[0]
     body = f"""<section class="phero pone"><div class="pht"><p class="kick">Year in review</p><h1>The most recommended golf lessons of {y}</h1>
-<p class="phs">{recs:,} times in {y}, a golfer on Reddit told another one which YouTube lesson to watch. These are the lessons, coaches and fixes they named most.</p></div></section>
-<div class="prose"><div class="kpis"><div><b>{recs:,}</b>recommendations</div><div><b>{n_lessons:,}</b>lessons recommended</div><div><b>{fixed:,}</b>said it fixed it</div><div><b>{len(coaches):,}</b>channels</div></div></div>
-<section class="ldb"><div class="ldh"><h2 class="row">Lessons of {y}</h2><p>Top {len(top)}, by recommendations in {y}</p></div>{LDK}<ol class="ldl">{board_html}</ol></section>
+<p class="phs">{recs:,} times in {y}, a golfer on Reddit told another one which YouTube lesson to watch. These are the lessons and coaches they named most.</p></div></section>
+<div class="prose"><div class="kpis"><div><b>{recs:,}</b>recommendations</div><div><b>{n_lessons:,}</b>videos recommended</div><div><b>{fixed:,}</b>said it fixed it</div><div><b>{len(coaches):,}</b>channels</div></div></div>
+<section class="ldb"><div class="ldh"><h2 class="row">Lessons of {y}</h2><p>Top {len(top)}, by golfers who recommended them in {y}</p></div>{LDK}<ol class="ldl">{board_html}</ol></section>
 <section class="ldb"><div class="ldh"><h2 class="row">Coaches of {y}</h2><p>{e(c1[1])} leads with {c1[2]:,} recommendations</p></div>
-<div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>{f"Change" if prev else ""}</span></div><ol class="ldl">{crow}</ol></section>
-<div class="prose"><h2>The #1 lesson for each problem in {y}</h2><p>Where at least {YEAR_MIN} golfers agreed in {y}.</p><ul>{win_html}</ul></div>
-{f'<section class="ldb"><div class="ldh"><h2 class="row">New in {y}</h2><p>First recommended in {y}</p></div>{LDK}<ol class="ldl">{new_html}</ol></section>' if new_html else ''}
-<div class="prose"><h2>How this is counted</h2><p>The same way as the <a href="{BASE}/">all-time ranking</a>: each golfer counts once per lesson, in the year of the comment we counted. Only lessons with a page on {e(SITE['name'])} are listed; clips under {CLIP_S} seconds are left out. The public Reddit archive we read is thin before mid-2021, so year pages start in {YEARS[0]}. <a href="{BASE}/about/">More on the method</a>.</p>
+<div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>{"Change" if prev else ""}</span></div><ol class="ldl">{crow}</ol></section>
+{f'<div class="prose"><h2>Most recommended for each problem in {y}</h2><p>Where at least {YEAR_MIN} golfers named the same lesson in {y} and no other lesson had as many.</p><ul>{win_html}</ul></div>' if win_html else ''}
+{f'<section class="ldb"><div class="ldh"><h2 class="row">New lessons of {y}</h2><p>Published in {y}, by golfers who recommended them that year</p></div>{LDK}<ol class="ldl">{new_html}</ol></section>' if new_html else ''}
+<div class="prose"><h2>How this is counted</h2><p>Like the <a href="{BASE}/">all-time ranking</a>, from public comments on Reddit, but per year: each golfer counts once per lesson and year, so a golfer who recommended a lesson in {int(y) - 1} and again in {y} counts in both years. The totals at the top include every recommended video; the lists show lessons with a page on {e(SITE['name'])}, without clips under {CLIP_S} seconds. Counts for a past year can still grow a little as late comments reach the public archive we read. That archive is thin before mid-2021, so year pages start in {YEARS[0]}. <a href="{BASE}/about/">More on the method</a>.</p>
 {f'<p>Other years: {others}</p>' if others else ''}</div>"""
     page(f"/year/{y}/", f"Best Golf Lessons of {y}, Ranked by Golfers | {SITE['name']}",
-         f"The YouTube golf lessons golfers recommended most in {y}: top 20 lessons, top coaches and the #1 fix per problem, from {recs:,} Reddit recommendations. #1 coach: {c1[1]}.",
+         f"Top coach of {y}: {c1[1]}. The YouTube golf lessons and coaches golfers recommended most in {y}, from {recs:,} Reddit recommendations.",
          body, nav="stats",
          ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": f"Most recommended golf lessons of {y}", "itemListElement": [
              {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{v['vid']}/", "name": nice(v["title"])} for i, (_, _, v, _) in enumerate(top, 1)]},
@@ -1221,10 +1226,10 @@ def build_misc():
          f'<section class="pix nf"><h2 class="pick">Pick your problem</h2><nav class="ixs" aria-label="All problems">{problem_index()}</nav></section>', canonical=False)
     # One sitemap part per kind of page: Search Console reports indexing per part (Pages > filter by sitemap), which
     # answers "which kind of page does Google leave out" without guessing. sitemap.xml stays the address to submit.
-    parts = {"pages": [], "coaches": [], "lessons": [], "lessons-tail": []}
+    parts = {"pages": [], "coaches": [], "years": [], "lessons": [], "lessons-tail": []}
     for u in SITEMAP:
         sec, _, slug = u[len(URL):].strip("/").partition("/")
-        parts["coaches" if sec == "coach" else "pages" if sec != "watch" else "lessons" if WATCH[slug]["recs"] >= STRONG_MIN else "lessons-tail"].append(u)
+        parts["coaches" if sec == "coach" else "years" if sec == "year" else "pages" if sec != "watch" else "lessons" if WATCH[slug]["recs"] >= STRONG_MIN else "lessons-tail"].append(u)
     ns = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
     parts = {k: us for k, us in parts.items() if us}
     for k, us in parts.items():
@@ -1254,4 +1259,4 @@ if __name__ == "__main__":
     for y in YEARS:
         build_year(y)
     build_report(); build_text(); build_guides(); build_badges_page(); build_index(); build_misc()
-    print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches -> {OUT}")
+    print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches, year pages {', '.join(YEARS) or 'none (no data/years.json?)'} -> {OUT}")
