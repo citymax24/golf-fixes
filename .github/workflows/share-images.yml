@@ -1,0 +1,50 @@
+name: Share images
+
+# The preview images for shared links (static/og4) carry the counts, so they are drawn again whenever the data,
+# the drawing script or the wordmark changes. Only images whose content changed are committed (build/og-hashes.json).
+on:
+  push:
+    branches: [main]
+    paths: ["data/**", "build/og.js", "static/logo-word.svg", ".github/workflows/share-images.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: share-images
+  cancel-in-progress: true
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: 22
+      - name: Font and browser
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-inter
+          fc-list | grep -i "inter" | head -3
+          npm install --no-save --silent playwright
+          npx playwright install --with-deps chromium
+      - name: Draw the images that changed
+        run: node build/og.js
+      - name: Commit and deploy if an image changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "golfvotes-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A static/og4 build/og-hashes.json
+          if git diff --cached --quiet; then echo "no image changed"; else
+            git commit -qm "Share images follow the data"
+            git pull -q --rebase origin main
+            git push -q origin HEAD:main
+            # a push by this workflow does not start the deploy by itself
+            gh workflow run pages.yml --ref main
+          fi
