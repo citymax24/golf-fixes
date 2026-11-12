@@ -29,6 +29,11 @@ LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "A
 BASE = SITE["base_path"].rstrip("/")
 URL = SITE["base_url"].rstrip("/")
 MIN = SITE.get("min_recs_per_problem", 2)
+# Indexing policy for lesson pages, by number of recommendations. Every lesson from MIN up has a page; from INDEX_MIN up
+# the page asks to be indexed (below it: noindex,follow, not in the sitemap). Indexable lessons below STRONG_MIN are
+# listed in their own sitemap part, so that Search Console shows how much of the long tail Google actually indexes.
+INDEX_MIN = SITE.get("min_recs_indexed", MIN)
+STRONG_MIN = 3
 e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
 PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
@@ -646,12 +651,12 @@ def build_watch(v):
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
     tt = trunc(base, 53)
-    USED[tt] += 1
-    if USED[tt] > 1:
-        tt = f"{tt} ({USED[tt]})"
+    USED[tt.lower()] += 1  # Google compares titles without case: "The TRICK to…" and "The Trick To…" are the same title
+    if USED[tt.lower()] > 1:
+        tt = f"{tt} ({USED[tt.lower()]})"
     page(f"/watch/{v['vid']}/", f"{tt} | {SITE['name']}",
          (f"{v['summary']} {rec}" if v.get("summary") and len(v["summary"]) + len(rec) < 158 else (v.get("summary") or f"{v['channel']} lesson. {rec}")) if v.get("summary") else f"{v['channel']} lesson. {rec}",
-         body, cls="wpage", og=thumb(v["vid"], "hqdefault"),
+         body, cls="wpage", og=thumb(v["vid"], "hqdefault"), canonical=v["recs"] >= INDEX_MIN,
          ld=[{"@context": "https://schema.org", "@type": "VideoObject", "name": nice(v["title"]), "thumbnailUrl": thumb(v["vid"], "hqdefault"),
              "uploadDate": (v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01") + "T00:00:00+00:00",
              "description": f"{v['recs']} golfers recommended this lesson.", "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}",
@@ -1124,8 +1129,19 @@ def build_misc():
          f'<section class="phero pone"><div class="pht"><h1>Out of bounds.</h1><p class="phs">This page moved or never existed.</p>'
          f'<p class="phi"><a class="pill start" href="{BASE}/">Back to the tee →</a></p></div></section>'
          f'<section class="pix nf"><h2 class="pick">Pick your problem</h2><nav class="ixs" aria-label="All problems">{problem_index()}</nav></section>', canonical=False)
-    open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-                                                     "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
+    # One sitemap part per kind of page: Search Console reports indexing per part (Pages > filter by sitemap), which
+    # answers "which kind of page does Google leave out" without guessing. sitemap.xml stays the address to submit.
+    parts = {"pages": [], "coaches": [], "lessons": [], "lessons-tail": []}
+    for u in SITEMAP:
+        sec, _, slug = u[len(URL):].strip("/").partition("/")
+        parts["coaches" if sec == "coach" else "pages" if sec != "watch" else "lessons" if WATCH[slug]["recs"] >= STRONG_MIN else "lessons-tail"].append(u)
+    ns = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+    parts = {k: us for k, us in parts.items() if us}
+    for k, us in parts.items():
+        open(os.path.join(OUT, f"sitemap-{k}.xml"), "w").write(f'<?xml version="1.0" encoding="UTF-8"?><urlset {ns}>' +
+            "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in us) + "</urlset>")
+    open(os.path.join(OUT, "sitemap.xml"), "w").write(f'<?xml version="1.0" encoding="UTF-8"?><sitemapindex {ns}>' +
+        "".join(f"<sitemap><loc>{URL}/sitemap-{k}.xml</loc><lastmod>{VDATA['generated']}</lastmod></sitemap>" for k in parts) + "</sitemapindex>")
     if SITE.get("cname"):
         open(os.path.join(OUT, "CNAME"), "w").write(SITE["cname"] + "\n")
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
