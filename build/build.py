@@ -233,7 +233,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <main class="main" id="main" tabindex="-1">{body}
   <footer class="ft">
   <div class="ftt"><div class="ftc"><p class="ftq">Golf lessons, ranked by golfers.</p>
-  <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
+  <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
   <nav class="ftn" aria-label="Footer"><div><h2>Explore</h2><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">All lessons</a></div>
   <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/badges/">Badges for coaches</a></div>
   <div><h2>GolfVotes</h2><a href="{BASE}/about/">How we rank</a><a href="{BASE}/report/">Stats</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a></div>
@@ -646,7 +646,7 @@ def build_watch(v):
 <div class="tags">{tags}</div></div>
 <section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
 <p class="vbtns"><button class="pill inl" data-vote="yes">{svg('like')}<span>Yes, it helped</span></button><button class="pill inl" data-vote="no">{svg('dislike')}<span>Not for me</span></button></p>
-<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
+<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
@@ -1019,7 +1019,7 @@ def build_badges_page():
 <li>Use a badge only for the channel and lessons it names, never to suggest that GolfVotes endorses a product, course or service.</li>
 <li>A badge is a statement about golfer recommendations, not a quality guarantee. If it is used misleadingly, or the underlying data turns out to be wrong, we may withdraw it.</li>
 <li>Free to use under these terms. The badge links to your GolfVotes profile; please keep that link.</li></ul>
-<p class="dim">Questions: <a href="mailto:max@fassia.io?subject=GolfVotes%20badges">max@fassia.io</a></p></div>
+<p class="dim">Questions: <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20badges">hello@golfvotes.com</a></p></div>
 <div class="bshow">{hero}</div></section></div>"""
     page("/badges/", f"Badges for coaches | {SITE['name']}", "How golf coaches earn GolfVotes badges for the YouTube lessons golfers recommend most.", body)
     for s, c in COACHES:  # short-lived per-coach kit pages from an earlier version -> coach page
@@ -1081,8 +1081,8 @@ def build_text():
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments and problem pages quote a few post titles, without usernames, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
-<h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20creator%20request">max@fassia.io</a>; it will be removed in the next update.</p>
-<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Problem pages quote a few post titles the same way. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment or post. It will be removed in the next update.</p>
+<h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20creator%20request">hello@golfvotes.com</a>; it will be removed in the next update.</p>
+<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Problem pages quote a few post titles the same way. If you wrote one and want it removed, email <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20comment%20removal">hello@golfvotes.com</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment or post. It will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
