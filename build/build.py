@@ -668,6 +668,16 @@ def build_misc():
     page("/404.html", f"Not found | {SITE['name']}", "Not found.", f'<h1 class="ptitle">That page moved.</h1><p class="lead">Pick your problem:</p><div class="tags">' + "".join(f'<a class="tag" href="{BASE}/fix/{PNAME[k]["slug"]}/">{e(PNAME[k]["name"])}</a>' for k in ["slice", "shank", "hook", "early_extension", "over_the_top", "chipping", "putting"] if k in PNAME) + '</div>', canonical=False)
     open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
                                                      "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
+    probs = sorted((p for p in PROBLEMS if p["video_count"]), key=lambda p: -p["total_recs"])
+    open(os.path.join(OUT, "llms.txt"), "w").write(
+        f"# {SITE['name']}\n\n> {SITE['description']}\n\n"
+        f"{len(WATCH):,} YouTube golf lessons, ranked by {TOTAL_RECS:,} independent recommendations from golfers in public golf-instruction communities "
+        f"({SITE['stats']['period']}). Each golfer counts once per video. Nobody can pay to rank higher. Last update: {VDATA['generated']}.\n\n"
+        "## Problems\n\n" + "".join(f"- [{p['q']}]({URL}/fix/{p['slug']}/): {p['video_count']} lessons, {p['total_recs']} recommendations\n" for p in probs) +
+        f"\n## Coaches\n\n- [Most recommended golf coaches on YouTube]({URL}/coaches/): {len(COACHES)} coaches ranked by recommendations\n"
+        f"\n## Data\n\n- [All ranked lessons (JSON)]({URL}/static/data/golfvotes-lessons.json): video id, title, coach, recommendations, fixed-it count, problems, type, level, summary\n"
+        f"- [Problems with their top lessons (JSON)]({URL}/static/data/golfvotes-problems.json)\n- [About the data and license]({URL}/data/): free to use with attribution to {SITE['name']}\n"
+        f"\n## About\n\n- [How the ranking works]({URL}/about/)\n")
     if SITE.get("cname"):
         open(os.path.join(OUT, "CNAME"), "w").write(SITE["cname"] + "\n")
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
