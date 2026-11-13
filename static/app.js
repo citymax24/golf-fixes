@@ -57,8 +57,53 @@
   }, true);
 
   // ---------- ambient light ----------
-  // The soft glow behind a lesson's picture is that picture, blurred by CSS; this only tells CSS which file, the one already loaded.
-  function amb(w) { var i = w && w.querySelector("img"); if (i && !w.style.getPropertyValue("--amb")) w.style.setProperty("--amb", 'url("' + (i.currentSrc || i.src) + '")'); }
+  // Like a TV lighting the wall: each edge of a lesson's picture throws its own colour outward, strongest from the middle of
+  // the edge, fading toward the corners. The colours come from a 32x18 copy of the picture already on the page; colourful
+  // pixels count most, grey and black throw little or no light, and muddy tones are freshened. Only the part of the picture that
+  // shows counts (the large previews carry black bars that the page crops away).
+  var ambCv;
+  function hsl2rgb(h, s, l) {
+    var f = function (n) { var k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); };
+    return f(0) + "," + f(8) + "," + f(4);
+  }
+  function ambCol(d, x0, x1, y0, y1) {  // one patch -> [clean colour, strength 0..1]
+    var r = 0, g = 0, b = 0, w = 0, lum = 0, n = 0;
+    for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) {
+      var i = (y * 32 + x) * 4, R = d[i], G = d[i + 1], Bl = d[i + 2], mx = Math.max(R, G, Bl), mn = Math.min(R, G, Bl), c = (mx - mn) / 255, k = c * c + .015;
+      r += R * k; g += G * k; b += Bl * k; w += k; lum += (mx + mn) / 510; n++;
+    }
+    r /= w * 255; g /= w * 255; b /= w * 255; lum /= n;
+    var mx2 = Math.max(r, g, b), mn2 = Math.min(r, g, b), l = (mx2 + mn2) / 2, dd = mx2 - mn2, s = dd ? dd / (1 - Math.abs(2 * l - 1)) : 0, h = 0;
+    if (dd) h = mx2 === r ? 60 * (((g - b) / dd) % 6) : mx2 === g ? 60 * ((b - r) / dd + 2) : 60 * ((r - g) / dd + 4);
+    if (h < 0) h += 360;
+    var lit = Math.min(1, lum / .2);  // black throws no light
+    if (s < .14) return ["255,255,255", Math.max(0, (lum - .45) / .45) * .6 * lit];  // grey or white: soft white light (on a white page it simply disappears)
+    if (h > 40 && h < 110) h += (135 - h) * .6;  // olive, khaki and lime grass turns fresh green
+    var vivid = s >= .25, L2 = vivid ? .5 + .12 * Math.min(1, Math.max(0, (l - .25) * 2)) : .74;  // faint colour becomes a tinted white light
+    if (h < 70 || h > 330) L2 += .08;  // warm light kept light: dim orange would read as brown
+    return [hsl2rgb(h, vivid ? Math.min(.78, Math.max(.55, s * 1.3 + .15)) : .4, L2), (.55 + .45 * Math.min(1, s * 2)) * lit];
+  }
+  function amb(w) {
+    var im = w && w.querySelector("img"); if (!im || w.dataset.amb) return; w.dataset.amb = "1";
+    var go = function () {
+      var d;
+      try { ambCv = ambCv || document.createElement("canvas"); ambCv.width = 32; ambCv.height = 18; var cx = ambCv.getContext("2d", { willReadFrequently: true }); var nw = im.naturalWidth, nh = im.naturalHeight, ar = (im.clientWidth / im.clientHeight) || 16 / 9, sw = Math.min(nw, nh * ar), sh = Math.min(nh, nw / ar); cx.drawImage(im, (nw - sw) / 2, (nh - sh) / 2, sw, sh, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data; } catch (e) { return; }
+      var spot = function (p, rx, ry, at, k) {  // a soft spot of light, centred on the picture's edge, fading outward
+        var a = p[1] * k; if (a < .04) return "";
+        return "radial-gradient(ellipse " + rx + " " + ry + " at " + at + ",rgba(" + p[0] + "," + a.toFixed(2) + "),rgba(" + p[0] + "," + (a * .72).toFixed(2) + ") 22%,rgba(" + p[0] + "," + (a * .36).toFixed(2) + ") 48%,rgba(" + p[0] + "," + (a * .1).toFixed(2) + ") 74%,rgba(" + p[0] + ",0))";
+      };
+      var X = "var(--ambx)", Y = "var(--amby)", Tr = "var(--ambt,var(--amby))", T = Y, Bt = "calc(100% - " + Y + ")", Lf = X, Rt = "calc(100% - " + X + ")";
+      var L = [  // the middle of each edge strongest; smaller, weaker spots either side; the corners get only what spills over
+        spot(ambCol(d, 11, 21, 0, 5), "34%", Tr, "50% " + T, 1), spot(ambCol(d, 0, 11, 0, 5), "16%", "calc(" + Tr + "*.8)", "24% " + T, .65), spot(ambCol(d, 21, 32, 0, 5), "16%", "calc(" + Tr + "*.8)", "76% " + T, .65),
+        spot(ambCol(d, 11, 21, 13, 18), "34%", Y, "50% " + Bt, 1), spot(ambCol(d, 0, 11, 13, 18), "16%", "calc(" + Y + "*.8)", "24% " + Bt, .65), spot(ambCol(d, 21, 32, 13, 18), "16%", "calc(" + Y + "*.8)", "76% " + Bt, .65),
+        spot(ambCol(d, 0, 6, 4, 14), X, "30%", Lf + " 50%", .85), spot(ambCol(d, 26, 32, 4, 14), X, "30%", Rt + " 50%", .85)
+      ].filter(Boolean);
+      if (!L.length) return;
+      w.style.setProperty("--ambg", L.join(","));
+      requestAnimationFrame(function () { w.classList.add("amb"); });
+    };
+    if (im.complete && im.naturalWidth) go(); else im.addEventListener("load", go, { once: true });
+  }
   $$(".bfv, .pwr").forEach(amb);
   document.addEventListener("pointerover", function (ev) { var w = ev.target.closest && ev.target.closest(".vc .thw"); if (w) amb(w); }, { passive: true });
 
