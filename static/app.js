@@ -683,7 +683,7 @@
       };
       var band = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) pick(e.target); }); }, { rootMargin: "-44% 0px -44% 0px" });
       $$(".ix", ixs).forEach(function (a) { band.observe(a); });
-      new IntersectionObserver(function (es) { tOn = es[0].intersectionRatio > .25; TF.lit(tOn && !!tAct); if (!tOn && tAct) { tAct.classList.remove("act"); tAct = null; } }, { threshold: [0, .25] }).observe(tblk);
+      new IntersectionObserver(function (es) { tOn = es[es.length - 1].intersectionRatio > .25; TF.lit(tOn && !!tAct); if (!tOn && tAct) { tAct.classList.remove("act"); tAct = null; } }, { threshold: [0, .25] }).observe(tblk);
     }
   }
   // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
