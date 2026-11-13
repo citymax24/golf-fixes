@@ -1558,8 +1558,8 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
    it (.ambl i), three along the top and bottom, two at each side, each blended with its neighbours, over one even wash of
    the picture's main colour (.ambw), so the light reads as one soft glow, strongest along the middle of each edge. The pools move on springs of slightly different stiffness: toward the mouse over the picture, toward
    the middle of the screen as you scroll, trailing behind fast scrolling, so the light flows and changes shape and then
-   settles. That motion only shifts, turns, stretches and dims the painted pools (transform and opacity), which the graphics
-   card does without repainting anything. Lesson cards light up only on hover, so a grid stays calm. -- */
+   settles; at rest it drifts slowly like steam. That motion only shifts, turns, stretches and dims the painted pools
+   (transform, translate, rotate, scale, opacity), which the graphics card does without repainting anything. Lesson cards light up only on hover, so a grid stays calm. -- */
 :root{--ambo:.8}
 .bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:64px;--amby:64px}
 .pwr{--ambx:96px;--amby:84px;--ambt:30px}  /* short light upward: the sticky header sits just above */
@@ -1567,13 +1567,23 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:12px}}  /* the page gutter is narrow on a phone */
 .ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .9s ease}
 .ambl i{position:absolute;opacity:.6;will-change:transform,opacity}
-.ambl .ambw{inset:24px;border-radius:24px}  /* set inside the picture, so its unlit middle never peeks out when it moves */
+.ambl .ambw{inset:32px;border-radius:28px}  /* set inside the picture, so its unlit middle never peeks out when it moves */
+/* At rest the light drifts like steam: every pool runs its own slow loop (8 to 15 s, started at a different point), so the
+   pattern hardly ever repeats. The loops use the separate translate, rotate and scale properties, which add to the mouse and
+   scroll motion (transform) instead of replacing it, and run on the graphics card. Paused when the picture is off screen. */
+@keyframes ambd1{0%{translate:0 0;rotate:0deg;scale:1 1}33%{translate:7px -4px;rotate:2.5deg;scale:1.06 .95}66%{translate:-5px 3px;rotate:-1.5deg;scale:.96 1.07}100%{translate:3px 5px;rotate:1deg;scale:1.03 .98}}
+@keyframes ambd2{0%{translate:0 0;rotate:0deg;scale:1 1}50%{translate:-8px -3px;rotate:-3deg;scale:1.08 .96}100%{translate:4px 4px;rotate:2deg;scale:.95 1.05}}
+@keyframes ambd3{0%{translate:0 0;rotate:0deg;scale:1 1}25%{translate:4px 6px;rotate:1.5deg;scale:.97 1.06}75%{translate:-6px -5px;rotate:-2.5deg;scale:1.06 .97}100%{translate:2px -2px;rotate:.5deg;scale:1 1.02}}
+@keyframes ambdw{0%{translate:0 0;scale:1}50%{translate:3px -2px;scale:1.012 .992}100%{translate:-2px 2px;scale:.994 1.01}}
+.ambl i{animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
+.ambp .ambl i,.vc .thw .ambl i{animation-play-state:paused}
+@media (hover:hover){.vc .thw:not(.ambp):hover .ambl i{animation-play-state:running}}
 .bfv.amb>.ambl,.pwr.amb>.ambl{opacity:var(--ambo)}
 .bfv.amb>.ambl{animation:ambin 1.2s ease both}
 @keyframes ambin{from{opacity:0}}
 @media (hover:hover){.vc .thw.amb:hover>.ambl{opacity:var(--ambo)}}
 .bfv{overflow:visible}.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}
-@media (prefers-reduced-motion:reduce){.bfv.amb>.ambl{animation:none}.ambl{transition:none}}
+@media (prefers-reduced-motion:reduce){.bfv.amb>.ambl,.ambl i{animation:none}.ambl{transition:none}}
 /* the hole itself gives off a little light where the grass is */
 #bf .bfc{background:radial-gradient(34% 44% at 50% 40%,rgba(11,122,75,.12),transparent 70%),var(--paper)}
 @supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{background:radial-gradient(34% 44% at 50% 40%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%),var(--paper)}}
