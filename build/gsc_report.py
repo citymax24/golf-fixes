@@ -16,7 +16,7 @@ last run and ours to fix. "Crawled - currently not indexed" is Google's choice, 
 
 The service account must be added as a user of the property in Search Console (Settings > Users and permissions).
 """
-import collections, concurrent.futures, datetime, json, os, re, sys
+import collections, concurrent.futures, datetime, json, os, re, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "_site")
@@ -26,6 +26,10 @@ HOST = URL.split("//")[1]
 STATUS = os.path.join(ROOT, "seo", "index_status.json")
 REPORT = os.path.join(ROOT, "seo", "index_report.md")
 BUDGET = int(os.environ.get("GSC_BUDGET", 1900))
+# Stop asking before the workflow's own time limit: the first run hit it after 45 minutes and lost every answer,
+# because nothing was saved until the end. Answers are now saved as they come and the next run continues.
+DEADLINE_S = 60 * int(os.environ.get("GSC_DEADLINE_MIN", 35))
+SAVE_EVERY = 100
 TODAY = datetime.date.today().isoformat()
 
 INDEXED = {"Submitted and indexed", "Indexed, not submitted in sitemap"}
@@ -70,8 +74,13 @@ class Quota(Exception):
 
 
 def inspect(s, prop, url):
-    r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
-               json={"inspectionUrl": url, "siteUrl": prop, "languageCode": "en-US"}, timeout=60)
+    for wait in (30, 60, 0):  # a 429 can be the per-minute limit: wait and retry twice before calling it the daily quota
+        r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+                   json={"inspectionUrl": url, "siteUrl": prop, "languageCode": "en-US"}, timeout=60)
+        if r.status_code != 429:
+            break
+        if wait:
+            time.sleep(wait)
     if r.status_code == 429:
         raise Quota(r.text[:200])
     if r.status_code != 200:
@@ -94,31 +103,55 @@ def fault(row):
     return None
 
 
-def run_inspections(s, prop, todo, status):
+def save_status(status, urls):
+    keep = {p: status[p] for p in sorted(status) if URL + p in urls}  # URLs that left the sitemap are forgotten
+    os.makedirs(os.path.dirname(STATUS), exist_ok=True)
+    tmp = STATUS + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(keep, f, indent=0, sort_keys=True)
+    os.replace(tmp, STATUS)
+    return keep
+
+
+def run_inspections(s, prop, todo, status, urls):
+    """Inspect with 4 threads, never more than 4 in flight, until done, the daily quota or the deadline."""
     done = failed = 0
     stop = None
+    start = time.monotonic()
+    queue = iter(todo)
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
-        futures = {pool.submit(inspect, s, prop, u): u for u in todo}
-        for f in concurrent.futures.as_completed(futures):
-            u = futures[f]
-            try:
-                status[u[len(URL):]] = f.result()
-                done += 1
-            except Quota as ex:
-                if not stop:
-                    stop = str(ex)
-                    for g in futures:
-                        g.cancel()
-            except concurrent.futures.CancelledError:
-                pass
-            except Exception as ex:
-                failed += 1
-                if failed <= 5:
-                    print(f"inspection failed for {u}: {ex}")
-                if failed > 20 and not done:
-                    sys.exit("every inspection fails; see the messages above")
+        running = {}
+
+        def refill():
+            while not stop and len(running) < 4 and time.monotonic() - start < DEADLINE_S:
+                u = next(queue, None)
+                if u is None:
+                    return
+                running[pool.submit(inspect, s, prop, u)] = u
+        refill()
+        while running:
+            fin, _ = concurrent.futures.wait(running, return_when=concurrent.futures.FIRST_COMPLETED)
+            for f in fin:
+                u = running.pop(f)
+                try:
+                    status[u[len(URL):]] = f.result()
+                    done += 1
+                    if done % SAVE_EVERY == 0:
+                        save_status(status, urls)
+                        print(f"{done} inspected in {(time.monotonic() - start) / 60:.1f} min", flush=True)
+                except Quota as ex:
+                    stop = stop or str(ex)
+                except Exception as ex:
+                    failed += 1
+                    if failed <= 5:
+                        print(f"inspection failed for {u}: {ex}", flush=True)
+                    if failed > 20 and not done:
+                        sys.exit("every inspection fails; see the messages above")
+            refill()
     if stop:
-        print(f"daily quota reached after {done} URLs: {stop}")
+        print(f"daily quota reached after {done} URLs: {stop}", flush=True)
+    elif done + failed < len(todo):
+        print(f"deadline of {DEADLINE_S // 60} min reached after {done} URLs; the next run continues", flush=True)
     return done, failed
 
 
@@ -168,10 +201,9 @@ if __name__ == "__main__":
     prop = find_property(s)
     # never asked first, then the answers that are oldest; the sitemap order puts the important pages first among equals
     todo = sorted(urls, key=lambda u: status.get(u[len(URL):], {}).get("t", ""))[:BUDGET]
-    done, failed = run_inspections(s, prop, todo, status)
-    status = {p: status[p] for p in sorted(status) if URL + p in set(urls)}  # URLs that left the sitemap are forgotten
-    os.makedirs(os.path.dirname(STATUS), exist_ok=True)
-    json.dump(status, open(STATUS, "w"), indent=0, sort_keys=True)
+    print(f"{len(todo)} URLs to inspect (of {len(urls)}), deadline {DEADLINE_S // 60} min", flush=True)
+    done, failed = run_inspections(s, prop, todo, status, set(urls))
+    status = save_status(status, set(urls))
     new_faults = write_report(parts, status, before, done)
     if not done:
         sys.exit("no URL could be inspected")

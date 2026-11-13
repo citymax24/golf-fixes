@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
       - name: Build the site (for its sitemap)
@@ -32,11 +32,14 @@ jobs:
           GSC_SERVICE_ACCOUNT: ${{ secrets.GSC_SERVICE_ACCOUNT }}
         run: |
           pip install -q google-auth requests
-          python3 build/gsc_report.py
+          python3 -u build/gsc_report.py   # -u: progress shows in the log while it runs
       - name: Commit the answers
         if: always() && hashFiles('seo/index_status.json') != ''
         run: |
           git config user.name "golfvotes-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add seo
-          git diff --cached --quiet || (git commit -qm "Index report" && git pull -q --rebase && git push -q)
+          git add seo ":!seo/*.tmp"  # never a half-written .tmp; the report may be missing after a timeout
+          git diff --cached --quiet && exit 0
+          git commit -qm "Index report"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 10; done
+          exit 1
