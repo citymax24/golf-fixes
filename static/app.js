@@ -85,7 +85,7 @@
     return [hsl2rgb(h, vivid ? Math.min(.78, Math.max(.55, s * 1.3 + .15)) : .4, L2), (.55 + .45 * Math.min(1, s * 2)) * lit];
   }
   var ambAll = [], ambY = window.scrollY, ambV = 0, ambStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ambIO = window.IntersectionObserver && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target._amb.vis = e.isIntersecting; }); ambGo(); }, { rootMargin: "120px" });
+  var ambIO = window.IntersectionObserver && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target._amb.vis = e.isIntersecting; e.target.classList.toggle("ambp", !e.isIntersecting); }); ambGo(); }, { rootMargin: "120px" });  // off screen: the drift pauses
   // the ten pools: edge (0 top, 1 bottom, 2 left, 3 right), place along the edge, size along it (%), strength, quickness, scroll lag
   var POOLS = [[0, .2, 62, .8, .06, .55], [0, .5, 78, 1, .09, .8], [0, .8, 62, .8, .075, 1],
     [1, .2, 62, .8, .07, .95], [1, .5, 78, 1, .1, .7], [1, .8, 62, .8, .055, .5],
@@ -111,9 +111,10 @@
       M.forEach(function (m) { tot += m[3]; wr += m[0] * m[3]; wg += m[1] * m[3]; wb += m[2] * m[3]; });
       if (tot > .2) {  // under the pools, one even wash of the picture's main colour all round, so there are no gaps
         var wash = document.createElement("i"); wash.className = "ambw";
-        wash.style.boxShadow = "0 0 calc(var(--amby)*1.2) calc(var(--amby)*.12 + 24px) rgba(" + Math.round(wr / tot) + "," + Math.round(wg / tot) + "," + Math.round(wb / tot) + "," + Math.min(.6, .2 + tot / 10 * .5).toFixed(2) + ")";
+        wash.style.boxShadow = "0 0 calc(var(--amby)*1.2) calc(var(--amby)*.12 + 32px) rgba(" + Math.round(wr / tot) + "," + Math.round(wg / tot) + "," + Math.round(wb / tot) + "," + Math.min(.6, .2 + tot / 10 * .5).toFixed(2) + ")";
         box.appendChild(wash);
         wash.style.transition = "transform 1.1s cubic-bezier(.2,.8,.3,1),opacity 1.2s ease";
+        if (!ambStill) { wash.style.animationName = "ambdw"; wash.style.animationDuration = "13.3s"; wash.style.animationDelay = "-5.1s"; }
         P.push({ el: wash, e: 4, u: .5, lag: .6 });
       }
       POOLS.forEach(function (q, qi) {
@@ -127,6 +128,8 @@
         box.appendChild(el);
         var dur = (.045 / q[4]).toFixed(2);  // softer pools take longer to arrive, so the pools part and meet again: the light changes shape
         el.style.transition = "transform " + dur + "s cubic-bezier(.22,1.25,.36,1),opacity " + (dur * 1.3).toFixed(2) + "s ease";
+        var loop = [9.7, 12.3, 10.9, 13.7, 8.9, 11.5, 14.3, 10.1, 12.9, 9.3][qi];  // its own slow drift, so no two pools keep step
+        if (!ambStill) { el.style.animationName = "ambd" + (qi % 3 + 1); el.style.animationDuration = loop + "s"; el.style.animationDelay = (-loop * ((qi * .37) % 1)).toFixed(1) + "s"; }  // only name, length, start: pausing stays with the style sheet
         P.push({ el: el, e: e, u: u, lag: q[5] });
       });
       if (!P.length) return;
