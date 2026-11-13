@@ -58,6 +58,11 @@
   }
   if (sysDark) { var onSys = function () { followSystem(); themeState(); }; sysDark.addEventListener ? sysDark.addEventListener("change", onSys) : sysDark.addListener && sysDark.addListener(onSys); }
   themeState();
+  // GoatCounter's own opt-out switch is the address ending #toggle-goatcounter: count.js flips it and says so. Once the
+  // page has loaded the ending is taken out of the address, so that a reload does not flip it back.
+  window.addEventListener("load", function () {
+    if (location.hash === "#toggle-goatcounter" && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+  });
   document.addEventListener("error", function (ev) {
     var t = ev.target; if (t.tagName === "IMG" && /\/(mq2|hq2)\.jpg$/.test(t.src)) t.src = t.src.replace(/(mq2|hq2)\.jpg$/, "mqdefault.jpg");
     else if (t.tagName === "IMG" && window.thumbFail && /\/thumbs\/(mq2|hq2)\//.test(t.src) && t.closest(".vc")) window.thumbFail(t);  // no inline handler: the content policy forbids them
