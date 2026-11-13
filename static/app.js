@@ -56,6 +56,12 @@
     else if (t.tagName === "IMG" && window.thumbFail && /\/thumbs\/(mq2|hq2)\//.test(t.src) && t.closest(".vc")) window.thumbFail(t);  // no inline handler: the content policy forbids them
   }, true);
 
+  // ---------- ambient light ----------
+  // The soft glow behind a lesson's picture is that picture, blurred by CSS; this only tells CSS which file, the one already loaded.
+  function amb(w) { var i = w && w.querySelector("img"); if (i && !w.style.getPropertyValue("--amb")) w.style.setProperty("--amb", 'url("' + (i.currentSrc || i.src) + '")'); }
+  $$(".bfv, .pwr").forEach(amb);
+  document.addEventListener("pointerover", function (ev) { var w = ev.target.closest && ev.target.closest(".vc .thw"); if (w) amb(w); }, { passive: true });
+
   // ---------- player ----------
   function play() {
     var b = $("button.player[data-vid]"); if (!b) { var fb = $(".bfp:not([hidden]) .bfplay"); if (fb) fb.click(); return; }
