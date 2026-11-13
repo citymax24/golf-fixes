@@ -1,11 +1,11 @@
 name: Share images
 
 # The preview images for shared links (static/og4) carry the counts, so they are drawn again whenever the data,
-# the drawing script or the wordmark changes. Only images whose content changed are committed (build/og-hashes.json).
+# the drawing script or the wordmark changes; the home page's card is drawn with the stylesheet and the course, so those too. Only images whose content changed are committed (build/og-hashes.json).
 on:
   push:
     branches: [main]
-    paths: ["data/**", "build/og.js", "static/logo-word.svg", ".github/workflows/share-images.yml"]
+    paths: ["data/**", "build/og.js", "build/course.svg", "static/style.css", "static/logo-word.svg", ".github/workflows/share-images.yml"]
   workflow_dispatch:
 
 permissions:
