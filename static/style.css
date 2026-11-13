@@ -1555,21 +1555,26 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 
 /* -- Ambient light. Like a TV that lights the wall behind it: each edge of a lesson's picture throws its own colour outward,
    strongest from the middle of the edge and fading toward the corners. app.js reads the colours once from the picture already
-   on the page, freshens them, and paints them as soft spots (--ambg); the blur carries them past the edge. Painted once,
-   nothing per frame. Lesson cards light up only on hover, so a grid stays calm. -- */
-:root{--ambo:.6}
-:root[data-theme=dark]{--ambo:.6}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ambo:.6}}
+   on the page and paints one soft band per edge (.ambl i). The light then moves: it leans toward the mouse over the picture,
+   toward the middle of the screen as you scroll, and trails a little behind fast scrolling. That motion only shifts, stretches
+   and dims the four painted bands (transform and opacity), which the graphics card does without repainting anything.
+   Lesson cards light up only on hover, so a grid stays calm. -- */
+:root{--ambo:.85}
 .bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:44px;--amby:44px}
-.bfv::before,.pwr::before,.vc .thw::before{content:"";position:absolute;inset:calc(var(--amby)*-1) calc(var(--ambx)*-1);z-index:-1;pointer-events:none;background:var(--ambg,none);filter:blur(14px);opacity:0;transition:opacity .9s ease}
-.pwr{--ambx:64px;--amby:56px;--ambt:22px}  /* short light upward: the sticky header sits just above */.vc .thw{--ambx:32px;--amby:32px}
+.pwr{--ambx:64px;--amby:56px;--ambt:22px}  /* short light upward: the sticky header sits just above */
+.vc .thw{--ambx:32px;--amby:32px}
 @media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:10px}}  /* never wider than the page gutter: no sideways scrolling on a phone */
-.bfv{overflow:visible}.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}
-.bfv.amb::before,.pwr.amb::before{opacity:var(--ambo)}
-.bfv.amb::before{animation:ambin 1.2s ease both}
+.ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .9s ease}
+.ambl i{position:absolute;filter:blur(14px);opacity:.7;will-change:transform,opacity}
+.ambl .t{left:calc(var(--ambx)*-1);right:calc(var(--ambx)*-1);top:calc(var(--ambt,var(--amby))*-1);height:calc(var(--ambt,var(--amby))*2)}
+.ambl .b{left:calc(var(--ambx)*-1);right:calc(var(--ambx)*-1);bottom:calc(var(--amby)*-1);height:calc(var(--amby)*2)}
+.ambl .l,.ambl .r{top:0;bottom:0;width:calc(var(--ambx)*2)}.ambl .l{left:calc(var(--ambx)*-1)}.ambl .r{right:calc(var(--ambx)*-1)}
+.bfv.amb>.ambl,.pwr.amb>.ambl{opacity:var(--ambo)}
+.bfv.amb>.ambl{animation:ambin 1.2s ease both}
 @keyframes ambin{from{opacity:0}}
-@media (hover:hover){.vc .thw.amb:hover::before{opacity:var(--ambo)}}
-@media (prefers-reduced-motion:reduce){.bfv.amb::before{animation:none}.bfv::before,.pwr::before,.vc .thw::before{transition:none}}
+@media (hover:hover){.vc .thw.amb:hover>.ambl{opacity:var(--ambo)}}
+.bfv{overflow:visible}.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}
+@media (prefers-reduced-motion:reduce){.bfv.amb>.ambl{animation:none}.ambl{transition:none}}
 /* the hole itself gives off a little light where the grass is */
 #bf .bfc{background:radial-gradient(34% 44% at 50% 40%,rgba(11,122,75,.12),transparent 70%),var(--paper)}
 @supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{background:radial-gradient(34% 44% at 50% 40%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%),var(--paper)}}
