@@ -624,7 +624,7 @@ def build_watch(v):
     ch = f'<a href="{BASE}/coach/{v["cs"]}/">{e(v["channel"])}</a>{"" if won else coach_mark(v["cs"])}' if v["cs"] in COACH_SET else e(v["channel"])
     body = f"""<div class="watch"><div class="wl">
 {''.join(plan_bar(pl, v) for pl in PLANS if pl.get("slug") and v["vid"] in [i["vid"] for i in pl["items"]])}
-<button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img fetchpriority="high" src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button>
+<div class="pwr"><button class="player" data-vid="{e(v['vid'])}" aria-label="Play"><img fetchpriority="high" src="{thumb(v['vid'], 'hq2')}" alt=""><span class="pb"></span></button></div>
 <h1 class="vt">{e(nice(v['title']))}</h1>
 <p class="vch">{ch}</p>
 {f'<p class="vaw">{rank_ctx(v).removesuffix(" · ")}</p>' if won else ''}<div class="vsb"><div><b data-cnt="{v['recs']}">{v['recs']}</b><span>golfer{'s' if v['recs'] != 1 else ''} recommend{'s' if v['recs'] == 1 else ''} it</span></div>{f'<div class="ok"><b data-cnt="{v["success"]}">{v["success"]}</b><span>say it fixed it</span></div>' if v.get('success') else ''}{f'<a href="{BASE}/fix/{rk[1]["slug"]}/"><b>#{rk[0]}</b><span>for {e(rk[1]["name"])}</span></a>' if rk and not won else ''}{f'<div class="nw"><b>{lastrec(v["vid"])}</b><span>last recommended</span></div>' if lastrec(v["vid"]) else ''}</div>
