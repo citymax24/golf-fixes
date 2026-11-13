@@ -1553,22 +1553,23 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107.12%;ascent-override:90.44%;descent-override:22.52%;line-gap-override:0%}
 :root{--font:"Inter","Inter Fallback",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
 
-/* -- Ambient light. Like a TV that lights the wall behind it, a lesson's picture glows softly around it in its own colours.
-   The glow is the picture already on the page, blurred by the browser: no extra download, painted once, nothing per frame.
-   Lesson cards light up only on hover, so a grid stays calm; the finder's lesson fades its light in when you pick a miss.
-   Stronger in the dark theme, where light reads as light; on white it can only tint, so it stays faint. -- */
-:root{--ambo:.42;--ambf:blur(40px) saturate(2.2) brightness(1.15)}
-:root[data-theme=dark]{--ambo:.55;--ambf:blur(40px) saturate(1.6)}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ambo:.55;--ambf:blur(40px) saturate(1.6)}}
-.bfv,.pwr,.vc .thw{position:relative;isolation:isolate}
-.bfv::before,.pwr::before,.vc .thw::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--amb,none) center/cover no-repeat;filter:var(--ambf);opacity:var(--ambo)}
-.pwr::before{top:10%}
+/* -- Ambient light. Like a TV that lights the wall behind it: each edge of a lesson's picture throws its own colour outward,
+   strongest from the middle of the edge and fading toward the corners. app.js reads the colours once from the picture already
+   on the page, freshens them, and paints them as soft spots (--ambg); the blur carries them past the edge. Painted once,
+   nothing per frame. Lesson cards light up only on hover, so a grid stays calm. -- */
+:root{--ambo:.6}
+:root[data-theme=dark]{--ambo:.6}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ambo:.6}}
+.bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:44px;--amby:44px}
+.bfv::before,.pwr::before,.vc .thw::before{content:"";position:absolute;inset:calc(var(--amby)*-1) calc(var(--ambx)*-1);z-index:-1;pointer-events:none;background:var(--ambg,none);filter:blur(14px);opacity:0;transition:opacity .9s ease}
+.pwr{--ambx:64px;--amby:56px;--ambt:22px}  /* short light upward: the sticky header sits just above */.vc .thw{--ambx:32px;--amby:32px}
+@media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:10px}}  /* never wider than the page gutter: no sideways scrolling on a phone */
 .bfv{overflow:visible}.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}
-.bfv::before{animation:ambin 1.2s ease both}
+.bfv.amb::before,.pwr.amb::before{opacity:var(--ambo)}
+.bfv.amb::before{animation:ambin 1.2s ease both}
 @keyframes ambin{from{opacity:0}}
-.vc .thw::before{opacity:0;transition:opacity .5s ease}
-@media (hover:hover){.vc .thw:hover::before{opacity:var(--ambo)}}
-@media (prefers-reduced-motion:reduce){.bfv::before{animation:none}.vc .thw::before{transition:none}}
+@media (hover:hover){.vc .thw.amb:hover::before{opacity:var(--ambo)}}
+@media (prefers-reduced-motion:reduce){.bfv.amb::before{animation:none}.bfv::before,.pwr::before,.vc .thw::before{transition:none}}
 /* the hole itself gives off a little light where the grass is */
 #bf .bfc{background:radial-gradient(34% 44% at 50% 40%,rgba(11,122,75,.12),transparent 70%),var(--paper)}
 @supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{background:radial-gradient(34% 44% at 50% 40%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%),var(--paper)}}
