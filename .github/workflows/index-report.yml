@@ -21,6 +21,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main  # the newest answers, also for a run that waited behind another; not the commit it was started on
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
@@ -34,7 +36,7 @@ jobs:
           pip install -q google-auth requests
           python3 -u build/gsc_report.py   # -u: progress shows in the log while it runs
       - name: Commit the answers
-        if: always() && hashFiles('seo/index_status.json') != ''
+        if: ${{ !cancelled() && hashFiles('seo/index_status.json') != '' }}  # also after a failure or step timeout, never after a cancel
         run: |
           git config user.name "golfvotes-bot"
           git config user.email "actions@users.noreply.github.com"
