@@ -1553,37 +1553,152 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107.12%;ascent-override:90.44%;descent-override:22.52%;line-gap-override:0%}
 :root{--font:"Inter","Inter Fallback",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
 
-/* -- Ambient light. Like a TV that lights the wall behind it: each edge of a lesson's picture throws its own colour outward.
-   app.js reads the colours once from the picture already on the page and paints ten large, overlapping pools of light around
-   it (.ambl i), three along the top and bottom, two at each side, each blended with its neighbours, over one even wash of
-   the picture's main colour (.ambw), so the light reads as one soft glow, strongest along the middle of each edge. The pools move on springs of slightly different stiffness: toward the mouse over the picture, toward
-   the middle of the screen as you scroll, trailing behind fast scrolling, so the light flows and changes shape and then
-   settles; at rest it drifts slowly like steam. That motion only shifts, turns, stretches and dims the painted pools
-   (transform, translate, rotate, scale, opacity), which the graphics card does without repainting anything. Lesson cards light up only on hover, so a grid stays calm. -- */
+/* == Home top: the promise, the proof, and the hole as the only action. No button.
+   Phone: the promise and the proof line, then the hole starts right under them; its top is already on the first screen,
+   so the first tap can happen without scrolling. Desktop: the same promise and proof on the left, the six misses as a
+   quiet list under them, the hole on the right. One headline on every screen. == */
+
+/* -- copy blocks (all widths) -- */
+.welcome .fh{margin:0}
+.welcome h1.hq.fhh{margin:0 0 14px;text-wrap:balance}
+.fp{margin:0;max-width:34em;color:var(--mut);font-size:16px;line-height:1.45;text-wrap:pretty}
+.fp b{color:var(--fg);font-weight:700;font-variant-numeric:tabular-nums}
+.bfq i{font-style:normal}
+.bfq .cc{display:none}
+@media (hover:hover) and (pointer:fine){.bfq .tc{display:none}.bfq .cc{display:inline}}
+.fm{display:none}
+
+/* -- desktop and tablet: one headline. The list keeps its column heads but loses "Six misses. One tap." -- */
+@media (min-width:1200px){
+  .welcome>.fh{grid-column:1;grid-row:1}
+  .welcome h1.hq.fhh{margin:6px 0 16px}   /* cap height lines up with the question over the hole */
+  .fp{font-size:20px;line-height:28px;margin:0 0 40px;max-width:30em}
+  .bf0 .bfg{margin-top:0}
+}
+@media (min-width:1440px){
+  .fp{font-size:22px;line-height:30px;margin-bottom:48px}
+}
+@media (min-width:760px) and (max-width:1199px){
+  .fp{font-size:18px;line-height:26px;margin-bottom:32px}
+  .welcome>h2.pick{margin-top:48px}   /* the cut lede used to hold this space */
+}
+
+/* -- phones -- */
+@media (max-width:759px){
+  .welcome{padding-top:0}
+  .welcome h1.hq.fhh{font-size:clamp(38px,12.3vw,50px);line-height:1.02;letter-spacing:-.04em;word-spacing:.04em;margin:8px 0 14px}
+  .fp{font-size:16px;line-height:1.45;max-width:24em}
+
+  /* the hole, edge to edge, starts right under the proof line */
+  .bf{margin-top:24px}
+  .bf>div:first-child{max-width:none;margin:0 calc(-1*var(--gut))}
+  .bf .bfq{margin:0 var(--gut) 2px;font-size:17px}
+  .bf .bfq b{font-size:17px;line-height:22px}
+  .bf .bfq span{font-size:16px;line-height:22px;color:var(--mut);font-weight:500}
+  .bfq .tx{display:none}
+  .bf .bfh{margin-left:var(--gut)}
+  #bf .yfix{display:none}            /* hole card, yardage scale, compass: fewer small words */
+  #bf .bfc use{opacity:.5}#bf .ysh{fill-opacity:.05}   /* quieter trees: the dots and their names come first */
+  .welcome>.bf{margin-bottom:0}
+  .welcome>h2.pick{margin-top:28px}
+
+  /* after the tap: which miss, the diagnosis, the lesson (where the light is), then why, then the way on */
+  .bfr{scroll-margin-top:60px}
+  .bfp:not([hidden]):not(.bf0){display:flex;flex-direction:column;align-items:flex-start}
+  .bfp .fm{order:0;display:flex;align-items:baseline;gap:6px;align-self:stretch;margin:0 0 4px;padding-top:12px;font-size:14px;line-height:20px;color:var(--mut)}
+  .bfp .fm b{color:var(--fg);font-weight:700}
+  .bfp .fm a{margin-left:auto;color:var(--acc);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:12px 0;margin-top:-12px;margin-bottom:-12px}
+  .fm .l,.lh .fm .r{display:none}.lh .fm .l{display:inline}
+  .bfp:not(.bf0)>h2{order:1;margin:0 0 14px}
+  .bfp:not(.bf0)>.bfv{order:2;align-self:stretch;flex:none;min-height:0;margin:0 0 14px}
+  .bf .bfp:not(.bf0)>.bftt{order:3;margin:0 0 10px}
+  .bf .bfp:not(.bf0)>.bfx{order:4;margin:0 0 16px;font-size:15px;line-height:1.5}
+  .bfp:not(.bf0)>.bfa{order:5}
+  .bfp:not(.bf0)>.bfy{order:6;margin:14px 0 0}
+  .bfp:not(.bf0)>.bfs{order:7;margin-top:6px}
+}
+@media (max-width:359px){
+  .fp{font-size:15px;line-height:1.4}
+  .bf .bfq b{font-size:16px}.bf .bfq span{font-size:15px}
+}
+/* the desktop answer grid keys on the explanation's class now */
+@media (min-width:1200px){
+  .bfp:not(.bf0)>.bfx{grid-column:1/-1;margin-bottom:12px}
+}
+.bfp>.bfx{text-wrap:balance}
+
+/* -- Ambient light. Like a TV that lights the wall behind it, a lesson's picture throws its own colours outward. It means one
+   thing on GolfVotes: "this is your answer". So it shows only around the #1 lesson the finder reveals after the golfer's tap
+   (rules and timing in app.js), and on the desktop in the "Or pick it by name" block while the pointer moves over the topics.
+   app.js reads the colours once from the picture and paints ten overlapping pools (.ambl i), each blended with its neighbours,
+   over one even wash (.ambw). The pools move only with transform, translate, rotate, scale and opacity, which the graphics card
+   does without repainting anything. The light sits below all text: the answer panel (.bfp) is its stacking context. -- */
 :root{--ambo:.8}
-.bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:64px;--amby:64px}
-.pwr{--ambx:96px;--amby:84px;--ambt:30px}  /* short light upward: the sticky header sits just above */
-.vc .thw{--ambx:44px;--amby:44px}
-@media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:12px}}  /* the page gutter is narrow on a phone */
-.ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .9s ease}
+.bfp{isolation:isolate}
+.bfv{position:relative;overflow:visible;--ambx:40px;--amby:40px;--ambt:20px;--ampk:.6;--amrs:.45}
+.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}.bfvid{background:#000}
+@media (max-width:759px){.bfv{--ambx:10px;--amby:24px;--ambt:10px;--ampk:.7;--amrs:.55}}
+:root[data-theme=dark] .bfv{--ampk:.4;--amrs:.28}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .bfv{--ampk:.4;--amrs:.28}}
+@media (max-width:759px){:root[data-theme=dark] .bfv{--ampk:.44;--amrs:.32}}
+@media (max-width:759px) and (prefers-color-scheme:dark){:root:not([data-theme=light]) .bfv{--ampk:.44;--amrs:.32}}
+.ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0}
 .ambl i{position:absolute;opacity:.6;will-change:transform,opacity}
 .ambl .ambw{inset:32px;border-radius:28px}  /* set inside the picture, so its unlit middle never peeks out when it moves */
-/* At rest the light drifts like steam: every pool runs its own slow loop (8 to 15 s, started at a different point), so the
+/* dark theme: coloured light only. A grey or white pool reads as haze there, so it is hidden. */
+:root[data-theme=dark] .ambl .ambg{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ambl .ambg{display:none}}
+/* the finder's answer: a bloom that opens out from behind the picture (first answer of a visit), then a quiet rest; the way out
+   is always quicker than the way in, except the slow dusk at the end */
+.bfv .ambl{transform:scale(.94)}
+.bfv.amb-up .ambl{opacity:var(--ampk);transform:none;transition:opacity 1.4s cubic-bezier(.2,.6,.2,1),transform 1.4s cubic-bezier(.2,.6,.2,1)}
+.bfv.amb-rest .ambl{opacity:var(--amrs);transform:none;transition:opacity 2.4s cubic-bezier(.45,0,.55,1),transform 1.4s cubic-bezier(.2,.6,.2,1)}
+.bfv.amb-off .ambl{opacity:0;transform:scale(.94);transition:opacity var(--amout,.6s) var(--amease,ease),transform var(--amout,.6s) var(--amease,ease)}
+/* at rest the light drifts like steam: every pool runs its own slow loop (13 to 21 s, started at a different point), so the
    pattern hardly ever repeats. The loops use the separate translate, rotate and scale properties, which add to the mouse and
-   scroll motion (transform) instead of replacing it, and run on the graphics card. Paused when the picture is off screen. */
-@keyframes ambd1{0%{translate:0 0;rotate:0deg;scale:1 1}33%{translate:7px -4px;rotate:2.5deg;scale:1.06 .95}66%{translate:-5px 3px;rotate:-1.5deg;scale:.96 1.07}100%{translate:3px 5px;rotate:1deg;scale:1.03 .98}}
-@keyframes ambd2{0%{translate:0 0;rotate:0deg;scale:1 1}50%{translate:-8px -3px;rotate:-3deg;scale:1.08 .96}100%{translate:4px 4px;rotate:2deg;scale:.95 1.05}}
-@keyframes ambd3{0%{translate:0 0;rotate:0deg;scale:1 1}25%{translate:4px 6px;rotate:1.5deg;scale:.97 1.06}75%{translate:-6px -5px;rotate:-2.5deg;scale:1.06 .97}100%{translate:2px -2px;rotate:.5deg;scale:1 1.02}}
-@keyframes ambdw{0%{translate:0 0;scale:1}50%{translate:3px -2px;scale:1.012 .992}100%{translate:-2px 2px;scale:.994 1.01}}
+   scroll motion (transform) instead of replacing it. No drift during the bloom: the bloom is the motion. */
+@keyframes ambd1{0%{translate:0 0;rotate:0deg;scale:1 1}33%{translate:4px -2px;rotate:1.5deg;scale:1.04 .97}66%{translate:-3px 2px;rotate:-1deg;scale:.97 1.04}100%{translate:2px 3px;rotate:.5deg;scale:1.02 .99}}
+@keyframes ambd2{0%{translate:0 0;rotate:0deg;scale:1 1}50%{translate:-4px -2px;rotate:-1.5deg;scale:1.04 .98}100%{translate:2px 2px;rotate:1deg;scale:.97 1.03}}
+@keyframes ambd3{0%{translate:0 0;rotate:0deg;scale:1 1}25%{translate:2px 3px;rotate:1deg;scale:.98 1.04}75%{translate:-3px -3px;rotate:-1.5deg;scale:1.04 .98}100%{translate:1px -1px;rotate:.5deg;scale:1 1.01}}
+@keyframes ambdw{0%{translate:0 0;scale:1}50%{translate:2px -1px;scale:1.008 .995}100%{translate:-1px 1px;scale:.996 1.006}}
 .ambl i{animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
-.ambp .ambl i,.vc .thw .ambl i{animation-play-state:paused}
-@media (hover:hover){.vc .thw:not(.ambp):hover .ambl i{animation-play-state:running}}
-.bfv.amb>.ambl,.pwr.amb>.ambl{opacity:var(--ambo)}
-.bfv.amb>.ambl{animation:ambin 1.2s ease both}
-@keyframes ambin{from{opacity:0}}
-@media (hover:hover){.vc .thw.amb:hover>.ambl{opacity:var(--ambo)}}
-.bfv{overflow:visible}.bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}
-@media (prefers-reduced-motion:reduce){.bfv.amb>.ambl,.ambl i{animation:none}.ambl{transition:none}}
-/* the hole itself gives off a little light where the grass is */
-#bf .bfc{background:radial-gradient(34% 44% at 50% 40%,rgba(11,122,75,.12),transparent 70%),var(--paper)}
-@supports (color:color-mix(in srgb,red 50%,blue)){#bf .bfc{background:radial-gradient(34% 44% at 50% 40%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%),var(--paper)}}
+.bfv.amb-up .ambl i,.bfv.amb-off .ambl i{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){
+  .ambl i{animation:none!important;transition:none!important}
+  .bfv .ambl,.bfv.amb-up .ambl,.bfv.amb-rest .ambl,.bfv.amb-off .ambl{transform:none;transition:opacity .6s linear}
+  .bfv.amb-up .ambl{opacity:var(--amrs)}
+}
+/* the topic index on the home page: the floating preview of a topic's top lesson carries its light, which trails behind it as
+   the pointer moves and changes colour from topic to topic. Only while the pointer is over the topics (mouse only). */
+.ixp{isolation:isolate;--ambx:34px;--amby:34px;background:none;box-shadow:none;border-radius:12px}
+.ixp img{display:block;width:100%;height:100%;object-fit:cover;border-radius:12px;background:var(--ph);box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.ixp .ambl{transition:opacity .35s ease}.ixp .ambl.in{opacity:var(--ambo)}.ixp .ambl.ambo{opacity:0;transition:opacity .45s ease}
+.ixp:not(.on) .ambl i{animation-play-state:paused}
+/* the home page's "Or pick it by name" block: while the pointer is over the topics, the block takes on the colours of the
+   topic under it. Four soft blobs inside ONE blurred container melt into a single field. Light theme: pastel tints laid over
+   each other like ink in water (multiply), a wide soft blur. Dark theme: the colours add up as light (screen), a tighter blur
+   and a brighter field. The blobs move only by transform (pointer springs in app.js plus a slow drift here, using the separate
+   translate/rotate/scale properties, which add to the transform); a new colour fades in from the picture outward. Hidden and
+   paused when the pointer is elsewhere, so it costs nothing then. */
+.pickb{position:relative;isolation:isolate}
+.ixf{position:absolute;inset:-64px -96px;z-index:-1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 1.4s cubic-bezier(.3,0,.2,1),visibility 0s linear 1.4s;
+  --ixfo:.68;--ixbl:80px;--ixbm:multiply}
+:root[data-theme=dark] .ixf{--ixfo:.62;--ixbl:72px;--ixbm:screen}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ixf{--ixfo:.62;--ixbl:72px;--ixbm:screen}}
+.pickb.lit .ixf{opacity:var(--ixfo);visibility:visible;transition:opacity .5s ease,visibility 0s}
+.ixg{position:absolute;inset:0;filter:blur(var(--ixbl));will-change:transform}
+.ixb{position:absolute;border-radius:50%;mix-blend-mode:var(--ixbm);will-change:transform;transition:background-color 1.1s ease}
+.ixb:nth-child(1){left:-42%;top:-46%;width:84%;height:92%;transition-delay:.12s;transition-duration:1.3s}  /* body: the picture's main colour */
+.ixb:nth-child(2){left:-17%;top:-24%;width:34%;height:48%;transition-duration:.8s}  /* lead: behind the floating picture, changes first */
+.ixb:nth-child(3){left:-24%;top:-31%;width:48%;height:62%;transition-delay:.26s;transition-duration:1.4s}  /* second colour, across the block */
+.ixb:nth-child(4){left:-20%;top:-26%;width:40%;height:52%;transition-delay:.4s;transition-duration:1.6s}  /* the fourth colour: brand green, on dark a violet */
+@keyframes ixd1{0%{translate:0 0;rotate:0deg;scale:1}33%{translate:48px -30px;rotate:14deg;scale:1.08 .93}66%{translate:-40px 24px;rotate:-9deg;scale:.94 1.08}100%{translate:22px 36px;rotate:6deg;scale:1.04 .97}}
+@keyframes ixd2{0%{translate:0 0;rotate:0deg;scale:1}50%{translate:-34px -22px;rotate:-16deg;scale:1.12 .92}100%{translate:26px 18px;rotate:10deg;scale:.92 1.1}}
+@keyframes ixd3{0%{translate:0 0;rotate:0deg;scale:1}25%{translate:30px 40px;rotate:10deg;scale:.95 1.07}75%{translate:-52px -26px;rotate:-14deg;scale:1.09 .95}100%{translate:14px -18px;rotate:4deg;scale:1 1.04}}
+@keyframes ixd4{0%{translate:0 0;rotate:0deg;scale:1}50%{translate:60px -34px;rotate:18deg;scale:1.1 .9}100%{translate:-44px 28px;rotate:-12deg;scale:.93 1.08}}
+@media (prefers-reduced-motion:no-preference){
+  .ixb{animation:ixd1 13.7s ease-in-out -4.1s infinite alternate}
+  .ixb:nth-child(2){animation-name:ixd2;animation-duration:9.3s;animation-delay:-2.2s}
+  .ixb:nth-child(3){animation-name:ixd3;animation-duration:15.1s;animation-delay:-7.6s}
+  .ixb:nth-child(4){animation-name:ixd4;animation-duration:17.9s;animation-delay:-11.3s}
+  .pickb:not(.lit) .ixb{animation-play-state:paused}}

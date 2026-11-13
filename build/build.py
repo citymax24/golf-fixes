@@ -409,7 +409,8 @@ def finder():
     for k, x, y, lr, ll, d, h in ms:
         p = PNAME[k]; sc, n, ok, v = by_problem[k][0]
         href = f"{BASE}/watch/{v['vid']}/" if v["page"] else f"{BASE}/fix/{p['slug']}/"
-        panels += (f'<div class="bfp" id="bf-{k}" hidden><h2>{e(h)}</h2><p>{e(MISS_INTRO.get(k) or p["intro"])}</p>'
+        panels += (f'<div class="bfp" id="bf-{k}" hidden><p class="fm">Your miss: <b><span class="r">{e(lr)}</span><span class="l">{e(ll)}</span></b><a href="#bf">Change</a></p>'
+                   f'<h2>{e(h)}</h2><p class="bfx">{e(MISS_INTRO.get(k) or p["intro"])}</p>'
                    f'<div class="bfv"><button class="bfplay" type="button" data-vid="{e(v["vid"])}" data-t="{e(nice(v["title"]))}" data-c="{e(v.get("channel") or "")}" aria-label="Play: {e(nice(v["title"]))}">'
                    f'<img loading="lazy" src="{thumb(v["vid"], "hq2" if v["page"] else "mq2")}" alt=""><span class="pb"></span></button></div>'
                    f'<a class="bftt" href="{href}"><i>Most recommended</i><b>{e(trunc(nice(v["title"]), 70))}</b>'
@@ -417,22 +418,21 @@ def finder():
                    f'<p class="bfy">Not playing? <a href="https://www.youtube.com/watch?v={e(v["vid"])}" target="_blank" rel="noopener">Open it on YouTube ↗</a></p>'
                    f'<a class="pill start bfa" href="{BASE}/fix/{p["slug"]}/">See all {p["video_count"]} lessons →</a>'
                    f'<p class="bfs"><b data-cnt="{p["total_recs"]}">{p["total_recs"]:,}</b> recommendations from golfers for this miss.</p></div>')
-    return f"""<div class="bf" id="bf"><div><p class="bfq"><b>What’s your miss?</b><span>Tap it to watch the #1 lesson.</span></p><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
+    return f"""<div class="bf" id="bf"><div><p class="bfq"><b>Where does your ball go?</b><span><i class="tc">Tap it</i><i class="cc">Click it</i><i class="tx"> to watch the #1 lesson</i>.</span></p><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">
 {course_svg()}<text class="bftx" x="160" y="12" text-anchor="middle">TARGET</text>{lines}<circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="352" text-anchor="middle">YOU</text></svg>{dots}</div>
 <label class="bfh"><input type="checkbox" id="bflh"> I play left-handed</label></div>
-<div class="bfr" aria-live="polite"><div class="bfp bf0" id="bf-0"><h2>Six misses. One tap.</h2><div class="bfg" aria-hidden="true"><span>Your miss</span><span>Golfers call it</span><span>Recommendations</span></div><ol class="bfis">{legend}</ol></div>{panels}</div></div>"""
+<div class="bfr" aria-live="polite"><div class="bfp bf0" id="bf-0"><div class="bfg" aria-hidden="true"><span>Your miss</span><span>Golfers call it</span><span>Recommendations</span></div><ol class="bfis" aria-label="The six misses">{legend}</ol></div>{panels}</div></div>"""
 
 
 def build_home():
     top = sorted((v for v in WATCH.values() if not 0 < (v.get("duration_s") or 0) < CLIP_S), key=lambda v: -(v["recs"] + 0.75 * v.get("success", 0)))[:60]
     index = problem_index()
     body = f"""<section class="welcome" id="welcome">
-<h1 class="hq">Golf lessons, ranked by golfers.<span>{TOTAL_RECS:,} Reddit recommendations for YouTube lessons.</span></h1>
+<div class="fh"><h1 class="hq fhh">Fix your miss with the lesson other golfers recommend.</h1><p class="fp">YouTube golf lessons, ranked by <b>{TOTAL_RECS:,}</b> recommendations in <b>{SITE["stats"]["comments_scanned"].replace(" ", "&nbsp;")}</b> Reddit comments.</p></div>
 {finder()}
-<p class="lede">We read {SITE["stats"]["comments_scanned"]} comments on r/GolfSwing and r/golftips and <a href="{BASE}/about/">counted</a> which YouTube lessons golfers recommend for each problem.</p>
-<h2 class="pick">Or pick it by name</h2>
+<div class="pickb"><h2 class="pick">Or pick it by name</h2>
 <nav class="ixs" aria-label="All problems">{index}</nav>
-<p class="ixn">The small number is how many recommendations we counted for it. <a class="ixa" href="{BASE}/categories/">All {len([p for p in PROBLEMS if p["video_count"]])} problems →</a></p>
+<p class="ixn">The small number is how many recommendations we counted for it. <a class="ixa" href="{BASE}/categories/">All {len([p for p in PROBLEMS if p["video_count"]])} problems →</a></p></div>
 </section>
 {board(top[:10])}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
