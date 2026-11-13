@@ -426,11 +426,13 @@
         ambStop("cut");  // another miss: the old light goes at once
         var nim = $("#bf-" + k + " .bfv img", bff); if (nim) { nim.loading = "eager"; if (nim.decode) nim.decode().catch(function () {}); }  // the answer's picture is ready when the ball lands
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.classList.remove("hit"); x.setAttribute("aria-pressed", String(x === a)); });
+        $$(".bfi", bff).forEach(function (x) { var on = x.dataset.k === k; x.classList.toggle("sel", on); if (on) x.setAttribute("aria-current", "true"); else x.removeAttribute("aria-current"); });  // the list marks the chosen miss
         var line = null;
         $$(".bfl", bff).forEach(function (p) { var on = p.dataset.k === k; p.classList.toggle("on", on); p.classList.remove("fly"); p.style.strokeDashoffset = ""; if (on) line = p; });
         $$("iframe.bfvid", bff).forEach(function (f) { f.replaceWith(f._btn); });  // stop a lesson that is playing
         var land = function () {  // the ball is down: show the lesson for this miss
           a.classList.add("hit");
+          bff.parentNode.classList.add("ans");  // an answer shows: on the desktop stage it takes the headline's place
           $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; p.classList.toggle("in", !p.hidden); });
           ambCue($("#bf-" + k, bff));  // the light comes last, once the answer has settled
           var c = $("#bf-" + k + " [data-cnt]", bff); if (c && !still) countUp(c);
