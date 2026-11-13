@@ -43,7 +43,12 @@ ASSET_V = {"css": _h("style.css"), "js": _h("app.js"), "count": _h("count.js")}
 # The one inline script (the theme, before first paint) is allowed by its hash; everything else a page may load is named
 # here. GitHub Pages cannot send headers, so the policy is a meta tag. static/count.js is GoatCounter's own script
 # (ISC licence, release 2.5.0), served from here so that no code from another host runs on the site.
-THEME_JS = 'try{var t=localStorage.getItem("gv_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}'
+# Theme: the site follows the system (light or dark) unless the visitor picked the other one with the footer button. That
+# pick is stored with the system scheme it overrode and lasts until the system switches; app.js drops it then, or when the
+# visitor toggles back to what the system shows. The old key gv_theme pinned a pick forever and is removed.
+THEME_JS = ('try{var r=document.documentElement,L=localStorage,s=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",t=null;'
+            'L.removeItem("gv_theme");try{t=JSON.parse(L.getItem("gv_theme2"))}catch(e){}'
+            'if(t&&t.s===s&&t.t!==s&&(t.t==="dark"||t.t==="light"))r.dataset.theme=t.t;else L.removeItem("gv_theme2")}catch(e){}')
 CSP = ("default-src 'self'; script-src 'self' 'sha256-" + base64.b64encode(hashlib.sha256(THEME_JS.encode()).digest()).decode() + "'; style-src 'self' 'unsafe-inline'; "
        "img-src 'self' data: https://golfvotes.goatcounter.com; connect-src 'self' https://golfvotes.goatcounter.com; frame-src https://www.youtube-nocookie.com; "
        "object-src 'none'; base-uri 'self'; form-action 'self'")
