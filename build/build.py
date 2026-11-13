@@ -40,6 +40,9 @@ PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
 _h = lambda f: hashlib.md5(open(os.path.join(ROOT, "static", f), "rb").read()).hexdigest()[:8]
 ASSET_V = {"css": _h("style.css"), "js": _h("app.js"), "count": _h("count.js")}
+# The home page's share image, also the fallback for pages without their own: home.png once the share-images workflow has
+# drawn it (build/og.js), default.png until then.
+OG_HOME = "/static/og4/" + ("home.png" if os.path.exists(os.path.join(ROOT, "static", "og4", "home.png")) else "default.png")
 # The one inline script (the theme, before first paint) is allowed by its hash; everything else a page may load is named
 # here. GitHub Pages cannot send headers, so the policy is a meta tag. static/count.js is GoatCounter's own script
 # (ISC licence, release 2.5.0), served from here so that no code from another host runs on the site.
@@ -230,7 +233,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<link rel="canonical" href="{e(full)}">' if canonical else '<meta name="robots" content="noindex,follow">'}
 <meta property="og:type" content="website"><meta property="og:site_name" content="{e(SITE['name'])}">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
-<meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + '/static/og4/default.png')}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="{e(full)}"><meta property="og:image" content="{e(og or URL + OG_HOME)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{BASE}/static/favicon.svg?v=e" type="image/svg+xml"><link rel="apple-touch-icon" href="{BASE}/static/apple-touch-icon.png?v=e"><meta name="apple-mobile-web-app-title" content="GolfVotes"><meta name="application-name" content="GolfVotes">
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
@@ -390,7 +393,8 @@ def problem_index(skip=None, only=None):
     return "".join(entry(p) for p in sorted([p for p in (only if only is not None else PROBLEMS) if p["video_count"] and p["key"] != skip], key=lambda p: -p["total_recs"]))
 
 
-MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
+MISSES = [  # the home page's share image repeats the spots and the first flight (SPOTS, FLIGHT in build/og.js)
+          # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
     ("slice", 262, 96, "Curves right", "Curves left", "M160 326C120 250 150 130 262 96", "That’s a slice."),
     ("hook", 58, 96, "Curves left", "Curves right", "M160 326C200 250 170 130 58 96", "That’s a hook."),
     ("over_the_top", 92, 44, "Pulled left", "Pulled right", "M160 326L92 44", "That’s a pull. Usually over the top."),

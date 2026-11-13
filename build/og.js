@@ -69,6 +69,38 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
 </div></body></html>`;
 };
 
+// The home page's card is the desktop stage: the headline and the hole, drawn with the site's own stylesheet in the dark
+// theme, so the card follows the page. SPOTS are the landing spots of MISSES in build.py (x, y in the 320x360 course);
+// the first one is shown as the chosen miss with its flight. The flag, cup and labels repeat course_svg() and finder() there.
+// The card depends on static/style.css and build/course.svg, so the share-images workflow also runs when they change.
+// The stylesheet names its own Inter file by a relative address, which a page made with setContent cannot load; a face
+// that fails would hide the installed Inter too. So the file goes in as a data URI: the card is set in the site's font.
+const inter = 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(root, 'static/fonts/inter.woff2')).toString('base64') + ')';
+const css = fs.readFileSync(path.join(root, 'static/style.css'), 'utf8').replace(/<\/style/gi, '').split('url(fonts/inter.woff2)').join(inter);
+const course = fs.readFileSync(path.join(root, 'build/course.svg'), 'utf8').trim();
+const SPOTS = [[262, 96], [58, 96], [92, 44], [252, 236], [160, 158], [160, 262]];
+const FLIGHT = 'M160 326C120 250 150 130 262 96', FLIGHT_NAME = 'Curves right';
+const stage = (title, sub) =>   // title and sub are put in as HTML: pass only text that is escaped or written here
+  `<!doctype html><html data-theme="dark"><head><meta charset="utf-8"><style>${css}</style><style>
+*,*::before,*::after{animation:none!important;transition:none!important}
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0f0f0f;color:#f1f1f1;font-family:Inter,sans-serif}
+.card{display:grid;grid-template-columns:minmax(0,1fr) 488px;column-gap:36px;align-items:center;height:630px;padding:52px 40px 52px 56px}
+.cl{display:flex;flex-direction:column;min-width:0;height:100%}
+.cw{height:34px}.cw svg{height:34px;width:auto;display:block;color:#f1f1f1}.cw .wmc{fill:#3ecf8e}
+.card h1{margin:auto 0 0;font:800 74px/1.02 Inter,sans-serif;letter-spacing:-.04em;word-spacing:.04em;color:#f1f1f1;max-width:none}
+.cs{margin:22px 0 0;font:500 24px/1.3 Inter,sans-serif;color:#aaa}.cs b{color:#f1f1f1;font-weight:700}
+.cu{margin-top:auto;font:700 16px/20px Inter,sans-serif;letter-spacing:2.2px;text-transform:uppercase;color:#aaa}
+.card #bf{display:block;margin:0}.card #bf>div{grid-column:auto;grid-row:auto;margin:0;max-width:none}   /* the page's own hero rules for .bf do not apply to the card */
+.card #bf .bfd span{display:none}.card #bf .bfd.on span{display:block}
+.card #bf .bfl.on{stroke-dashoffset:0}
+</style></head><body><div class="card"><div class="cl">
+<div class="cw">${word}</div><h1>${title}</h1><p class="cs">${sub}</p><div class="cu">golfvotes.com</div></div>
+<div class="bf used" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">${course}
+<ellipse class="bfcup" cx="160" cy="46.5" rx="3.2" ry="1.4"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>
+<text class="bftx" x="160" y="12" text-anchor="middle">TARGET</text><path class="bfl on" d="${FLIGHT}" pathLength="1"/><circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="352" text-anchor="middle">YOU</text></svg>
+${SPOTS.map(([x, y], i) => `<a class="bfd${i ? '' : ' on'}" style="--x:${(x / 3.2).toFixed(1)}%;--y:${(y / 3.6).toFixed(1)}%">${i ? '' : `<span>${FLIGHT_NAME}</span>`}</a>`).join('')}</div></div></div>
+</div></body></html>`;
+
 (async () => {
   const out = path.join(root, 'static', OUT); fs.mkdirSync(out, { recursive: true });
   const hashFile = path.join(root, 'build/og-hashes.json');
@@ -87,7 +119,10 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
   };
   const top = [...videos].sort((a, b) => (b.recs + 0.75 * (b.success || 0)) - (a.recs + 0.75 * (a.success || 0)));
   const all = top.map(v => ({ v, n: v.recs, ok: v.success || 0 }));
-  await shot('default', tpl('', 'Golf lessons, ranked by golfers.', `${n(totalRecs)} Reddit recommendations for YouTube lessons.`, all));
+  // 'home' is the home page's card and the fallback for pages without one (build.py). It replaced default.png, which
+  // stays in the folder for links that were shared before, because networks keep preview images by URL.
+  await shot('home', stage('Fix your miss with the lesson other golfers recommend.',
+    `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`));
   await shot('report', tpl('The data', 'What golfers recommend to each other', `${site.stats.comments_scanned} comments read. ${n(totalRecs)} recommendations counted.`, all));
   for (const pr of problems) {
     const r = rankFor(pr.key); if (!r.length) continue;
