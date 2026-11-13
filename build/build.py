@@ -459,7 +459,7 @@ def build_home():
 <div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:16])}</div>
 <p class="more"><a href="{BASE}/browse/">Browse all {len(WATCH):,} lessons →</a></p>"""
     page("/", f"Best Golf Lessons on YouTube, Ranked by Golfers | {SITE['name']}",
-         f"The YouTube golf lessons golfers recommend most, counted from {TOTAL_RECS:,} Reddit recommendations and sorted by problem: slice, hook, shanks, chipping, putting and more.", body, nav="home",
+         f"The YouTube golf lessons golfers recommend most, counted from {TOTAL_RECS:,} Reddit recommendations and sorted by problem: slice, hook, shanks, chipping, putting and more.", body, nav="home", cls="home",
          ld={"@context": "https://schema.org", "@type": "WebSite", "name": SITE["name"], "url": URL + "/",
              "potentialAction": {"@type": "SearchAction", "target": URL + "/search/?q={q}", "query-input": "required name=q"}})
 
