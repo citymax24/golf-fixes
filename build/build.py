@@ -1,7 +1,7 @@
 """GolfVotes static site generator (HackerTube-style layout). Standard library only.
 
 Usage: python3 build/build.py  -> writes _site/
-Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional)
+Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional), data/years.json (optional)
 """
 import base64
 import hashlib, html, json, os, re, shutil, sys, urllib.parse
@@ -21,6 +21,7 @@ SEO = _opt("seo.json", {})
 CARDS = _opt("cards.json", {})
 RECENCY = _opt("recency.json", {})
 REDDIT = _opt("reddit.json", {})
+YDATA = _opt("years.json", {}).get("videos", {})  # vid -> {year: [recs, fixed it, {topic: [recs, fixed it]}]}, same counting as videos.json
 MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 lastrec = lambda vid: (MON[int(RECENCY[vid][5:7]) - 1] + " " + RECENCY[vid][:4]) if RECENCY.get(vid) else ""
 TYPES = {"drill": "Drill", "explainer": "Explainer", "lesson": "Live lesson", "pro_swing": "Pro swing", "quick_tip": "Quick tip",
@@ -29,6 +30,11 @@ LEVELS = {"beginner": "Beginner", "intermediate": "Intermediate", "advanced": "A
 BASE = SITE["base_path"].rstrip("/")
 URL = SITE["base_url"].rstrip("/")
 MIN = SITE.get("min_recs_per_problem", 2)
+# Indexing policy for lesson pages, by number of recommendations. Every lesson from MIN up has a page; from INDEX_MIN up
+# the page asks to be indexed (below it: noindex,follow, not in the sitemap). Indexable lessons below STRONG_MIN are
+# listed in their own sitemap part, so that Search Console shows how much of the long tail Google actually indexes.
+INDEX_MIN = SITE.get("min_recs_indexed", MIN)
+STRONG_MIN = 3
 e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
 PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
@@ -175,6 +181,18 @@ KW = {"slice": "How to Fix a Slice", "hook": "How to Fix a Hook", "shank": "How 
       "practice_method": "How to Practice Golf", "course_management": "Golf Course Management", "mental": "The Mental Game of Golf", "fundamentals_general": "Golf Swing Fundamentals"}
 YEAR = VDATA["generated"][:4]
 UPDATED = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%B %Y")
+# Year pages: only finished calendar years with enough data. The Reddit archive is thin before mid-2021, so 2021 and
+# earlier stay out by the threshold. A year counts as finished from March on: the archive takes in late comments for
+# a while, and the monthly update runs early in the month.
+_VIDS = {v["vid"] for v in VIDEOS}
+YDATA = {vid: ys for vid, ys in YDATA.items() if vid in _VIDS}  # same base as the all-time totals
+YEAR_TOTAL = Counter()
+for _ys in YDATA.values():
+    for _y, _r in _ys.items():
+        YEAR_TOTAL[_y] += _r[0]
+_LAST_DONE = int(YEAR) - (1 if int(VDATA["generated"][5:7]) >= 3 else 2)
+YEARS = [y for y in sorted(YEAR_TOTAL) if int(y) <= _LAST_DONE and YEAR_TOTAL[y] >= 1000
+         and any(y in YDATA.get(vid, {}) and not 0 < (v.get("duration_s") or 0) < CLIP_S for vid, v in WATCH.items())]
 
 
 def fit(*options, limit=65):
@@ -228,9 +246,9 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 <main class="main" id="main" tabindex="-1">{body}
   <footer class="ft">
   <div class="ftt"><div class="ftc"><p class="ftq">Golf lessons, ranked by golfers.</p>
-  <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
+  <p class="fts">Something wrong, missing or ranked badly? <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20feedback">Tell us</a></p>{f'<p class="fts"><a class="sub" href="{e(nl)}">Get the monthly top fixes</a></p>' if nl else ''}</div>
   <nav class="ftn" aria-label="Footer"><div><h2>Explore</h2><a href="{BASE}/categories/">Problems</a><a href="{BASE}/plans/">Fix plans</a><a href="{BASE}/coaches/">Coaches</a><a href="{BASE}/browse/">All lessons</a></div>
-  <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a><a href="{BASE}/badges/">Badges for coaches</a></div>
+  <div><h2>Guides</h2><a href="{BASE}/guides/best-golf-youtube-channels/">Best channels</a><a href="{BASE}/guides/best-golf-drills/">Best drills</a>{f'<a href="{BASE}/year/{YEARS[-1]}/">Best of {YEARS[-1]}</a>' if YEARS else ''}<a href="{BASE}/badges/">Badges for coaches</a></div>
   <div><h2>GolfVotes</h2><a href="{BASE}/about/">How we rank</a><a href="{BASE}/report/">Stats</a><a href="{BASE}/data/">Data</a><a href="{BASE}/settings/">Settings</a></div>
   <div><h2>Legal</h2><a href="{BASE}/privacy/">Privacy</a><a href="{BASE}/imprint/">Imprint</a></div></nav></div>
   <div class="ftw" aria-hidden="true">{WORDMARK.replace(' role="img" aria-label="GolfVotes"', '')}</div>
@@ -435,6 +453,7 @@ def build_home():
 <p class="ixn">The small number is how many recommendations we counted for it. <a class="ixa" href="{BASE}/categories/">All {len([p for p in PROBLEMS if p["video_count"]])} problems →</a></p></div>
 </section>
 {board(top[:10])}
+{f'<p class="more"><a href="{BASE}/year/{YEARS[-1]}/">The most recommended lessons of {YEARS[-1]} →</a></p>' if YEARS else ''}
 {('<h2 class="row">Watch these in order</h2><div class="pgrid row1">' + PLAN_CARDS_TOP + f'</div><p class="more"><a href="{BASE}/plans/">All {len(PLANS)} fix plans →</a></p>') if PLAN_CARDS else ''}
 <h2 class="row">More lessons golfers recommend</h2>
 <div class="grid" id="feed">{''.join(card(v, hq=True) for v in top[10:16])}</div>
@@ -641,17 +660,17 @@ def build_watch(v):
 <div class="tags">{tags}</div></div>
 <section class="vote" data-vid="{e(v['vid'])}" data-t="{e(trunc(v['title'], 60))}"><h2>Did this video fix it for you?</h2>
 <p class="vbtns"><button class="pill inl" data-vote="yes">{svg('like')}<span>Yes, it helped</span></button><button class="pill inl" data-vote="no">{svg('dislike')}<span>Not for me</span></button></p>
-<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:max@fassia.io?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
+<p class="vthanks dim" hidden>Thanks! Your vote helps other golfers. <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20feedback%3A%20{urllib.parse.quote(v['vid'])}">Tell us more</a></p></section>
 {comments_html(v)}</div><aside class="wr"><h2>Up next</h2>{upnext}</aside></div>"""
     base = v["title"] if TITLE_COUNT[v["title"].lower()] == 1 else f"{v['title']} – {v['channel']}"
     rec = f"Recommended by {v['recs']} golfers" + (f" for {PNAME[v['top']]['name'].lower()}" if v["top"] in PNAME else "") + (f", {v['success']} said it fixed it" if v.get("success") else "") + "."
     tt = trunc(base, 53)
-    USED[tt] += 1
-    if USED[tt] > 1:
-        tt = f"{tt} ({USED[tt]})"
+    USED[tt.lower()] += 1  # Google compares titles without case: "The TRICK to…" and "The Trick To…" are the same title
+    if USED[tt.lower()] > 1:
+        tt = f"{tt} ({USED[tt.lower()]})"
     page(f"/watch/{v['vid']}/", f"{tt} | {SITE['name']}",
          (f"{v['summary']} {rec}" if v.get("summary") and len(v["summary"]) + len(rec) < 158 else (v.get("summary") or f"{v['channel']} lesson. {rec}")) if v.get("summary") else f"{v['channel']} lesson. {rec}",
-         body, cls="wpage", og=thumb(v["vid"], "hqdefault"),
+         body, cls="wpage", og=thumb(v["vid"], "hqdefault"), canonical=v["recs"] >= INDEX_MIN,
          ld=[{"@context": "https://schema.org", "@type": "VideoObject", "name": nice(v["title"]), "thumbnailUrl": thumb(v["vid"], "hqdefault"),
              "uploadDate": (v.get("published") or f"{(v.get('years') or [2020])[0]}-01-01") + "T00:00:00+00:00",
              "description": f"{v['recs']} golfers recommended this lesson.", "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['vid']}",
@@ -1014,7 +1033,7 @@ def build_badges_page():
 <li>Use a badge only for the channel and lessons it names, never to suggest that GolfVotes endorses a product, course or service.</li>
 <li>A badge is a statement about golfer recommendations, not a quality guarantee. If it is used misleadingly, or the underlying data turns out to be wrong, we may withdraw it.</li>
 <li>Free to use under these terms. The badge links to your GolfVotes profile; please keep that link.</li></ul>
-<p class="dim">Questions: <a href="mailto:max@fassia.io?subject=GolfVotes%20badges">max@fassia.io</a></p></div>
+<p class="dim">Questions: <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20badges">hello@golfvotes.com</a></p></div>
 <div class="bshow">{hero}</div></section></div>"""
     page("/badges/", f"Badges for coaches | {SITE['name']}", "How golf coaches earn GolfVotes badges for the YouTube lessons golfers recommend most.", body)
     for s, c in COACHES:  # short-lived per-coach kit pages from an earlier version -> coach page
@@ -1056,9 +1075,90 @@ def build_report():
 <div class="kpis"><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{st['yt_comments']}</b>with a YouTube link</div><div><b>{TOTAL_RECS:,}</b>lesson recommendations</div><div><b>{len(WATCH):,}</b>lessons ranked</div></div>
 <h2>Problems golfers ask about most</h2><div class="bars">{bars}</div><h2>Most recommended coaches</h2><div class="bars">{cb}</div>
 <p>Guides: <a href="{BASE}/guides/best-golf-youtube-channels/">Best golf instruction channels on YouTube</a> · <a href="{BASE}/guides/best-golf-drills/">Most recommended golf drills</a></p>
+{f'<p>By year: {" · ".join(f"<a href={chr(34)}{BASE}/year/{y}/{chr(34)}>{y}</a>" for y in YEARS)}</p>' if YEARS else ''}
 <p class="dim">Free to cite with a link to {e(SITE['name'])}. Method: <a href="{BASE}/about/">About</a>.</p></div>"""
     page("/report/", f"What golfers recommend to each other: the data | {SITE['name']}",
          f"Which golf problems golfers ask about most and which YouTube coaches they recommend, from {st['comments_scanned']} comments.", body, nav="stats", og=f"{URL}/static/og4/report.png")
+
+
+YEAR_MIN = 5  # a lesson needs this many recommendations in a year, and a clear lead, to be named most recommended for a problem
+VBY = {v["vid"]: v for v in VIDEOS}
+
+
+def year_coaches(y):
+    """Channels ranked by recommendations in year y, over the same lessons as the all-time coach ranking: [(slug, name, recs)]."""
+    c = Counter()
+    for vid, v in WATCH.items():
+        if y in YDATA.get(vid, {}):
+            c[v["cs"]] += YDATA[vid][y][0]
+    return [(s, channels[s]["name"] or s, n) for s, n in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
+
+
+def build_year(y):
+    """One page per finished year: the lessons, coaches and most recommended lesson per problem in that year."""
+    lessons = sorted(((ys[y][0], ys[y][1], WATCH[vid], ys[y][2]) for vid, ys in YDATA.items()
+                      if y in ys and vid in WATCH and not 0 < (WATCH[vid].get("duration_s") or 0) < CLIP_S),
+                     key=lambda r: (-r[0], -r[1], -r[2]["recs"], r[2]["vid"]))
+    recs = YEAR_TOTAL[y]
+    fixed = sum(ys[y][1] for ys in YDATA.values() if y in ys)
+    n_lessons = sum(1 for ys in YDATA.values() if y in ys)
+    top = lessons[:20]
+    mx = top[0][0]
+    board_html = "".join(board_row(v, n, ok, i, mx) for i, (n, ok, v, _) in enumerate(top, 1))
+
+    coaches = year_coaches(y)
+    py = str(int(y) - 1)
+    prev = {s: i for i, (s, _, _) in enumerate(year_coaches(py), 1)} if py in YEARS else {}
+    cmx = coaches[0][2]
+
+    def move(s, i):
+        if not prev:
+            return ""
+        if s not in prev:
+            return f'<span class="ldo cbl">new <i>vs {py}</i></span>'
+        d = prev[s] - i
+        word = f"up {d} place{'s' if d > 1 else ''}" if d > 0 else f"down {-d} place{'s' if d < -1 else ''}" if d < 0 else "same place"
+        return f'<span class="ldo cbl" title="{word} vs {py}">{"▲ " + str(d) if d > 0 else "▼ " + str(-d) if d < 0 else "="} <i>vs {py}</i><span class="sr">{word}</span></span>'
+    crow = ""
+    for i, (s, name, n) in enumerate(coaches[:10], 1):
+        tag, href = ("a", f' href="{BASE}/coach/{s}/"') if s in COACH_SET else ("span", "")
+        crow += (f'<li class="ldi"><{tag} class="ldr cbr{" ld3" if i <= 3 else ""}"{href} style="--w:{100 * n / cmx:.1f}%">'
+                 f'<span class="ldp">{i}</span><span class="ldn"><b>{e(name)}</b></span>'
+                 f'<span class="lds"><span class="ldv"><b data-cnt="{n}">{n:,}</b> <i>recommendations</i></span>{move(s, i) or "<span class=ldo></span>"}</span>'
+                 f'<span class="ldbar"></span></{tag}></li>')
+
+    wins = []
+    for p in PROBLEMS:
+        k = p["key"]
+        cand = sorted(((t[k][0], t[k][1], v) for _, _, v, t in lessons if k in t), key=lambda r: (-r[0], -r[1], -r[2]["recs"], r[2]["vid"]))
+        if cand and cand[0][0] >= YEAR_MIN and (len(cand) == 1 or cand[0][0] > cand[1][0]):  # a clear lead, as for awards
+            wins.append((sum(r[0] for r in cand), p, cand[0]))
+    wins.sort(key=lambda w: (-w[0], w[1]["key"]))
+    win_html = "".join(f'<li><a href="{BASE}/fix/{p["slug"]}/">{e(p["name"])}</a>: <a href="{BASE}/watch/{v["vid"]}/">{e(nice(v["title"]))}</a>'
+                       f' <span class="dim">· {e(v["channel"])} · {n} recommendation{"s" if n != 1 else ""}{f", {ok} fixed it" if ok else ""}</span></li>'
+                       for _, p, (n, ok, v) in wins)
+
+    new = [r for r in lessons if (r[2].get("published") or "")[:4] == y][:10]  # lessons that came out that year
+    new_html = "".join(board_row(v, n, ok, i, new[0][0]) for i, (n, ok, v, _) in enumerate(new, 1)) if len(new) >= 3 else ""
+
+    others = " · ".join(f'<a href="{BASE}/year/{o}/">{o}</a>' for o in YEARS if o != y)
+    c1 = coaches[0]
+    body = f"""<section class="phero pone"><div class="pht"><p class="kick">Year in review</p><h1>The most recommended golf lessons of {y}</h1>
+<p class="phs">{recs:,} times in {y}, a golfer on Reddit told another one which YouTube lesson to watch. These are the lessons and coaches they named most.</p></div></section>
+<div class="prose"><div class="kpis"><div><b>{recs:,}</b>recommendations</div><div><b>{n_lessons:,}</b>videos recommended</div><div><b>{fixed:,}</b>said it fixed it</div><div><b>{len(coaches):,}</b>channels</div></div></div>
+<section class="ldb"><div class="ldh"><h2 class="row">Lessons of {y}</h2><p>Top {len(top)}, by golfers who recommended them in {y}</p></div>{LDK}<ol class="ldl">{board_html}</ol></section>
+<section class="ldb"><div class="ldh"><h2 class="row">Coaches of {y}</h2><p>{e(c1[1])} leads with {c1[2]:,} recommendations</p></div>
+<div class="ldk cbk" aria-hidden="true"><span>Pos</span><span>Coach</span><span>Recommend</span><span>{"Change" if prev else ""}</span></div><ol class="ldl">{crow}</ol></section>
+{f'<div class="prose"><h2>Most recommended for each problem in {y}</h2><p>Where at least {YEAR_MIN} golfers named the same lesson in {y} and no other lesson had as many.</p><ul>{win_html}</ul></div>' if win_html else ''}
+{f'<section class="ldb"><div class="ldh"><h2 class="row">New lessons of {y}</h2><p>Published in {y}, by golfers who recommended them that year</p></div>{LDK}<ol class="ldl">{new_html}</ol></section>' if new_html else ''}
+<div class="prose"><h2>How this is counted</h2><p>Like the <a href="{BASE}/">all-time ranking</a>, from public comments on Reddit, but per year: each golfer counts once per lesson and year, so a golfer who recommended a lesson in {int(y) - 1} and again in {y} counts in both years. The totals at the top include every recommended video; the lists show lessons with a page on {e(SITE['name'])}, without clips under {CLIP_S} seconds. Counts for a past year can still grow a little as late comments reach the public archive we read. That archive is thin before mid-2021, so year pages start in {YEARS[0]}. <a href="{BASE}/about/">More on the method</a>.</p>
+{f'<p>Other years: {others}</p>' if others else ''}</div>"""
+    page(f"/year/{y}/", f"Best Golf Lessons of {y}, Ranked by Golfers | {SITE['name']}",
+         f"Top coach of {y}: {c1[1]}. The YouTube golf lessons and coaches golfers recommended most in {y}, from {recs:,} Reddit recommendations.",
+         body, nav="stats",
+         ld=[{"@context": "https://schema.org", "@type": "ItemList", "name": f"Most recommended golf lessons of {y}", "itemListElement": [
+             {"@type": "ListItem", "position": i, "url": f"{URL}/watch/{v['vid']}/", "name": nice(v["title"])} for i, (_, _, v, _) in enumerate(top, 1)]},
+             crumbs((f"Best of {y}", f"/year/{y}/"))])
 
 
 def build_text():
@@ -1076,8 +1176,8 @@ def build_text():
 <li><b>Rank per problem</b> by those recommendations, with extra weight when golfers report it actually fixed their problem.</li></ol>
 <h2>Promises</h2><p>Nobody can pay to rank higher. Sponsored content or affiliate links, if they ever appear, are labeled and kept out of the rankings. Video pages show short excerpts of public Reddit comments and problem pages quote a few post titles, without usernames, always linked to the original. Ask and we'll remove yours.</p>
 <h2>Your data</h2><p>Liked, history and watch later are stored only in your browser.</p>
-<h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20creator%20request">max@fassia.io</a>; it will be removed in the next update.</p>
-<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Problem pages quote a few post titles the same way. If you wrote one and want it removed, email <a href="mailto:max@fassia.io?subject=GolfVotes%20comment%20removal">max@fassia.io</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment or post. It will be removed in the next update.</p>
+<h2>Creators</h2><p>Video pages show a small preview image of each lesson, stored on this site, always linking to the video on YouTube. If you are a creator and want a preview image or your channel removed, email <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20creator%20request">hello@golfvotes.com</a>; it will be removed in the next update.</p>
+<h2 id="removal">Comments</h2><p>Video pages show short excerpts of public Reddit comments, without usernames, always linked to the original. Problem pages quote a few post titles the same way. If you wrote one and want it removed, email <a href="mailto:hello@golfvotes.com?subject=GolfVotes%20comment%20removal">hello@golfvotes.com</a> or open an issue at <a href="https://github.com/citymax24/golf-fixes/issues">GitHub</a>, with the link to your comment or post. It will be removed in the next update.</p>
 <h2>Keyboard shortcuts</h2><p><kbd>/</kbd> search · <kbd>h</kbd> home · <kbd>k</kbd> play · <kbd>l</kbd> like · <kbd>w</kbd> watch later · <kbd>?</kbd> all shortcuts · <kbd>Esc</kbd> close</p></div>"""
     page("/about/", f"About | {SITE['name']}", "How GolfVotes ranks golf lessons by independent recommendations.", about)
     page("/privacy/", f"Privacy | {SITE['name']}", "How GolfVotes handles your data: no cookies, no tracking, YouTube videos load only when you click play.", f"""<div class="prose"><h1 class="ptitle">Privacy</h1>
@@ -1124,8 +1224,19 @@ def build_misc():
          f'<section class="phero pone"><div class="pht"><h1>Out of bounds.</h1><p class="phs">This page moved or never existed.</p>'
          f'<p class="phi"><a class="pill start" href="{BASE}/">Back to the tee →</a></p></div></section>'
          f'<section class="pix nf"><h2 class="pick">Pick your problem</h2><nav class="ixs" aria-label="All problems">{problem_index()}</nav></section>', canonical=False)
-    open(os.path.join(OUT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-                                                     "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in SITEMAP) + "</urlset>")
+    # One sitemap part per kind of page: Search Console reports indexing per part (Pages > filter by sitemap), which
+    # answers "which kind of page does Google leave out" without guessing. sitemap.xml stays the address to submit.
+    parts = {"pages": [], "coaches": [], "years": [], "lessons": [], "lessons-tail": []}
+    for u in SITEMAP:
+        sec, _, slug = u[len(URL):].strip("/").partition("/")
+        parts["coaches" if sec == "coach" else "years" if sec == "year" else "pages" if sec != "watch" else "lessons" if WATCH[slug]["recs"] >= STRONG_MIN else "lessons-tail"].append(u)
+    ns = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+    parts = {k: us for k, us in parts.items() if us}
+    for k, us in parts.items():
+        open(os.path.join(OUT, f"sitemap-{k}.xml"), "w").write(f'<?xml version="1.0" encoding="UTF-8"?><urlset {ns}>' +
+            "".join(f"<url><loc>{e(u)}</loc><lastmod>{VDATA['generated']}</lastmod></url>" for u in us) + "</urlset>")
+    open(os.path.join(OUT, "sitemap.xml"), "w").write(f'<?xml version="1.0" encoding="UTF-8"?><sitemapindex {ns}>' +
+        "".join(f"<sitemap><loc>{URL}/sitemap-{k}.xml</loc><lastmod>{VDATA['generated']}</lastmod></sitemap>" for k in parts) + "</sitemapindex>")
     if SITE.get("cname"):
         open(os.path.join(OUT, "CNAME"), "w").write(SITE["cname"] + "\n")
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
@@ -1145,5 +1256,7 @@ if __name__ == "__main__":
     build_coaches()
     for s, c in COACHES:
         build_coach(s, c)
+    for y in YEARS:
+        build_year(y)
     build_report(); build_text(); build_guides(); build_badges_page(); build_index(); build_misc()
-    print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches -> {OUT}")
+    print(f"built {len(SITEMAP)} indexed pages, {len(WATCH)} watch pages, {len(COACHES)} coaches, year pages {', '.join(YEARS) or 'none (no data/years.json?)'} -> {OUT}")
