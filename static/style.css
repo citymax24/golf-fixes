@@ -1704,7 +1704,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .pickb:not(.lit) .ixb{animation-play-state:paused}}
 /* phones and tablets: the topic in the middle of the screen is the one the field shows; its picture is read, never shown */
 .ixsmp{position:absolute;left:0;top:0;width:160px;height:90px;visibility:hidden;pointer-events:none;overflow:hidden}
-.ixsmp img{width:100%;height:100%;object-fit:cover}
+.ixsmp img{width:100%;height:100%;object-fit:cover}.ixsmp .ambl{display:none}  /* its own light is never seen: nothing to draw or animate */
 @media (hover:none){
   .ix.act,.ix.act sup{color:var(--acc)}
   .ixf{--ixfo:.5;--ixbl:64px}
