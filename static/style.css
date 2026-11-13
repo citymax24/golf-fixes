@@ -1637,11 +1637,11 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .bfp{isolation:isolate}
 .bfv{position:relative;overflow:visible;--ambx:40px;--amby:40px;--ambt:20px;--ampk:.6;--amrs:.45}
 .bfv>.bfplay,.bfv>.bfvid{border-radius:12px;overflow:hidden}.bfvid{background:#000}
-@media (max-width:759px){.bfv{--ambx:10px;--amby:24px;--ambt:10px;--ampk:.7;--amrs:.55}}
+@media (max-width:759px){.bfv{--ambx:16px;--amby:60px;--ambt:20px;--ampk:1;--amrs:.85}.bfv .ambl i{opacity:1}}  /* phones: the picture fills the width, so the light goes mostly down, under the title, and needs full strength to be seen at all */
 :root[data-theme=dark] .bfv{--ampk:.4;--amrs:.28}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .bfv{--ampk:.4;--amrs:.28}}
-@media (max-width:759px){:root[data-theme=dark] .bfv{--ampk:.44;--amrs:.32}}
-@media (max-width:759px) and (prefers-color-scheme:dark){:root:not([data-theme=light]) .bfv{--ampk:.44;--amrs:.32}}
+@media (max-width:759px){:root[data-theme=dark] .bfv{--ampk:1;--amrs:.8}}
+@media (max-width:759px) and (prefers-color-scheme:dark){:root:not([data-theme=light]) .bfv{--ampk:1;--amrs:.8}}
 .ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0}
 .ambl i{position:absolute;opacity:.6;will-change:transform,opacity}
 .ambl .ambw{inset:32px;border-radius:28px}  /* set inside the picture, so its unlit middle never peeks out when it moves */
@@ -1683,8 +1683,8 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .pickb{position:relative;isolation:isolate}
 .ixf{position:absolute;inset:-64px -96px;z-index:-1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 1.4s cubic-bezier(.3,0,.2,1),visibility 0s linear 1.4s;
   --ixfo:.68;--ixbl:80px;--ixbm:multiply}
-:root[data-theme=dark] .ixf{--ixfo:.62;--ixbl:72px;--ixbm:screen}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ixf{--ixfo:.62;--ixbl:72px;--ixbm:screen}}
+:root[data-theme=dark] .ixf{--ixfo:.5;--ixbl:72px;--ixbm:screen}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ixf{--ixfo:.5;--ixbl:72px;--ixbm:screen}}
 .pickb.lit .ixf{opacity:var(--ixfo);visibility:visible;transition:opacity .5s ease,visibility 0s}
 .ixg{position:absolute;inset:0;filter:blur(var(--ixbl));will-change:transform}
 .ixb{position:absolute;border-radius:50%;mix-blend-mode:var(--ixbm);will-change:transform;transition:background-color 1.1s ease}
@@ -1702,3 +1702,14 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .ixb:nth-child(3){animation-name:ixd3;animation-duration:15.1s;animation-delay:-7.6s}
   .ixb:nth-child(4){animation-name:ixd4;animation-duration:17.9s;animation-delay:-11.3s}
   .pickb:not(.lit) .ixb{animation-play-state:paused}}
+/* phones and tablets: the topic in the middle of the screen is the one the field shows; its picture is read, never shown */
+.ixsmp{position:absolute;left:0;top:0;width:160px;height:90px;visibility:hidden;pointer-events:none;overflow:hidden}
+.ixsmp img{width:100%;height:100%;object-fit:cover}
+@media (hover:none){
+  .ix.act,.ix.act sup{color:var(--acc)}
+  .ixf{--ixfo:.5;--ixbl:64px}
+  :root[data-theme=dark] .ixf{--ixfo:.36;--ixbl:60px}
+}
+@media (hover:none) and (prefers-color-scheme:dark){:root:not([data-theme=light]) .ixf{--ixfo:.36;--ixbl:60px}}
+/* while the field shows, the small counts take the text colour: grey on colour would be too faint to read */
+.pickb.lit .ix sup,.pickb.lit .ix:hover sup,.pickb.lit .ix.act sup{color:var(--fg)}
