@@ -109,9 +109,11 @@ The data files above are produced by the monthly pipeline run in a separate priv
   `YOUTUBE_API_KEY`; commits `data/videos.json` and `static/thumbs`, then triggers `pages.yml` itself
   (a push by Actions does not start it).
 - `index-report.yml`: Mondays and Thursdays, secret `GSC_SERVICE_ACCOUNT`; commits `seo/`.
-- `share-images.yml`: on push to `main` touching `data/**`, `build/og.js`, `static/logo-word.svg` or itself;
-  runs `node build/og.js` and commits only changed images to `static/og4/` and `build/og-hashes.json`,
-  then triggers `pages.yml`.
+- `share-images.yml`: on push to `main` touching `data/**`, `build/og.js`, `build/course.svg`, `static/style.css`,
+  `static/logo-word.svg` or itself; runs `node build/og.js` and commits only changed images to `static/og4/` and
+  `build/og-hashes.json`, then triggers `pages.yml`. The home page's card (`home.png`, also the fallback for pages
+  without their own card) is drawn with the site's stylesheet and the course drawing, hence those two paths.
+  `default.png` is the card it replaced: no longer drawn, kept for links shared before.
 - Bots commit to `main` as golfvotes-bot, so expect rebases and `git pull --rebase` before pushing manually.
 - Actions are pinned by commit SHA; keep that when editing workflows. Never print secrets in logs.
 
