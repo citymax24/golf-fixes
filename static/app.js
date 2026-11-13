@@ -681,9 +681,22 @@
         if (a.dataset.vid) smi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
         TF.focus(a); TF.lit(tOn);
       };
-      var band = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) pick(e.target); }); }, { rootMargin: "-44% 0px -44% 0px" });
-      $$(".ix", ixs).forEach(function (a) { band.observe(a); });
-      new IntersectionObserver(function (es) { tOn = es[es.length - 1].intersectionRatio > .25; TF.lit(tOn && !!tAct); if (!tOn && tAct) { tAct.classList.remove("act"); tAct = null; } }, { threshold: [0, .25] }).observe(tblk);
+      // A row crosses the middle band of the screen; while it does, the choice walks along it from left to right, so every topic
+      // in a row gets its turn (on tablets and in landscape a row holds several topics).
+      var tRaf = 0, tWords = $$(".ix", ixs);
+      var choose = function () {
+        tRaf = 0; if (!tOn) return;
+        var vh = window.innerHeight, vw = window.innerWidth, top = vh * .42, bot = vh * .58, best = null, bd = 1e9, br = tblk.getBoundingClientRect();
+        if (br.top > bot || br.bottom < top) { TF.lit(false); if (tAct) { tAct.classList.remove("act"); tAct = null; } return; }  // the block is not at the middle of the screen
+        tWords.forEach(function (a) {
+          var r = a.getBoundingClientRect(), cy = r.top + r.height / 2; if (cy < top || cy > bot) return;
+          var d = Math.abs(r.left + r.width / 2 - (bot - cy) / (bot - top) * vw); if (d < bd) { bd = d; best = a; }
+        });
+        if (best) pick(best);
+      };
+      window.addEventListener("scroll", function () { if (tOn && !tRaf) tRaf = requestAnimationFrame(choose); }, { passive: true });
+      window.addEventListener("resize", function () { if (tAct) TF.focus(tAct); }, { passive: true });  // turned the phone: the field finds its place again
+      new IntersectionObserver(function (es) { tOn = es[es.length - 1].isIntersecting; if (tOn) choose(); else { TF.lit(false); if (tAct) { tAct.classList.remove("act"); tAct = null; } } }).observe(tblk);
     }
   }
   // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
