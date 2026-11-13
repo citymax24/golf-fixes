@@ -78,32 +78,71 @@
     if (h < 0) h += 360;
     var lit = Math.min(1, lum / .2);  // black throws no light
     if (s < .14) return ["255,255,255", Math.max(0, (lum - .45) / .45) * .6 * lit];  // grey or white: soft white light (on a white page it simply disappears)
-    if (h > 40 && h < 110) h += (135 - h) * .6;  // olive, khaki and lime grass turns fresh green
+    if (h >= 12 && h <= 52 && s < .6) return [hsl2rgb(h, .35, .82), (.45 + .3 * Math.min(1, s * 2)) * lit];  // skin, sand, tan: a warm white, since dim orange reads as brown
+    if (h > 52 && h < 110) h += (135 - h) * .6;  // olive, khaki and lime grass turns fresh green
     var vivid = s >= .25, L2 = vivid ? .5 + .12 * Math.min(1, Math.max(0, (l - .25) * 2)) : .74;  // faint colour becomes a tinted white light
     if (h < 70 || h > 330) L2 += .08;  // warm light kept light: dim orange would read as brown
     return [hsl2rgb(h, vivid ? Math.min(.78, Math.max(.55, s * 1.3 + .15)) : .4, L2), (.55 + .45 * Math.min(1, s * 2)) * lit];
   }
+  var ambAll = [], ambRaf = 0, ambY = window.scrollY, ambV = 0, ambStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ambIO = window.IntersectionObserver && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target._amb.vis = e.isIntersecting; }); ambGo(); }, { rootMargin: "120px" });
   function amb(w) {
     var im = w && w.querySelector("img"); if (!im || w.dataset.amb) return; w.dataset.amb = "1";
     var go = function () {
       var d;
       try { ambCv = ambCv || document.createElement("canvas"); ambCv.width = 32; ambCv.height = 18; var cx = ambCv.getContext("2d", { willReadFrequently: true }); var nw = im.naturalWidth, nh = im.naturalHeight, ar = (im.clientWidth / im.clientHeight) || 16 / 9, sw = Math.min(nw, nh * ar), sh = Math.min(nh, nw / ar); cx.drawImage(im, (nw - sw) / 2, (nh - sh) / 2, sw, sh, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data; } catch (e) { return; }
-      var spot = function (p, rx, ry, at, k) {  // a soft spot of light, centred on the picture's edge, fading outward
+      var spot = function (p, rx, ry, at, k) {  // a soft spot of light, centred on the picture's edge (the middle of its band), fading outward
         var a = p[1] * k; if (a < .04) return "";
         return "radial-gradient(ellipse " + rx + " " + ry + " at " + at + ",rgba(" + p[0] + "," + a.toFixed(2) + "),rgba(" + p[0] + "," + (a * .72).toFixed(2) + ") 22%,rgba(" + p[0] + "," + (a * .36).toFixed(2) + ") 48%,rgba(" + p[0] + "," + (a * .1).toFixed(2) + ") 74%,rgba(" + p[0] + ",0))";
       };
-      var X = "var(--ambx)", Y = "var(--amby)", Tr = "var(--ambt,var(--amby))", T = Y, Bt = "calc(100% - " + Y + ")", Lf = X, Rt = "calc(100% - " + X + ")";
-      var L = [  // the middle of each edge strongest; smaller, weaker spots either side; the corners get only what spills over
-        spot(ambCol(d, 11, 21, 0, 5), "34%", Tr, "50% " + T, 1), spot(ambCol(d, 0, 11, 0, 5), "16%", "calc(" + Tr + "*.8)", "24% " + T, .65), spot(ambCol(d, 21, 32, 0, 5), "16%", "calc(" + Tr + "*.8)", "76% " + T, .65),
-        spot(ambCol(d, 11, 21, 13, 18), "34%", Y, "50% " + Bt, 1), spot(ambCol(d, 0, 11, 13, 18), "16%", "calc(" + Y + "*.8)", "24% " + Bt, .65), spot(ambCol(d, 21, 32, 13, 18), "16%", "calc(" + Y + "*.8)", "76% " + Bt, .65),
-        spot(ambCol(d, 0, 6, 4, 14), X, "30%", Lf + " 50%", .85), spot(ambCol(d, 26, 32, 4, 14), X, "30%", Rt + " 50%", .85)
-      ].filter(Boolean);
-      if (!L.length) return;
-      w.style.setProperty("--ambg", L.join(","));
-      requestAnimationFrame(function () { w.classList.add("amb"); });
+      var edge = function (l) { return l.filter(Boolean).join(","); };
+      var G = [  // per edge: the middle strongest, smaller and weaker spots either side; the corners get only what spills over
+        edge([spot(ambCol(d, 11, 21, 0, 5), "34%", "50%", "50% 50%", 1), spot(ambCol(d, 0, 11, 0, 5), "16%", "40%", "24% 50%", .65), spot(ambCol(d, 21, 32, 0, 5), "16%", "40%", "76% 50%", .65)]),
+        edge([spot(ambCol(d, 11, 21, 13, 18), "34%", "50%", "50% 50%", 1), spot(ambCol(d, 0, 11, 13, 18), "16%", "40%", "24% 50%", .65), spot(ambCol(d, 21, 32, 13, 18), "16%", "40%", "76% 50%", .65)]),
+        edge([spot(ambCol(d, 0, 6, 4, 14), "50%", "36%", "50% 50%", .85)]),
+        edge([spot(ambCol(d, 26, 32, 4, 14), "50%", "36%", "50% 50%", .85)])
+      ];
+      if (!G.join("")) return;
+      var box = document.createElement("span"); box.className = "ambl"; box.setAttribute("aria-hidden", "true");
+      var L = ["t", "b", "l", "r"].map(function (c, i) { var e = document.createElement("i"); e.className = c; if (G[i]) e.style.background = G[i]; box.appendChild(e); return e; });
+      w.insertBefore(box, w.firstChild);
+      var A = w._amb = { w: w, L: L, vis: true, mx: 0, my: 0, tx: 0, ty: 0, ax: 20 };
+      if (!ambStill) {
+        ambAll.push(A); if (ambIO) ambIO.observe(w);
+        A.ax = parseFloat(getComputedStyle(w).getPropertyValue("--ambx")) || 20;
+        w.addEventListener("pointermove", function (ev) { if (ev.pointerType === "touch") return; var r = w.getBoundingClientRect(); A.tx = Math.max(-1, Math.min(1, (ev.clientX - r.left) / r.width * 2 - 1)); A.ty = Math.max(-1, Math.min(1, (ev.clientY - r.top) / r.height * 2 - 1)); ambGo(); }, { passive: true });
+        w.addEventListener("pointerleave", function () { A.tx = A.ty = 0; ambGo(); }, { passive: true });
+      }
+      requestAnimationFrame(function () { w.classList.add("amb"); ambGo(); });
     };
     if (im.complete && im.naturalWidth) go(); else im.addEventListener("load", go, { once: true });
   }
+  function ambGo() { if (!ambRaf && ambAll.length) ambRaf = requestAnimationFrame(ambTick); }
+  function ambTick() {  // one frame of the light's motion: read every position first, then write only transforms and opacities
+    ambRaf = 0;
+    var y = window.scrollY, vh = window.innerHeight, more = false;
+    ambV += (Math.max(-40, Math.min(40, y - ambY)) - ambV) * .18; ambY = y;  // scroll speed, smoothed, so the light trails and settles
+    if (Math.abs(ambV) > .05) more = true; else ambV = 0;
+    var on = ambAll.filter(function (a) { return a.vis && a.w.isConnected; });
+    var R = on.map(function (a) { return a.w.getBoundingClientRect(); });
+    on.forEach(function (a, i) {
+      var r = R[i]; if (!r.width) return;
+      a.mx += (a.tx - a.mx) * .1; a.my += (a.ty - a.my) * .1;
+      if (Math.abs(a.tx - a.mx) > .002 || Math.abs(a.ty - a.my) > .002) more = true;
+      var p = Math.max(-.6, Math.min(.6, (r.top + r.height / 2 - vh / 2) / vh));  // below the middle of the screen: the light leans up, above it: down
+      var reach = Math.min(r.width, r.height) * .09, rx = Math.min(reach, a.ax * .5), tr = Math.max(-14, Math.min(14, ambV * .7)), st = Math.min(.35, Math.abs(ambV) * .015);
+      var f = function (x) { return Math.max(.3, Math.min(1, x)).toFixed(3); };
+      var T = a.L[0].style, B = a.L[1].style, Lf = a.L[2].style, Rt = a.L[3].style;
+      T.transform = "translate3d(" + (a.mx * rx).toFixed(1) + "px," + tr.toFixed(1) + "px,0) scaleY(" + (1 + .3 * Math.max(0, -a.my) + .25 * Math.max(0, p) - (ambV > 0 ? st * .5 : -st)).toFixed(3) + ")";
+      B.transform = "translate3d(" + (a.mx * rx).toFixed(1) + "px," + tr.toFixed(1) + "px,0) scaleY(" + (1 + .3 * Math.max(0, a.my) + .25 * Math.max(0, -p) + (ambV > 0 ? st : -st * .5)).toFixed(3) + ")";
+      Lf.transform = "translate3d(0," + (a.my * reach + tr).toFixed(1) + "px,0) scaleX(" + (1 + .3 * Math.max(0, -a.mx)).toFixed(3) + ")";
+      Rt.transform = "translate3d(0," + (a.my * reach + tr).toFixed(1) + "px,0) scaleX(" + (1 + .3 * Math.max(0, a.mx)).toFixed(3) + ")";
+      T.opacity = f(.7 - .3 * a.my + .35 * p); B.opacity = f(.7 + .3 * a.my - .35 * p);
+      Lf.opacity = f(.7 - .3 * a.mx); Rt.opacity = f(.7 + .3 * a.mx);
+    });
+    if (more) ambGo();
+  }
+  window.addEventListener("scroll", ambGo, { passive: true });
   $$(".bfv, .pwr").forEach(amb);
   document.addEventListener("pointerover", function (ev) { var w = ev.target.closest && ev.target.closest(".vc .thw"); if (w) amb(w); }, { passive: true });
 
