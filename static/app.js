@@ -135,7 +135,7 @@
         if (gray(m[0], m[1], m[2])) el.classList.add("ambg");
         box.appendChild(el);
         var dur = (.045 / q[4]).toFixed(2);  // softer pools take longer to arrive, so the pools part and meet again: the light changes shape
-        el.style.transition = "transform " + dur + "s cubic-bezier(.22,1.25,.36,1),opacity " + (dur * 1.3).toFixed(2) + "s ease";
+        el.style.transition = "transform " + dur + "s cubic-bezier(.25,.8,.35,1),opacity " + (dur * 1.3).toFixed(2) + "s ease";
         var loop = [14.6, 18.4, 16.3, 20.6, 13.4, 17.2, 21.4, 15.1, 19.3, 14][qi];  // its own slow drift, so no two pools keep step
         if (!ambStill) { el.style.animationName = "ambd" + (qi % 3 + 1); el.style.animationDuration = loop + "s"; el.style.animationDelay = (-loop * ((qi * .37) % 1)).toFixed(1) + "s"; }  // only name, length, start: pausing stays with the style sheet
         P.push({ el: el, e: e, u: u, lag: q[5] });
@@ -558,7 +558,7 @@
       var dirOf = function (q) { var u = (q[1] - .5) * 1.4; return q[0] === 0 ? [u, -1] : q[0] === 1 ? [u, 1] : q[0] === 2 ? [-1, u] : [1, u]; };
       // --- motion: one spring per blob (stiffness, damping); the blobs follow at different speeds, so the field stretches and re-forms ---
       var S = [{ k: .02, d: .87 }, { k: .065, d: .8 }, { k: .026, d: .85 }, { k: .014, d: .89 }];
-      S.forEach(function (s) { s.x = s.y = s.vx = s.vy = s.tx = s.ty = 0; s.tf = ""; });
+      S.forEach(function (s) { s.x = s.y = s.vx = s.vy = s.tx = s.ty = 0; s.tf = ""; s.d = Math.max(.35, 1 - 1.9 * Math.sqrt(s.k)); });  // damped close to critical: the light glides and never bounces
       var W = 0, H = 0, ox = 0, oy = 0, px = 0, py = 0, fxp = 1, fyp = 1, d1 = [0, 1], d2 = [-1, -.3], pls = 0, plv = 0, run = 0, last = 0;
       var measure = function () { var r = fld.getBoundingClientRect(); W = r.width; H = r.height; ox = r.left + window.scrollX; oy = r.top + window.scrollY; };
       var aim = function () {  // where each blob wants to be
@@ -606,31 +606,30 @@
         var c = [tune(p[0], dk, "body", bold), tune(p[1], dk, "lead", bold * 1.1), tune(p[2], dk, "mid", bold), dk ? rgbOf(.68, .13, 300) : rgbOf(.8, .1, H0 + 5)];
         var A = dk ? [.6, .8, .6, .34 + .2 * (1 - vivid)] : [.9, .85, .8, .4 + .25 * (1 - vivid)];
         BL.forEach(function (b, i) { b.style.backgroundColor = rgba(c[i], A[i]); });
-        if (p !== BRAND && at) { d1 = dirOf(at[0]); d2 = dirOf(at[1]); if (d1[0] * d2[0] + d1[1] * d2[1] > .5) d2 = [-d2[0], -d2[1]]; }  // the two colours never pile up on one side
-        if (blk.classList.contains("lit")) { aim(); plv += calm ? 0 : .045; kick(); }
+        // the blobs keep their places when the colour changes (moving them for every topic made the light jump); only the colour flows
       };
       if (touch) {  // no pointer: the topic in the middle of the screen leads, and the field flows to it as the page scrolls
         fxp = fyp = 0;
         return {
-          focus: function (a) {
-            measure(); var r = a.getBoundingClientRect(), f = fld.getBoundingClientRect(); px = r.left + r.width / 2 - f.left; py = r.top + r.height / 2 - f.top; aim();
-            if (!blk.classList.contains("lit")) { S.forEach(function (s) { s.x = s.tx * .6 + px * .4; s.y = s.ty * .6 + py * .4; s.vx = s.vy = 0; }); pls = calm ? 0 : -.18; plv = 0; }
+          track: function () {  // the light rests in the block and scrolls with it like the text (the browser scrolls it, smoothly); only its colour changes
+            measure(); px = W * .42; py = H * .5; aim();
+            if (!blk.classList.contains("lit")) { S.forEach(function (s) { s.x = s.tx; s.y = s.ty; s.vx = s.vy = 0; }); pls = plv = 0; }
             if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; });
             kick();
           },
-          lit: function (on) { if (on === blk.classList.contains("lit")) return; blk.classList.toggle("lit", on); if (!on && !calm) { plv += .03; } kick(); }
+          lit: function (on) { if (on === blk.classList.contains("lit")) return; if (on) this.track(); blk.classList.toggle("lit", on); kick(); }
         };
       }
       ixs.addEventListener("mouseenter", function (ev) {
         measure(); point(ev);
         if (!blk.classList.contains("lit")) {  // it blooms out from where the pointer came in, instead of flying in from a corner
           S.forEach(function (s) { s.x = s.tx * .6 + px * .4; s.y = s.ty * .6 + py * .4; s.vx = s.vy = 0; });
-          pls = calm ? 0 : -.22; plv = 0;
+          pls = plv = 0;
         }
         blk.classList.add("lit"); kick();
       });
       ixs.addEventListener("mousemove", function (ev) { point(ev); if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; }); kick(); });
-      ixs.addEventListener("mouseleave", function () { blk.classList.remove("lit"); if (!calm) { plv += .03; kick(); } });  // it swells a little as it fades, like steam
+      ixs.addEventListener("mouseleave", function () { blk.classList.remove("lit"); });  // it fades where it is
       window.addEventListener("resize", function () { if (blk.classList.contains("lit")) measure(); }, { passive: true });
       }
   // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
@@ -676,10 +675,11 @@
       smp.className = "ixsmp"; smp.setAttribute("aria-hidden", "true"); smi.alt = ""; smp.appendChild(smi); tblk.appendChild(smp);
       smi.addEventListener("load", function () { amb(smp); });  // the picture is only read for its colours; it is never shown
       var TF = ixField(tblk, ixs, smp, true);
+      var tPal = 0;
       var pick = function (a) {
         if (a === tAct) return; if (tAct) tAct.classList.remove("act"); tAct = a; a.classList.add("act");
-        if (a.dataset.vid) smi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
-        TF.focus(a); TF.lit(tOn);
+        clearTimeout(tPal); tPal = setTimeout(function () { if (tAct === a && a.dataset.vid) smi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp"; }, 260);  // the colour changes once a topic stays a moment, not for every one flying past
+        TF.lit(tOn);
       };
       // A row crosses the middle band of the screen; while it does, the choice walks along it from left to right, so every topic
       // in a row gets its turn (on tablets and in landscape a row holds several topics).
@@ -695,7 +695,7 @@
         if (best) pick(best);
       };
       window.addEventListener("scroll", function () { if (tOn && !tRaf) tRaf = requestAnimationFrame(choose); }, { passive: true });
-      window.addEventListener("resize", function () { if (tAct) TF.focus(tAct); }, { passive: true });  // turned the phone: the field finds its place again
+      window.addEventListener("resize", function () { if (tAct) TF.track(); }, { passive: true });  // turned the phone: the field finds its place again
       new IntersectionObserver(function (es) { tOn = es[es.length - 1].isIntersecting; if (tOn) choose(); else { TF.lit(false); if (tAct) { tAct.classList.remove("act"); tAct = null; } } }).observe(tblk);
     }
   }
