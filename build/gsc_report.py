@@ -74,8 +74,13 @@ class Quota(Exception):
 
 
 def inspect(s, prop, url):
-    r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
-               json={"inspectionUrl": url, "siteUrl": prop, "languageCode": "en-US"}, timeout=60)
+    for wait in (30, 60, 0):  # a 429 can be the per-minute limit: wait and retry twice before calling it the daily quota
+        r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+                   json={"inspectionUrl": url, "siteUrl": prop, "languageCode": "en-US"}, timeout=60)
+        if r.status_code != 429:
+            break
+        if wait:
+            time.sleep(wait)
     if r.status_code == 429:
         raise Quota(r.text[:200])
     if r.status_code != 200:
@@ -102,7 +107,8 @@ def save_status(status, urls):
     keep = {p: status[p] for p in sorted(status) if URL + p in urls}  # URLs that left the sitemap are forgotten
     os.makedirs(os.path.dirname(STATUS), exist_ok=True)
     tmp = STATUS + ".tmp"
-    json.dump(keep, open(tmp, "w"), indent=0, sort_keys=True)
+    with open(tmp, "w") as f:
+        json.dump(keep, f, indent=0, sort_keys=True)
     os.replace(tmp, STATUS)
     return keep
 
