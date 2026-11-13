@@ -512,40 +512,9 @@
     }
   }
   if (!calm) $$(".vsb [data-cnt]").forEach(function (el, i) { countUp(el, 150 + i * 120); });  // lesson page: the counts run up
-  // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
-  var ixs = $(".ixs");
-  if (ixs && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    var pv = document.createElement("div"), pvi = document.createElement("img"), tx = 0, ty = 0, cx = 0, cy = 0, pr = 0;
-    pv.className = "ixp"; pvi.alt = ""; pv.appendChild(pvi); document.body.appendChild(pv);
-    pvi.addEventListener("load", function () { amb(pv, true); });  // each topic's picture brings its own light, which trails behind as it flies
-    var follow = function () {
-      var k = calm ? 1 : .2, ox = cx, oy = cy; cx += (tx - cx) * k; cy += (ty - cy) * k;
-      pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
-      var A = pv._amb; if (A) { A.vx = A.vx * .6 + (cx - ox) * .4; A.vy = A.vy * .6 + (cy - oy) * .4; if (Math.abs(A.vx) + Math.abs(A.vy) > .3) ambGo(); }
-      pr = pv.classList.contains("on") || Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(follow) : 0;
-    };
-    ixs.addEventListener("mousemove", function (ev) {
-      var x = ev.clientX + 24, y = ev.clientY + 24;
-      if (x + 248 > window.innerWidth) x = ev.clientX - 264;
-      if (y + 143 > window.innerHeight) y = ev.clientY - 159;
-      tx = x; ty = y; if (!pr) pr = requestAnimationFrame(follow);
-    });
-    $$(".ix", ixs).forEach(function (a) {
-      a.addEventListener("mouseenter", function () {
-        if (!a.dataset.vid) { pv.classList.remove("on"); if (pv._amb) pv._amb.vis = false; return; }
-        pvi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
-        if (!pv.classList.contains("on")) { cx = tx; cy = ty; }
-        pv.classList.add("on"); if (pv._amb) pv._amb.vis = true;
-      });
-    });
-    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
-    // On the home page the whole "Or pick it by name" block takes on the colours of the topic under the pointer. Four soft colour
-    // blobs sit in ONE container with a large blur, so they melt into a single field: on dark they add up like light in fog, on
-    // light they lie over each other like ink in water. The picture's colours are first pulled into the brand's family (fresh green
-    // to sky, see tune), and one blob always carries the brand green, on dark a violet that works against the greens. The blobs only move, stretch and turn (transform), drift
-    // slowly on their own (CSS), and fade to a new colour from the picture outward; nothing runs while the pointer is elsewhere.
-    var blk = ixs.closest(".pickb");
-    if (blk) {
+  // The colour field of the "Or pick it by name" block (see the comment inside). src is the element whose picture's light feeds it;
+  // touch: driven by scrolling instead of a mouse.
+  function ixField(blk, ixs, src, touch) {
       var fld = document.createElement("div"); fld.className = "ixf"; fld.setAttribute("aria-hidden", "true");
       fld.innerHTML = "<div class=ixg><i class=ixb></i><i class=ixb></i><i class=ixb></i><i class=ixb></i></div>"; blk.insertBefore(fld, blk.firstChild);
       var BL = $$(".ixb", fld);
@@ -620,7 +589,7 @@
         fxp = ev.clientX + 272 > window.innerWidth ? -1 : 1; fyp = ev.clientY + 167 > window.innerHeight ? -1 : 1;
         aim();
       };
-      pv._onpal = function (pal, M, Q) {
+      src._onpal = function (pal, M, Q) {
         var dk = getComputedStyle(document.documentElement).colorScheme.indexOf("dark") >= 0, at = null;
         if (pal && M) {  // the lead is the strongest pool; the second is the strongest one that differs most from it after tuning (sky against grass, say)
           var O = M.map(function (m) { var o = oklch(m); return [hueOf(o, dk), o[0], m[3]]; }), li = 0;
@@ -640,6 +609,18 @@
         if (p !== BRAND && at) { d1 = dirOf(at[0]); d2 = dirOf(at[1]); if (d1[0] * d2[0] + d1[1] * d2[1] > .5) d2 = [-d2[0], -d2[1]]; }  // the two colours never pile up on one side
         if (blk.classList.contains("lit")) { aim(); plv += calm ? 0 : .045; kick(); }
       };
+      if (touch) {  // no pointer: the topic in the middle of the screen leads, and the field flows to it as the page scrolls
+        fxp = fyp = 0;
+        return {
+          focus: function (a) {
+            measure(); var r = a.getBoundingClientRect(), f = fld.getBoundingClientRect(); px = r.left + r.width / 2 - f.left; py = r.top + r.height / 2 - f.top; aim();
+            if (!blk.classList.contains("lit")) { S.forEach(function (s) { s.x = s.tx * .6 + px * .4; s.y = s.ty * .6 + py * .4; s.vx = s.vy = 0; }); pls = calm ? 0 : -.18; plv = 0; }
+            if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; });
+            kick();
+          },
+          lit: function (on) { if (on === blk.classList.contains("lit")) return; blk.classList.toggle("lit", on); if (!on && !calm) { plv += .03; } kick(); }
+        };
+      }
       ixs.addEventListener("mouseenter", function (ev) {
         measure(); point(ev);
         if (!blk.classList.contains("lit")) {  // it blooms out from where the pointer came in, instead of flying in from a corner
@@ -651,6 +632,71 @@
       ixs.addEventListener("mousemove", function (ev) { point(ev); if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; }); kick(); });
       ixs.addEventListener("mouseleave", function () { blk.classList.remove("lit"); if (!calm) { plv += .03; kick(); } });  // it swells a little as it fades, like steam
       window.addEventListener("resize", function () { if (blk.classList.contains("lit")) measure(); }, { passive: true });
+      }
+  // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
+  var ixs = $(".ixs");
+  if (ixs && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    var pv = document.createElement("div"), pvi = document.createElement("img"), tx = 0, ty = 0, cx = 0, cy = 0, pr = 0;
+    pv.className = "ixp"; pvi.alt = ""; pv.appendChild(pvi); document.body.appendChild(pv);
+    pvi.addEventListener("load", function () { amb(pv, true); });  // each topic's picture brings its own light, which trails behind as it flies
+    var follow = function () {
+      var k = calm ? 1 : .2, ox = cx, oy = cy; cx += (tx - cx) * k; cy += (ty - cy) * k;
+      pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
+      var A = pv._amb; if (A) { A.vx = A.vx * .6 + (cx - ox) * .4; A.vy = A.vy * .6 + (cy - oy) * .4; if (Math.abs(A.vx) + Math.abs(A.vy) > .3) ambGo(); }
+      pr = pv.classList.contains("on") || Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(follow) : 0;
+    };
+    ixs.addEventListener("mousemove", function (ev) {
+      var x = ev.clientX + 24, y = ev.clientY + 24;
+      if (x + 248 > window.innerWidth) x = ev.clientX - 264;
+      if (y + 143 > window.innerHeight) y = ev.clientY - 159;
+      tx = x; ty = y; if (!pr) pr = requestAnimationFrame(follow);
+    });
+    $$(".ix", ixs).forEach(function (a) {
+      a.addEventListener("mouseenter", function () {
+        if (!a.dataset.vid) { pv.classList.remove("on"); if (pv._amb) pv._amb.vis = false; return; }
+        pvi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
+        if (!pv.classList.contains("on")) { cx = tx; cy = ty; }
+        pv.classList.add("on"); if (pv._amb) pv._amb.vis = true;
+      });
+    });
+    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
+    // On the home page the whole "Or pick it by name" block takes on the colours of the topic under the pointer. Four soft colour
+    // blobs sit in ONE container with a large blur, so they melt into a single field: on dark they add up like light in fog, on
+    // light they lie over each other like ink in water. The picture's colours are first pulled into the brand's family (fresh green
+    // to sky, see tune), and one blob always carries the brand green, on dark a violet that works against the greens. The blobs only move, stretch and turn (transform), drift
+    // slowly on their own (CSS), and fade to a new colour from the picture outward; nothing runs while the pointer is elsewhere.
+    var blk = ixs.closest(".pickb"); if (blk) ixField(blk, ixs, pv, false);
+  }
+  // Phones and tablets have no pointer: on the home page the topic passing through the middle of the screen turns green and the
+  // block takes on the colours of its #1 lesson, flowing on to the next topic as the page scrolls. Only while the block is on screen.
+  if (ixs && window.matchMedia && window.matchMedia("(hover: none)").matches && window.IntersectionObserver) {
+    var tblk = ixs.closest(".pickb");
+    if (tblk) {
+      var smp = document.createElement("div"), smi = document.createElement("img"), tAct = null, tOn = false;
+      smp.className = "ixsmp"; smp.setAttribute("aria-hidden", "true"); smi.alt = ""; smp.appendChild(smi); tblk.appendChild(smp);
+      smi.addEventListener("load", function () { amb(smp); });  // the picture is only read for its colours; it is never shown
+      var TF = ixField(tblk, ixs, smp, true);
+      var pick = function (a) {
+        if (a === tAct) return; if (tAct) tAct.classList.remove("act"); tAct = a; a.classList.add("act");
+        if (a.dataset.vid) smi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
+        TF.focus(a); TF.lit(tOn);
+      };
+      // A row crosses the middle band of the screen; while it does, the choice walks along it from left to right, so every topic
+      // in a row gets its turn (on tablets and in landscape a row holds several topics).
+      var tRaf = 0, tWords = $$(".ix", ixs);
+      var choose = function () {
+        tRaf = 0; if (!tOn) return;
+        var vh = window.innerHeight, vw = window.innerWidth, top = vh * .42, bot = vh * .58, best = null, bd = 1e9, br = tblk.getBoundingClientRect();
+        if (br.top > bot || br.bottom < top) { TF.lit(false); if (tAct) { tAct.classList.remove("act"); tAct = null; } return; }  // the block is not at the middle of the screen
+        tWords.forEach(function (a) {
+          var r = a.getBoundingClientRect(), cy = r.top + r.height / 2; if (cy < top || cy > bot) return;
+          var d = Math.abs(r.left + r.width / 2 - (bot - cy) / (bot - top) * vw); if (d < bd) { bd = d; best = a; }
+        });
+        if (best) pick(best);
+      };
+      window.addEventListener("scroll", function () { if (tOn && !tRaf) tRaf = requestAnimationFrame(choose); }, { passive: true });
+      window.addEventListener("resize", function () { if (tAct) TF.focus(tAct); }, { passive: true });  // turned the phone: the field finds its place again
+      new IntersectionObserver(function (es) { tOn = es[es.length - 1].isIntersecting; if (tOn) choose(); else { TF.lit(false); if (tAct) { tAct.classList.remove("act"); tAct = null; } } }).observe(tblk);
     }
   }
   // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
