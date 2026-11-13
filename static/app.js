@@ -84,17 +84,23 @@
     if (h < 70 || h > 330) L2 += .08;  // warm light kept light: dim orange would read as brown
     return [hsl2rgb(h, vivid ? Math.min(.78, Math.max(.55, s * 1.3 + .15)) : .4, L2), (.55 + .45 * Math.min(1, s * 2)) * lit];
   }
-  var ambAll = [], ambY = window.scrollY, ambV = 0, ambStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ambIO = window.IntersectionObserver && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target._amb.vis = e.isIntersecting; e.target.classList.toggle("ambp", !e.isIntersecting); }); ambGo(); }, { rootMargin: "120px" });  // off screen: the drift pauses
+  var ambAll = [], ambY = window.scrollY, ambV = 0, ambRM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)"), ambStill = !!(ambRM && ambRM.matches);
+  var gray = function (r, g, b) { var mx = Math.max(r, g, b); return mx - Math.min(r, g, b) < mx * .1; };
   // the ten pools: edge (0 top, 1 bottom, 2 left, 3 right), place along the edge, size along it (%), strength, quickness, scroll lag
   var POOLS = [[0, .2, 62, .8, .06, .55], [0, .5, 78, 1, .09, .8], [0, .8, 62, .8, .075, 1],
     [1, .2, 62, .8, .07, .95], [1, .5, 78, 1, .1, .7], [1, .8, 62, .8, .055, .5],
     [2, .3, 72, .85, .08, .9], [2, .7, 72, .85, .065, .6], [3, .3, 72, .85, .06, .65], [3, .7, 72, .85, .085, 1]];
-  function amb(w) {
-    var im = w && w.querySelector("img"); if (!im || w.dataset.amb) return; w.dataset.amb = "1";
-    var go = function () {
+  // Build the light for a loaded picture (nothing is drawn until a class asks for it). Returns its state, or null for a picture with no colour to give.
+  function ambBuild(w, fly) {
+    var im = w && w.querySelector("img"); if (!im || !im.complete || !im.naturalWidth) return null;
       var d;
-      try { ambCv = ambCv || document.createElement("canvas"); ambCv.width = 32; ambCv.height = 18; var cx = ambCv.getContext("2d", { willReadFrequently: true }); var nw = im.naturalWidth, nh = im.naturalHeight, ar = (im.clientWidth / im.clientHeight) || 16 / 9, sw = Math.min(nw, nh * ar), sh = Math.min(nh, nw / ar); cx.drawImage(im, (nw - sw) / 2, (nh - sh) / 2, sw, sh, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data; } catch (e) { return; }
+      try { ambCv = ambCv || document.createElement("canvas"); ambCv.width = 32; ambCv.height = 18; var cx = ambCv.getContext("2d", { willReadFrequently: true }); var nw = im.naturalWidth, nh = im.naturalHeight, ar = (im.clientWidth / im.clientHeight) || 16 / 9, sw = Math.min(nw, nh * ar), sh = Math.min(nh, nw / ar); var sx0 = (nw - sw) / 2, sy0 = (nh - sh) / 2; cx.drawImage(im, sx0, sy0, sw, sh, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data;
+        // black bars inside the picture (old 4:3 lessons, phone videos) throw no light: read the colours from the picture between them
+        var lumAt = function (x, y) { var i = (y * 32 + x) * 4; return (d[i] + d[i + 1] + d[i + 2]) / 765; }, colL = function (x) { var t = 0; for (var y = 0; y < 18; y++) t += lumAt(x, y); return t / 18; }, rowL = function (y) { var t = 0; for (var x = 0; x < 32; x++) t += lumAt(x, y); return t / 32; };
+        var bl = 0, br = 31, bt = 0, bb = 17;
+        while (bl < 8 && colL(bl) < .06) bl++; while (br > 23 && colL(br) < .06) br--; while (bt < 4 && rowL(bt) < .06) bt++; while (bb > 13 && rowL(bb) < .06) bb--;
+        if (bl || br < 31 || bt || bb < 17) { cx.drawImage(im, sx0 + sw * bl / 32, sy0 + sh * bt / 18, sw * (br - bl + 1) / 32, sh * (bb - bt + 1) / 18, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data; }
+      } catch (e) { return null; }
       var patch = function (e, u) {  // the part of the picture behind each pool
         return e < 2 ? (u < .4 ? [0, 12] : u > .6 ? [20, 32] : [10, 22]).concat(e ? [13, 18] : [0, 5]) : (e === 2 ? [0, 6] : [26, 32]).concat(u < .5 ? [2, 10] : [8, 16]);
       };
@@ -112,9 +118,10 @@
       if (tot > .2) {  // under the pools, one even wash of the picture's main colour all round, so there are no gaps
         var wash = document.createElement("i"); wash.className = "ambw";
         wash.style.boxShadow = "0 0 calc(var(--amby)*1.2) calc(var(--amby)*.12 + 32px) rgba(" + Math.round(wr / tot) + "," + Math.round(wg / tot) + "," + Math.round(wb / tot) + "," + Math.min(.6, .2 + tot / 10 * .5).toFixed(2) + ")";
+        if (gray(wr / tot, wg / tot, wb / tot)) wash.classList.add("ambg");  // a grey or white wash only reads as haze on dark: the dark theme hides it
         box.appendChild(wash);
         wash.style.transition = "transform 1.1s cubic-bezier(.2,.8,.3,1),opacity 1.2s ease";
-        if (!ambStill) { wash.style.animationName = "ambdw"; wash.style.animationDuration = "13.3s"; wash.style.animationDelay = "-5.1s"; }
+        if (!ambStill) { wash.style.animationName = "ambdw"; wash.style.animationDuration = "20s"; wash.style.animationDelay = "-5.1s"; }
         P.push({ el: wash, e: 4, u: .5, lag: .6 });
       }
       POOLS.forEach(function (q, qi) {
@@ -125,55 +132,117 @@
         el.style.cssText = (e < 2 ? "left:calc(" + (u * 100 - z / 2) + "%);width:" + z + "%;" + (e ? "bottom:calc(var(--amby)*-1);height:calc(var(--amby)*2)" : "top:calc(" + T + "*-1);height:calc(" + T + "*2)")
           : "top:calc(" + (u * 100 - z / 2) + "%);height:" + z + "%;width:calc(var(--ambx)*2);" + (e === 2 ? "left" : "right") + ":calc(var(--ambx)*-1)")
           + ";background:radial-gradient(closest-side," + g(1) + "," + g(.82) + " 18%," + g(.55) + " 38%," + g(.3) + " 56%," + g(.12) + " 74%," + g(.03) + " 90%,rgba(" + m[0] + "," + m[1] + "," + m[2] + ",0))";
+        if (gray(m[0], m[1], m[2])) el.classList.add("ambg");
         box.appendChild(el);
         var dur = (.045 / q[4]).toFixed(2);  // softer pools take longer to arrive, so the pools part and meet again: the light changes shape
         el.style.transition = "transform " + dur + "s cubic-bezier(.22,1.25,.36,1),opacity " + (dur * 1.3).toFixed(2) + "s ease";
-        var loop = [9.7, 12.3, 10.9, 13.7, 8.9, 11.5, 14.3, 10.1, 12.9, 9.3][qi];  // its own slow drift, so no two pools keep step
+        var loop = [14.6, 18.4, 16.3, 20.6, 13.4, 17.2, 21.4, 15.1, 19.3, 14][qi];  // its own slow drift, so no two pools keep step
         if (!ambStill) { el.style.animationName = "ambd" + (qi % 3 + 1); el.style.animationDuration = loop + "s"; el.style.animationDelay = (-loop * ((qi * .37) % 1)).toFixed(1) + "s"; }  // only name, length, start: pausing stays with the style sheet
         P.push({ el: el, e: e, u: u, lag: q[5] });
       });
-      if (!P.length) return;
-      w.insertBefore(box, w.firstChild);
-      var A = w._amb = { w: w, P: P, vis: true, mx: 0, my: 0, on: 0, ax: 20 };
-      if (!ambStill) {
-        ambAll.push(A); if (ambIO) ambIO.observe(w);
-        A.ax = parseFloat(getComputedStyle(w).getPropertyValue("--ambx")) || 20;
-        // the mouse position is measured against the picture's place from the last update: no extra layout work per mouse move
-        w.addEventListener("pointermove", function (ev) { if (ev.pointerType === "touch") return; var r = A.r || (A.r = w.getBoundingClientRect()); A.mx = Math.max(-1, Math.min(1, (ev.clientX - r.left) / r.width * 2 - 1)); A.my = Math.max(-1, Math.min(1, (ev.clientY - r.top) / r.height * 2 - 1)); A.on = 1; ambGo(); }, { passive: true });
-        w.addEventListener("pointerleave", function () { A.on = 0; ambGo(); }, { passive: true });
-        window.addEventListener("resize", function () { A.r = null; }, { passive: true });
+      if (w._onpal) {  // the picture's light in three colours: its main colour and its two strongest edges
+        var strong = M.map(function (m, i) { return [m[3], i]; }).sort(function (x, y) { return y[0] - x[0]; });
+        w._onpal(tot > .2 ? [[Math.round(wr / tot), Math.round(wg / tot), Math.round(wb / tot)], M[strong[0][1]], M[strong[1][1]]] : null, M, POOLS);  // and all ten pools with their places
       }
-      requestAnimationFrame(function () { w.classList.add("amb"); ambGo(); });
-    };
-    if (im.complete && im.naturalWidth) go(); else im.addEventListener("load", go, { once: true });
+      if (!P.length) return null;
+      var old = w.querySelector(".ambl");
+      if (old) { old.classList.add("ambo"); setTimeout(function () { old.remove(); }, 500); }  // the old light fades out as the new one comes in
+      w.insertBefore(box, w.firstChild);
+      var A = w._amb;
+      if (A && fly) { A.P = P; A.box = box; requestAnimationFrame(function () { box.classList.add("in"); ambGo(); }); return A; }
+      A = w._amb = { w: w, P: P, box: box, vis: true, mx: 0, my: 0, on: 0, ax: 20, fly: !!fly, vx: 0, vy: 0, tr: window.innerWidth < 760 ? 6 : 12 };
+      if (fly) { if (!ambStill) ambAll.push(A); requestAnimationFrame(function () { box.classList.add("in"); ambGo(); }); }
+      return A;
   }
-  // The motion itself runs on the graphics card as CSS transitions; this sets new goals about twelve times a second at most
+  function amb(w, fly) { return ambBuild(w, fly); }  // the floating topic preview calls this on every new picture
+
+  // ----- When the light shows. It means "this is your answer": only around the #1 lesson the finder reveals after the golfer's tap.
+  // The first answer of a visit blooms (sessionStorage, per tab), later answers just glow quietly. It waits until the ball has
+  // landed and the answer has settled, and it goes when Play is pressed, another miss is picked, the picture is scrolled away,
+  // or after about 25 seconds. Nothing exists before that moment or after it.
+  var ambLive = null, ambCueT = 0, ambOnce = false;
+  function ambUsed() { if (ambOnce) return true; try { return sessionStorage.getItem("gv_amb") === "1"; } catch (e) { return false; } }
+  function ambSpend() { ambOnce = true; try { sessionStorage.setItem("gv_amb", "1"); } catch (e) {} }
+  function ambCue(p) {
+    clearTimeout(ambCueT); ambOff(ambLive, "cut");
+    var w = p && $(".bfv", p), im = w && w.querySelector("img"); if (!im) return;
+    var t0 = performance.now(), wait = window.innerWidth < 760 ? 1300 : 700;  // phones first scroll the answer up
+    var tryStart = function () {
+      if (!p.isConnected || p.hidden || !w.querySelector("img")) return;
+      var r = w.getBoundingClientRect(), seen = r.height ? Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 56)) / r.height : 0;
+      if (im.complete && im.naturalWidth && seen >= .6) { var A = ambBuild(w); if (A) ambStart(A, !ambUsed()); return; }
+      if (performance.now() - t0 < wait + 3000) ambCueT = setTimeout(tryStart, 200);  // not ready in time: this answer gets no light
+    };
+    ambCueT = setTimeout(tryStart, wait);
+  }
+  function ambStart(A, bloom) {
+    var w = A.w; if (bloom) ambSpend();
+    ambLive = A; A.off = 0; void A.box.offsetWidth;  // commit the start state, so the entrance transitions
+    w.classList.remove("amb-off"); w.classList.add(bloom && !ambStill ? "amb-up" : "amb-rest");
+    if (bloom && !ambStill) A.t1 = setTimeout(function () { w.classList.remove("amb-up"); w.classList.add("amb-rest"); }, 1400);
+    if (window.IntersectionObserver) { A.io = new IntersectionObserver(function (es) { var e = es[es.length - 1]; A.vis = e.isIntersecting; if (e.intersectionRatio < .3) ambOff(A, "away"); }, { threshold: [0, .3] }); A.io.observe(w); }
+    var left = 23800, since = performance.now();
+    var cap = function () { if (A.hover) { A.late = 1; return; } ambOff(A, "out"); };  // about 20 s of rest, then a slow dusk
+    A.t2 = setTimeout(cap, left);
+    A.vz = function () { if (document.hidden) { clearTimeout(A.t2); left -= performance.now() - since; } else { since = performance.now(); A.t2 = setTimeout(cap, Math.max(0, left)); } };  // the clock waits while the tab is hidden
+    document.addEventListener("visibilitychange", A.vz);
+    A.pm = function (ev) { if (ev.pointerType !== "mouse") return; var r = A.r || (A.r = w.getBoundingClientRect()); A.mx = Math.max(-1, Math.min(1, (ev.clientX - r.left) / r.width * 2 - 1)); A.my = Math.max(-1, Math.min(1, (ev.clientY - r.top) / r.height * 2 - 1)); A.on = 1; A.hover = 1; ambGo(); };
+    A.pl = function () { A.on = 0; A.hover = 0; ambGo(); if (A.late) A.t2 = setTimeout(function () { ambOff(A, "out"); }, 2000); };
+    w.addEventListener("pointermove", A.pm, { passive: true }); w.addEventListener("pointerleave", A.pl, { passive: true });
+    A.ax = parseFloat(getComputedStyle(w).getPropertyValue("--ambx")) || 20; A.tr = window.innerWidth < 760 ? 6 : 12;
+    if (!ambStill && ambAll.indexOf(A) < 0) ambAll.push(A);
+    ambGo();
+  }
+  function ambOff(A, kind) {
+    if (!A || A.off) return; A.off = 1;
+    var w = A.w, ms = ambStill ? 600 : { cut: 200, away: 800, out: 4000, play: 600 }[kind] || 600;
+    clearTimeout(A.t1); clearTimeout(A.t2);
+    w.style.setProperty("--amout", ms + "ms"); w.style.setProperty("--amease", kind === "out" ? "cubic-bezier(.45,0,.55,1)" : "cubic-bezier(.4,0,1,1)");
+    w.classList.remove("amb-up", "amb-rest"); w.classList.add("amb-off");
+    if (A.io) A.io.disconnect(); document.removeEventListener("visibilitychange", A.vz);
+    w.removeEventListener("pointermove", A.pm); w.removeEventListener("pointerleave", A.pl);
+    if (ambLive === A) ambLive = null;
+    setTimeout(function () {
+      var i = ambAll.indexOf(A); if (i >= 0) ambAll.splice(i, 1);
+      if (A.box) A.box.remove(); w.classList.remove("amb-off"); w.style.removeProperty("--amout"); w.style.removeProperty("--amease");
+      if (w._amb === A) w._amb = null;
+    }, ms + 50);
+  }
+  function ambStop(kind) { clearTimeout(ambCueT); ambOff(ambLive, kind); }
+
+  // ----- How the light moves while it shows. The motion runs on the graphics card as CSS transitions and the slow keyframe drift;
+  // this only sets new goals, about twelve times a second at most, and only while something moves.
   var ambTm = 0, ambLast = 0, ambEnd = 0;
   function ambGo() {
-    if (ambTm || !ambAll.length) return;
+    if (ambTm || !ambAll.length || ambStill) return;
     ambTm = setTimeout(function () { ambTm = 0; requestAnimationFrame(ambTick); }, Math.max(0, 80 - (performance.now() - ambLast)));
   }
   function ambTick() {  // read every position first, then write only transforms and opacities, and only where they changed
     var now = performance.now(), y = window.scrollY, vh = window.innerHeight, dt = Math.max(16, now - ambLast);
     ambV = ambV * .35 + Math.max(-40, Math.min(40, (y - ambY) / dt * 16)) * .65; ambY = y; ambLast = now;  // scroll speed in px per frame
     if (Math.abs(ambV) < .3) ambV = 0; else ambGo();  // keep easing back until the page is still
-    var on = ambAll.filter(function (a) { return a.vis && a.w.isConnected; });
+    ambAll.forEach(function (a) { if (a.fly && a.vis && Math.abs(a.vx) + Math.abs(a.vy) > .3) ambGo(); });
+    ambAll = ambAll.filter(function (a) { return a.w.isConnected; });  // forget lights whose picture has left the page
+    var on = ambAll.filter(function (a) { return a.vis && !a.off; });
     var R = on.map(function (a) { return a.w.getBoundingClientRect(); });
     var cl = function (x, lo, hi) { return Math.max(lo, Math.min(hi, x)); };
-    var sv = cl(ambV * .03, -.5, .5);  // how hard the light is being pulled by scrolling
     on.forEach(function (a, i) {
       var r = a.r = R[i]; if (!r.width) return;
-      var p = cl((r.top + r.height / 2 - vh / 2) / vh, -.6, .6);  // below the middle of the screen: the light leans up, above it: down
+      var p = a.fly ? 0 : cl((r.top + r.height / 2 - vh / 2) / vh, -.6, .6);  // below the middle of the screen: the light leans up, above it: down
+      var gx = a.fly ? -a.vx : 0, gy = a.fly ? -a.vy : ambV;  // where the light is pushed: down by scrolling, behind a preview that flies with the pointer
+      var kf = a.fly ? .03 : .015, kc = a.fly ? .5 : .25, kt = a.fly ? 1.1 : .55, tc = a.fly ? 24 : a.tr;  // the finder's light moves at half the amplitude, so it stays off the text
+      var sv = cl(gy * kf, -kc, kc), sx = cl(gx * kf, -kc, kc);  // how hard
       a.P.forEach(function (b) {
         var e = b.e, ux = b.u * 2 - 1, side = e < 2, along = side ? a.mx : a.my, len = side ? r.width : r.height;
         var toward = e === 0 ? -a.my : e === 1 ? a.my : e === 2 ? -a.mx : a.mx;  // 1: the mouse is at this edge, -1: at the opposite one
         var prox = a.on * Math.exp(-(along - ux) * (along - ux) / .5) * (.55 + .45 * toward);
-        var lean = e === 0 ? p : e === 1 ? -p : 0, trail = cl(ambV * b.lag * 1.1, -24, 24);
+        var lean = e === 0 ? p : e === 1 ? -p : 0, trail = cl(gy * b.lag * kt, -tc, tc), trailX = cl(gx * b.lag * kt, -tc, tc);
+        var pullX = e === 3 ? Math.max(0, sx) : e === 2 ? Math.max(0, -sx) : 0;
         var pull = e === 1 ? Math.max(0, sv) : Math.max(0, -sv);  // the trailing side stretches
         var slide = cl(a.on * (along - ux) * .2 * len, -(side ? a.ax * .7 : 60), side ? a.ax * .7 : 60);
-        var T = e === 4 ? [a.on * a.mx * 6, cl(a.on * a.my * 5 + trail * .4, -8, 8), 1 + .02 * a.on + .01 * Math.abs(sv), 1 + .02 * a.on + .03 * Math.abs(sv), 0, .7 + .2 * a.on + .1 * Math.abs(sv)] : side
-          ? [slide, trail, 1 + .2 * prox - .12 * Math.abs(sv), 1 + .6 * prox + .3 * Math.max(0, lean) + .9 * pull - .2 * Math.abs(sv), (along - ux) * prox * 9 * (e ? -1 : 1) + (b.u - .5) * sv * 16, .55 + .35 * prox + .25 * lean - .12 * a.on * Math.max(0, -toward)]
-          : [0, slide + trail, 1 + .6 * prox, 1 + .2 * prox + .7 * Math.abs(sv), (b.u - .5) * sv * 14 * (e === 2 ? 1 : -1), .55 + .35 * prox - .12 * a.on * Math.max(0, -toward)];
+        var T = e === 4 ? [cl(a.on * a.mx * 6 + trailX * .4, -8, 8), cl(a.on * a.my * 5 + trail * .4, -8, 8), 1 + .02 * a.on + .01 * Math.abs(sv), 1 + .02 * a.on + .03 * Math.abs(sv), 0, .7 + .2 * a.on + .1 * Math.abs(sv)] : side
+          ? [slide + trailX, trail, 1 + .2 * prox - .12 * Math.abs(sv) + .25 * Math.abs(sx), 1 + .6 * prox + .3 * Math.max(0, lean) + .9 * pull - .2 * Math.abs(sv), (along - ux) * prox * 9 * (e ? -1 : 1) + (b.u - .5) * sv * 16, .55 + .35 * prox + .25 * lean - .12 * a.on * Math.max(0, -toward)]
+          : [trailX, slide + trail, 1 + .6 * prox + .9 * pullX - .2 * Math.abs(sx), 1 + .2 * prox + .7 * Math.abs(sv), (b.u - .5) * sv * 14 * (e === 2 ? 1 : -1), .55 + .35 * prox - .12 * a.on * Math.max(0, -toward)];
         var tf = "translate3d(" + T[0].toFixed(1) + "px," + T[1].toFixed(1) + "px,0) rotate(" + T[4].toFixed(1) + "deg) scale(" + T[2].toFixed(3) + "," + T[3].toFixed(3) + ")", op = cl(T[5], .2, 1).toFixed(2);
         if (tf !== b.tf) { b.el.style.transform = b.tf = tf; }
         if (op !== b.op) { b.el.style.opacity = b.op = op; }
@@ -181,8 +250,11 @@
     });
   }
   window.addEventListener("scroll", function () { ambGo(); clearTimeout(ambEnd); ambEnd = setTimeout(ambGo, 140); }, { passive: true });  // and once more when scrolling stops
-  $$(".bfv, .pwr").forEach(amb);
-  document.addEventListener("pointerover", function (ev) { var w = ev.target.closest && ev.target.closest(".vc .thw"); if (w) amb(w); }, { passive: true });
+  window.addEventListener("resize", function () { ambAll.forEach(function (a) { a.r = null; a.ax = parseFloat(getComputedStyle(a.w).getPropertyValue("--ambx")) || 20; }); }, { passive: true });
+  if (ambRM) {  // "Reduce motion" switched on while the page is open: the light keeps its glow but stops moving
+    var ambRMc = function () { ambStill = ambRM.matches; if (ambStill) ambAll.forEach(function (a) { a.P.forEach(function (b) { b.el.style.animationName = ""; b.el.style.transform = ""; b.tf = ""; }); }); };
+    if (ambRM.addEventListener) ambRM.addEventListener("change", ambRMc); else if (ambRM.addListener) ambRM.addListener(ambRMc);
+  }
 
   // ---------- player ----------
   function play() {
@@ -330,6 +402,7 @@
     lh.onchange = function () { bff.classList.toggle("lh", lh.checked); save("lefty", lh.checked); };
     bff.addEventListener("click", function (ev) {
       var pb = ev.target.closest(".bfplay"); if (!pb) return;
+      ambStop("play");  // the video takes over: the light draws back into the picture
       var f = document.createElement("iframe");
       f.className = "bfvid"; f._btn = pb;
       f.src = "https://www.youtube-nocookie.com/embed/" + pb.dataset.vid + "?autoplay=1&playsinline=1&rel=0&modestbranding=1";
@@ -340,12 +413,18 @@
       pb.replaceWith(f); f.setAttribute("tabindex", "0"); f.focus();
     });
     bff.addEventListener("keydown", function (ev) { if (ev.key === " " && ev.target.classList.contains("bfd")) { ev.preventDefault(); ev.target.click(); } });
+    bff.addEventListener("click", function (ev) {  // "Change": back to the hole, which still shows the flight drawn
+      var ch = ev.target.closest(".fm a"); if (!ch) return; ev.preventDefault();
+      var q = $(".bfq", bff); window.scrollTo({ top: q.getBoundingClientRect().top + window.scrollY - 68, behavior: still ? "auto" : "smooth" });
+    });
     $$(".bfd", bff).forEach(function (a) {
       a.addEventListener("click", function (ev) {
         ev.preventDefault();
         var k = a.dataset.k;
         if (a.classList.contains("on")) return;
         bff.classList.add("used");
+        ambStop("cut");  // another miss: the old light goes at once
+        var nim = $("#bf-" + k + " .bfv img", bff); if (nim) { nim.loading = "eager"; if (nim.decode) nim.decode().catch(function () {}); }  // the answer's picture is ready when the ball lands
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.classList.remove("hit"); x.setAttribute("aria-pressed", String(x === a)); });
         var line = null;
         $$(".bfl", bff).forEach(function (p) { var on = p.dataset.k === k; p.classList.toggle("on", on); p.classList.remove("fly"); p.style.strokeDashoffset = ""; if (on) line = p; });
@@ -353,8 +432,10 @@
         var land = function () {  // the ball is down: show the lesson for this miss
           a.classList.add("hit");
           $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; p.classList.toggle("in", !p.hidden); });
+          ambCue($("#bf-" + k, bff));  // the light comes last, once the answer has settled
           var c = $("#bf-" + k + " [data-cnt]", bff); if (c && !still) countUp(c);
-          if (window.innerWidth < 760) setTimeout(function () { $(".bfr", bff).scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 120);
+          // phones: let the landing be seen for a moment, then bring the answer to the top of the screen
+          if (window.innerWidth < 760) setTimeout(function () { var r = $(".bfr", bff); window.scrollTo({ top: r.getBoundingClientRect().top + window.scrollY - 60, behavior: still ? "auto" : "smooth" }); }, still ? 0 : 650);
         };
         if (still || !line || !line.getTotalLength) land(); else shot(line, land);
       });
@@ -434,11 +515,13 @@
   // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
   var ixs = $(".ixs");
   if (ixs && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    var pv = document.createElement("img"), tx = 0, ty = 0, cx = 0, cy = 0, pr = 0;
-    pv.className = "ixp"; pv.alt = ""; document.body.appendChild(pv);
+    var pv = document.createElement("div"), pvi = document.createElement("img"), tx = 0, ty = 0, cx = 0, cy = 0, pr = 0;
+    pv.className = "ixp"; pvi.alt = ""; pv.appendChild(pvi); document.body.appendChild(pv);
+    pvi.addEventListener("load", function () { amb(pv, true); });  // each topic's picture brings its own light, which trails behind as it flies
     var follow = function () {
-      var k = calm ? 1 : .2; cx += (tx - cx) * k; cy += (ty - cy) * k;
+      var k = calm ? 1 : .2, ox = cx, oy = cy; cx += (tx - cx) * k; cy += (ty - cy) * k;
       pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
+      var A = pv._amb; if (A) { A.vx = A.vx * .6 + (cx - ox) * .4; A.vy = A.vy * .6 + (cy - oy) * .4; if (Math.abs(A.vx) + Math.abs(A.vy) > .3) ambGo(); }
       pr = pv.classList.contains("on") || Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(follow) : 0;
     };
     ixs.addEventListener("mousemove", function (ev) {
@@ -449,13 +532,126 @@
     });
     $$(".ix", ixs).forEach(function (a) {
       a.addEventListener("mouseenter", function () {
-        if (!a.dataset.vid) { pv.classList.remove("on"); return; }
-        pv.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
+        if (!a.dataset.vid) { pv.classList.remove("on"); if (pv._amb) pv._amb.vis = false; return; }
+        pvi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
         if (!pv.classList.contains("on")) { cx = tx; cy = ty; }
-        pv.classList.add("on");
+        pv.classList.add("on"); if (pv._amb) pv._amb.vis = true;
       });
     });
-    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); });
+    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
+    // On the home page the whole "Or pick it by name" block takes on the colours of the topic under the pointer. Four soft colour
+    // blobs sit in ONE container with a large blur, so they melt into a single field: on dark they add up like light in fog, on
+    // light they lie over each other like ink in water. The picture's colours are first pulled into the brand's family (fresh green
+    // to sky, see tune), and one blob always carries the brand green, on dark a violet that works against the greens. The blobs only move, stretch and turn (transform), drift
+    // slowly on their own (CSS), and fade to a new colour from the picture outward; nothing runs while the pointer is elsewhere.
+    var blk = ixs.closest(".pickb");
+    if (blk) {
+      var fld = document.createElement("div"); fld.className = "ixf"; fld.setAttribute("aria-hidden", "true");
+      fld.innerHTML = "<div class=ixg><i class=ixb></i><i class=ixb></i><i class=ixb></i><i class=ixb></i></div>"; blk.insertBefore(fld, blk.firstChild);
+      var BL = $$(".ixb", fld);
+      // --- colour: OKLCH, so lightness and colourfulness can be set evenly whatever the hue ---
+      var lin = function (c) { c /= 255; return c <= .04045 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); };
+      var gam = function (c) { c = Math.max(0, Math.min(1, c)); return Math.round(255 * (c <= .0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - .055)); };
+      var oklch = function (c) {
+        var r = lin(c[0]), g = lin(c[1]), b = lin(c[2]);
+        var l = Math.cbrt(.4122214708 * r + .5363325363 * g + .0514459929 * b), m = Math.cbrt(.2119034982 * r + .6806995451 * g + .1073969566 * b), s = Math.cbrt(.0883024619 * r + .2817188376 * g + .6299787005 * b);
+        var A = 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, Bb = .0259040371 * l + .7827717662 * m - .808675766 * s;
+        return [.2104542553 * l + .793617785 * m - .0040720468 * s, Math.sqrt(A * A + Bb * Bb), (Math.atan2(Bb, A) * 180 / Math.PI + 360) % 360];
+      };
+      var rgbOf = function (L, C, h) {  // back to screen colour; too colourful for the screen: the colour is softened, its hue and lightness kept
+        for (var k = 0; k < 16; k++, C *= .9) {
+          var a = C * Math.cos(h * Math.PI / 180), b = C * Math.sin(h * Math.PI / 180);
+          var l = L + .3963377774 * a + .2158037573 * b, m = L - .1055613458 * a - .0638541728 * b, s = L - .0894841775 * a - 1.291485548 * b;
+          l *= l * l; m *= m * m; s *= s * s;
+          var R = 4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, G = -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, B2 = -.0041960863 * l - .7034186147 * m + 1.707614701 * s;
+          if (Math.min(R, G, B2) > -.003 && Math.max(R, G, B2) < 1.003) return [gam(R), gam(G), gam(B2)];
+        }
+        return [gam(L * L * L), gam(L * L * L), gam(L * L * L)];
+      };
+      // The colour rules. The brand green sits at hue 159 (OKLCH; #0b7a4b and #3ecf8e alike). The picture's natural colours (grass,
+      // trees, water, sky: hue 100-275) keep their direction but are pulled 40% toward the brand green and kept between fresh green
+      // (138) and sky (222), so a field is never yellow, olive or gold. Skin, sand, wood, red shirts and grey have no hue of their own
+      // here: they become a faint brand-tinted light (never cream, never brown). Lightness is fixed per theme (dark: a luminous band like
+      // #3ecf8e and #9be7c4; light: pastels that keep black text readable), and colourfulness follows the picture within a band.
+      var H0 = 159;
+      // role: [lightness low, lightness high, chroma min, chroma max] per theme. Dark: a deep body under brighter lights, so the
+      // field has depth instead of one flat slab. Light: a pale wash under deeper pastel tints, multiplied like ink.
+      var ROLE = { dk: { body: [.44, .52, .07, .12], lead: [.72, .8, .12, .18], mid: [.64, .72, .1, .16] },
+        lt: { body: [.91, .95, .035, .06], lead: [.77, .84, .08, .13], mid: [.83, .88, .06, .11] } };
+      var hueOf = function (o, dk) { var d = o[2] - H0; return o[2] > 100 && o[2] < 275 && o[1] > .03 ? Math.max(dk ? 154 : 162, Math.min(230, H0 + d * (d < 0 ? .2 : .65))) : -1; };  // -1: no hue of its own. Light: a little bluer, as multiplied layers lean yellow
+      var tune = function (c, dk, role, bold) {
+        var o = oklch(c), L = o[0], C = o[1], h = hueOf(o, dk), R = ROLE[dk ? "dk" : "lt"][role];
+        var t = Math.max(0, Math.min(1, (L - .3) / .5));
+        return h < 0 ? rgbOf(R[0] + (R[1] - R[0]) * t, R[2] * .7, H0 + 6) : rgbOf(R[0] + (R[1] - R[0]) * t, Math.max(R[2], Math.min(R[3], (R[2] + C * .8) * bold)), h);
+      };
+      var BRAND = [[11, 122, 75], [62, 207, 142, .6], [155, 231, 196, .5]];  // a grey picture: the brand's own greens
+      var rgba = function (c, a) { return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a.toFixed(2) + ")"; };
+      var dirOf = function (q) { var u = (q[1] - .5) * 1.4; return q[0] === 0 ? [u, -1] : q[0] === 1 ? [u, 1] : q[0] === 2 ? [-1, u] : [1, u]; };
+      // --- motion: one spring per blob (stiffness, damping); the blobs follow at different speeds, so the field stretches and re-forms ---
+      var S = [{ k: .02, d: .87 }, { k: .065, d: .8 }, { k: .026, d: .85 }, { k: .014, d: .89 }];
+      S.forEach(function (s) { s.x = s.y = s.vx = s.vy = s.tx = s.ty = 0; s.tf = ""; });
+      var W = 0, H = 0, ox = 0, oy = 0, px = 0, py = 0, fxp = 1, fyp = 1, d1 = [0, 1], d2 = [-1, -.3], pls = 0, plv = 0, run = 0, last = 0;
+      var measure = function () { var r = fld.getBoundingClientRect(); W = r.width; H = r.height; ox = r.left + window.scrollX; oy = r.top + window.scrollY; };
+      var aim = function () {  // where each blob wants to be
+        var cx0 = W / 2, cy0 = H / 2, dx = px - cx0, dy = py - cy0;
+        var qx = px + 144 * fxp, qy = py + 92 * fyp;  // the centre of the floating picture (it flips left/up near the window edge)
+        S[0].tx = cx0 + dx * .18; S[0].ty = cy0 + dy * .18;  // the body: the picture's main colour over the whole block, heavy and slow
+        S[1].tx = qx + d1[0] * 80; S[1].ty = qy + d1[1] * 56;  // the lead: its strongest colour, right behind the picture, on the side where it is in the picture
+        S[2].tx = cx0 + d2[0] * W * .3 - dx * .25; S[2].ty = cy0 + d2[1] * H * .28 - dy * .25;  // the second colour, across the block, moving against the pointer
+        S[3].tx = cx0 - d2[0] * W * .22 + dx * .45; S[3].ty = cy0 - d2[1] * H * .2 + dy * .45;  // the fourth colour (brand green, violet on dark), slowest of all
+      };
+      var step = function (now) {
+        var dt = Math.min(3, Math.max(.5, (now - last) / 16.7)), mv = false; last = now;
+        plv += -pls * .09 * dt; plv *= Math.pow(.8, dt); pls += plv * dt;  // a short swell when a new picture arrives
+        S.forEach(function (s, i) {
+          s.vx += (s.tx - s.x) * s.k * dt; s.vy += (s.ty - s.y) * s.k * dt; var f = Math.pow(s.d, dt); s.vx *= f; s.vy *= f;
+          s.x += s.vx * dt; s.y += s.vy * dt;
+          var sp = Math.sqrt(s.vx * s.vx + s.vy * s.vy), st = Math.min(.5, sp * .02), a = (Math.atan2(s.vy, s.vx) * 57.3).toFixed(1), g = 1 + pls * (i === 1 ? 1 : .45);
+          // stretched along the way it moves, without turning its own shape
+          var tf = "translate3d(" + s.x.toFixed(1) + "px," + s.y.toFixed(1) + "px,0) rotate(" + a + "deg) scale(" + ((1 + st) * g).toFixed(3) + "," + (g / (1 + st * .55)).toFixed(3) + ") rotate(" + (-a) + "deg)";
+          if (tf !== s.tf) BL[i].style.transform = s.tf = tf;
+          if (sp > .04 || Math.abs(s.tx - s.x) + Math.abs(s.ty - s.y) > .4) mv = true;
+        });
+        run = mv || Math.abs(pls) + Math.abs(plv) > .002 ? requestAnimationFrame(step) : 0;
+      };
+      var kick = function () { if (!run) { last = performance.now(); run = requestAnimationFrame(step); } };
+      var point = function (ev) {
+        px = ev.pageX - ox; py = ev.pageY - oy;
+        fxp = ev.clientX + 272 > window.innerWidth ? -1 : 1; fyp = ev.clientY + 167 > window.innerHeight ? -1 : 1;
+        aim();
+      };
+      pv._onpal = function (pal, M, Q) {
+        var dk = getComputedStyle(document.documentElement).colorScheme.indexOf("dark") >= 0, at = null;
+        if (pal && M) {  // the lead is the strongest pool; the second is the strongest one that differs most from it after tuning (sky against grass, say)
+          var O = M.map(function (m) { var o = oklch(m); return [hueOf(o, dk), o[0], m[3]]; }), li = 0;
+          O.forEach(function (o, i) { if (o[2] > O[li][2]) li = i; });
+          var mi = -1, best = -1;
+          O.forEach(function (o, i) {
+            if (i === li) return;
+            var dh = o[0] < 0 || O[li][0] < 0 ? (o[0] === O[li][0] ? 0 : .5) : Math.abs(o[0] - O[li][0]) / 30, sc = o[2] * (.3 + Math.min(1.6, dh) + Math.abs(o[1] - O[li][1]) * 1.5) * (o[0] < 0 ? .6 : 1);
+            if (sc > best) { best = sc; mi = i; }
+          });
+          pal = [pal[0], M[li], M[mi]]; at = [Q[li], Q[mi]];
+        }
+        var p = pal && pal[1][3] >= .25 ? pal : BRAND, vivid = p === BRAND ? 0 : Math.min(1, p[1][3]), bold = .85 + .35 * vivid;
+        var c = [tune(p[0], dk, "body", bold), tune(p[1], dk, "lead", bold * 1.1), tune(p[2], dk, "mid", bold), dk ? rgbOf(.68, .13, 300) : rgbOf(.8, .1, H0 + 5)];
+        var A = dk ? [.6, .8, .6, .34 + .2 * (1 - vivid)] : [.9, .85, .8, .4 + .25 * (1 - vivid)];
+        BL.forEach(function (b, i) { b.style.backgroundColor = rgba(c[i], A[i]); });
+        if (p !== BRAND && at) { d1 = dirOf(at[0]); d2 = dirOf(at[1]); if (d1[0] * d2[0] + d1[1] * d2[1] > .5) d2 = [-d2[0], -d2[1]]; }  // the two colours never pile up on one side
+        if (blk.classList.contains("lit")) { aim(); plv += calm ? 0 : .045; kick(); }
+      };
+      ixs.addEventListener("mouseenter", function (ev) {
+        measure(); point(ev);
+        if (!blk.classList.contains("lit")) {  // it blooms out from where the pointer came in, instead of flying in from a corner
+          S.forEach(function (s) { s.x = s.tx * .6 + px * .4; s.y = s.ty * .6 + py * .4; s.vx = s.vy = 0; });
+          pls = calm ? 0 : -.22; plv = 0;
+        }
+        blk.classList.add("lit"); kick();
+      });
+      ixs.addEventListener("mousemove", function (ev) { point(ev); if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; }); kick(); });
+      ixs.addEventListener("mouseleave", function () { blk.classList.remove("lit"); if (!calm) { plv += .03; kick(); } });  // it swells a little as it fades, like steam
+      window.addEventListener("resize", function () { if (blk.classList.contains("lit")) measure(); }, { passive: true });
+    }
   }
   // Page transition: the picture you pick becomes the player of the lesson page (browsers without view transitions just navigate).
   document.addEventListener("click", function (ev) {
