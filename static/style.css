@@ -1736,3 +1736,46 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 }
 @media (min-width:1200px) and (hover:hover){.pickb .ix:hover,.pickb .ix:hover sup{color:var(--acc)}}
 @media (min-width:1440px){.welcome{column-gap:96px}}
+
+/* -- desktop home (1200px and up): the stage. The first screen belongs to the headline and the hole; the six misses run
+   as a strip along its lower edge (same links, same hover as the table they replace), and the index starts on the
+   second screen. After a tap the answer takes the headline's place with its video across the column, the strip stays and marks the chosen miss, and nothing below moves. The header is taller, the
+   search smaller, logo and menu sit at the edges. CSS only: the markup and its order are unchanged. body.home is set by
+   build_home(). Phones and tablets keep the stacked hero. -- */
+@media (min-width:1200px){
+  body.home .top{height:88px;padding:0 32px}
+  body.home .search{flex:0 0 288px;margin-left:auto}
+  body.home .tnav{gap:12px}
+  body.home .main{max-width:1680px;padding-top:0}
+  body.home .welcome{--strip:96px;padding-top:0;margin-top:0;column-gap:96px;
+    grid-template-columns:minmax(0,1fr) clamp(400px,min(calc((100vh - 316px)*.8889),40vw),680px);
+    grid-template-rows:minmax(calc(min(100vh,1080px) - 88px - var(--strip) - 24px),auto) minmax(var(--strip),auto) auto}
+  body.home .welcome>.fh{grid-row:1;align-self:center}
+  body.home .welcome h1.hq.fhh{font-size:clamp(64px,4.6vw,92px);line-height:1.02;letter-spacing:-.04em;margin:0 0 28px}
+  body.home .fp{margin:0}
+  body.home .bf>div:first-child{grid-column:2;grid-row:1;align-self:center;margin-top:0}
+  body.home .bf>.bfr{display:contents}   /* the strip and the answer sit in different rows of the stage */
+  body.home .bfr>.bf0,body.home .bfr>.bf0[hidden]{display:block;visibility:visible;grid-column:1/-1;grid-row:2;align-self:start}   /* the strip stays after a tap */
+  body.home .bfr>.bfp:not(.bf0){grid-column:1;grid-row:1;align-self:center}
+  body.home .welcome>.pickb{grid-row:3}
+  body.home .bfr>.bfp[hidden]:not(.bf0){display:none}   /* the stage has fixed rows, so hidden answers need not hold space */
+  body.home .bfg{display:none}
+  body.home .bfis{margin-top:24px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);column-gap:32px}
+  body.home .bfi{grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:start;min-height:0;padding:20px 0 0;border-bottom:0}
+  body.home .bfi b{grid-column:1;grid-row:1}
+  body.home .bfi i{grid-column:1;grid-row:2;padding-left:24px}
+  body.home .bfi em{grid-column:2;grid-row:1;line-height:24px}
+  body.home .bf .bfp>h2{font-size:clamp(40px,3vw,56px);line-height:1.05;letter-spacing:-.035em;margin-bottom:16px}
+  body.home .bfp>h2+p{font-size:18px;line-height:26px;max-width:34em}
+  body.home .welcome:has(.bfp:not(.bf0):not([hidden]))>.fh{display:none}
+  /* the answer: its video as wide as the column allows (never taller than the stage), title and button in one line below */
+  body.home .bfr>.bfp:not(.bf0):not([hidden]){grid-template-columns:minmax(0,1fr) auto;column-gap:24px;max-width:min(100%,max(480px,calc((100vh - 500px)*1.7778)))}
+  body.home .bf .bfp:not(.bf0)>.bfv{grid-column:1/-1;grid-row:3;max-width:none;margin:8px 0 20px}
+  body.home .bf .bfp:not(.bf0)>.bftt{grid-column:1;grid-row:4;max-width:none;margin:0}
+  body.home .bf .bfp:not(.bf0)>.bftt b{font-size:20px;line-height:26px}
+  body.home .bf .bfp:not(.bf0)>.bfa{grid-column:2;grid-row:4;align-self:center;justify-self:end}
+  body.home .bf .bfp:not(.bf0)>.bfy{grid-column:1;grid-row:5;margin:12px 0 0}
+  body.home .bf .bfp:not(.bf0)>.bfs{grid-column:2;grid-row:5;margin:12px 0 0;text-align:right}
+  body.home .welcome:has(.bfd.on[data-k="slice"]) .bfi[data-k="slice"],body.home .welcome:has(.bfd.on[data-k="hook"]) .bfi[data-k="hook"],body.home .welcome:has(.bfd.on[data-k="over_the_top"]) .bfi[data-k="over_the_top"],body.home .welcome:has(.bfd.on[data-k="shank"]) .bfi[data-k="shank"],body.home .welcome:has(.bfd.on[data-k="driver_distance"]) .bfi[data-k="driver_distance"],body.home .welcome:has(.bfd.on[data-k="iron_contact"]) .bfi[data-k="iron_contact"]{color:var(--acc)}
+  body.home .welcome:has(.bfd.on[data-k="slice"]) .bfi[data-k="slice"] b::before,body.home .welcome:has(.bfd.on[data-k="hook"]) .bfi[data-k="hook"] b::before,body.home .welcome:has(.bfd.on[data-k="over_the_top"]) .bfi[data-k="over_the_top"] b::before,body.home .welcome:has(.bfd.on[data-k="shank"]) .bfi[data-k="shank"] b::before,body.home .welcome:has(.bfd.on[data-k="driver_distance"]) .bfi[data-k="driver_distance"] b::before,body.home .welcome:has(.bfd.on[data-k="iron_contact"]) .bfi[data-k="iron_contact"] b::before{background:var(--acc);border-color:var(--acc)}
+}
