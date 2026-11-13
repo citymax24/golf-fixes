@@ -1767,7 +1767,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.home .bfi em{grid-column:2;grid-row:1;line-height:24px}
   body.home .bf .bfp>h2{font-size:clamp(40px,3vw,56px);line-height:1.05;letter-spacing:-.035em;margin-bottom:16px}
   body.home .bfp>h2+p{font-size:18px;line-height:26px;max-width:34em}
-  body.home .welcome:has(.bfp:not(.bf0):not([hidden]))>.fh{display:none}
+  body.home .welcome.ans>.fh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* still the page's h1 for screen readers */
   /* the answer: its video as wide as the column allows (never taller than the stage), title and button in one line below */
   body.home .bfr>.bfp:not(.bf0):not([hidden]){grid-template-columns:minmax(0,1fr) auto;column-gap:24px;max-width:min(100%,max(480px,calc((100vh - 500px)*1.7778)))}
   body.home .bf .bfp:not(.bf0)>.bfv{grid-column:1/-1;grid-row:3;max-width:none;margin:8px 0 20px}
@@ -1776,6 +1776,6 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.home .bf .bfp:not(.bf0)>.bfa{grid-column:2;grid-row:4;align-self:center;justify-self:end}
   body.home .bf .bfp:not(.bf0)>.bfy{grid-column:1;grid-row:5;margin:12px 0 0}
   body.home .bf .bfp:not(.bf0)>.bfs{grid-column:2;grid-row:5;margin:12px 0 0;text-align:right}
-  body.home .welcome:has(.bfd.on[data-k="slice"]) .bfi[data-k="slice"],body.home .welcome:has(.bfd.on[data-k="hook"]) .bfi[data-k="hook"],body.home .welcome:has(.bfd.on[data-k="over_the_top"]) .bfi[data-k="over_the_top"],body.home .welcome:has(.bfd.on[data-k="shank"]) .bfi[data-k="shank"],body.home .welcome:has(.bfd.on[data-k="driver_distance"]) .bfi[data-k="driver_distance"],body.home .welcome:has(.bfd.on[data-k="iron_contact"]) .bfi[data-k="iron_contact"]{color:var(--acc)}
-  body.home .welcome:has(.bfd.on[data-k="slice"]) .bfi[data-k="slice"] b::before,body.home .welcome:has(.bfd.on[data-k="hook"]) .bfi[data-k="hook"] b::before,body.home .welcome:has(.bfd.on[data-k="over_the_top"]) .bfi[data-k="over_the_top"] b::before,body.home .welcome:has(.bfd.on[data-k="shank"]) .bfi[data-k="shank"] b::before,body.home .welcome:has(.bfd.on[data-k="driver_distance"]) .bfi[data-k="driver_distance"] b::before,body.home .welcome:has(.bfd.on[data-k="iron_contact"]) .bfi[data-k="iron_contact"] b::before{background:var(--acc);border-color:var(--acc)}
+  body.home .bfi.sel{color:var(--acc)}
+  body.home .bfi.sel b::before{background:var(--acc);border-color:var(--acc)}
 }
