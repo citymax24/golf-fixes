@@ -40,17 +40,29 @@
   };
   if (window.innerWidth > 1000 && !document.body.classList.contains("wpage")) $("#menu").setAttribute("aria-expanded", "true");
   $("#scrim").onclick = function () { closeMenu(true); };
+  // Theme: follow the system unless the visitor picked the other scheme. The pick is stored with the system scheme it
+  // overrode (gv_theme2, read before paint by the inline script in the page head) and ends when the system switches or
+  // when the visitor toggles back to what the system shows.
+  var sysDark = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function sysTheme() { return sysDark && sysDark.matches ? "dark" : "light"; }
+  function followSystem() { delete document.documentElement.dataset.theme; try { localStorage.removeItem("gv_theme2"); } catch (e) {} }
   $("#theme").onclick = function () {
-    var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    r.dataset.theme = dark ? "light" : "dark";
-    try { localStorage.setItem("gv_theme", r.dataset.theme); } catch (e) {}
+    var r = document.documentElement, next = (r.dataset.theme || sysTheme()) === "dark" ? "light" : "dark", sys = sysTheme();
+    if (next === sys) followSystem();
+    else { r.dataset.theme = next; save("theme2", { t: next, s: sys }); }
     themeState();
   };
   function themeState() {
-    var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var dark = (document.documentElement.dataset.theme || sysTheme()) === "dark";
     $("#theme").setAttribute("aria-pressed", String(dark)); $("#theme").textContent = dark ? "Light mode" : "Dark mode";
   }
+  if (sysDark) { var onSys = function () { followSystem(); themeState(); }; sysDark.addEventListener ? sysDark.addEventListener("change", onSys) : sysDark.addListener && sysDark.addListener(onSys); }
   themeState();
+  // GoatCounter's own opt-out switch is the address ending #toggle-goatcounter: count.js flips it and says so. Once the
+  // page has loaded the ending is taken out of the address, so that a reload does not flip it back.
+  window.addEventListener("load", function () {
+    if (location.hash === "#toggle-goatcounter" && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+  });
   document.addEventListener("error", function (ev) {
     var t = ev.target; if (t.tagName === "IMG" && /\/(mq2|hq2)\.jpg$/.test(t.src)) t.src = t.src.replace(/(mq2|hq2)\.jpg$/, "mqdefault.jpg");
     else if (t.tagName === "IMG" && window.thumbFail && /\/thumbs\/(mq2|hq2)\//.test(t.src) && t.closest(".vc")) window.thumbFail(t);  // no inline handler: the content policy forbids them
