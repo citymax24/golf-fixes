@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "golfvotes-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add seo/index_status.json seo/index_report.md  # never a half-written .tmp
+          git add seo ":!seo/*.tmp"  # never a half-written .tmp; the report may be missing after a timeout
           git diff --cached --quiet && exit 0
           git commit -qm "Index report"
           for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 10; done
