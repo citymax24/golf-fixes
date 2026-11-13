@@ -1706,7 +1706,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .ixsmp{position:absolute;left:0;top:0;width:160px;height:90px;visibility:hidden;pointer-events:none;overflow:hidden}
 .ixsmp img{width:100%;height:100%;object-fit:cover}.ixsmp .ambl{display:none}  /* its own light is never seen: nothing to draw or animate */
 @media (hover:none){
-  .ix.act,.ix.act sup{color:var(--acc)}
+  .ix.act{color:var(--acc)}
   .ixf{--ixfo:.5;--ixbl:64px}
   :root[data-theme=dark] .ixf{--ixfo:.36;--ixbl:60px}
 }
