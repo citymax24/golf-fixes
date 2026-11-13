@@ -16,7 +16,9 @@ last run and ours to fix. "Crawled - currently not indexed" is Google's choice, 
 
 The service account must be added as a user of the property in Search Console (Settings > Users and permissions).
 """
-import collections, concurrent.futures, datetime, json, os, re, sys
+import collections, concurrent.futures, datetime, functools, json, os, re, sys, threading, time
+
+print = functools.partial(print, flush=True)  # the Actions log shows progress live, not only at the end
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "_site")
@@ -26,6 +28,8 @@ HOST = URL.split("//")[1]
 STATUS = os.path.join(ROOT, "seo", "index_status.json")
 REPORT = os.path.join(ROOT, "seo", "index_report.md")
 BUDGET = int(os.environ.get("GSC_BUDGET", 1900))
+MAX_MINUTES = float(os.environ.get("GSC_MAX_MINUTES", 30))  # stop asking in time, so the answers so far are saved
+WORKERS = 4
 TODAY = datetime.date.today().isoformat()
 
 INDEXED = {"Submitted and indexed", "Indexed, not submitted in sitemap"}
@@ -47,13 +51,28 @@ def session():
         sys.exit("GSC_SERVICE_ACCOUNT is not set (repository secret with the service account's JSON key)")
     info = json.loads(key)
     print(f"service account: {info.get('client_email')}")
-    return AuthorizedSession(service_account.Credentials.from_service_account_info(
-        info, scopes=["https://www.googleapis.com/auth/webmasters.readonly"]))
+    creds = service_account.Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/webmasters.readonly"])
+    local, lock = threading.local(), threading.Lock()
+
+    def get():
+        """One HTTP session per thread (a requests session is not thread-safe); the token is refreshed under a lock."""
+        if not hasattr(local, "s"):
+            local.s = AuthorizedSession(creds)
+        with lock:
+            if not creds.valid:
+                local.s.credentials.refresh(google_request())
+        return local.s
+    return get
+
+
+def google_request():
+    from google.auth.transport.requests import Request
+    return Request()
 
 
 def find_property(s):
     """The Search Console property for this site: the domain property if the account can see it, else the URL prefix."""
-    r = s.get("https://www.googleapis.com/webmasters/v3/sites", timeout=30)
+    r = s().get("https://www.googleapis.com/webmasters/v3/sites", timeout=30)
     if r.status_code != 200:
         sys.exit(f"Search Console API answered {r.status_code}: {r.text[:300]}")
     seen = {x["siteUrl"]: x.get("permissionLevel") for x in r.json().get("siteEntry", [])}
@@ -70,7 +89,7 @@ class Quota(Exception):
 
 
 def inspect(s, prop, url):
-    r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+    r = s().post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
                json={"inspectionUrl": url, "siteUrl": prop, "languageCode": "en-US"}, timeout=60)
     if r.status_code == 429:
         raise Quota(r.text[:200])
@@ -95,31 +114,38 @@ def fault(row):
 
 
 def run_inspections(s, prop, todo, status):
+    """Asks for each URL in todo until the budget, the daily quota or MAX_MINUTES runs out. Saves every 100 answers."""
     done = failed = 0
-    stop = None
-    with concurrent.futures.ThreadPoolExecutor(4) as pool:
-        futures = {pool.submit(inspect, s, prop, u): u for u in todo}
-        for f in concurrent.futures.as_completed(futures):
-            u = futures[f]
-            try:
-                status[u[len(URL):]] = f.result()
-                done += 1
-            except Quota as ex:
-                if not stop:
-                    stop = str(ex)
-                    for g in futures:
-                        g.cancel()
-            except concurrent.futures.CancelledError:
-                pass
-            except Exception as ex:
-                failed += 1
-                if failed <= 5:
-                    print(f"inspection failed for {u}: {ex}")
-                if failed > 20 and not done:
-                    sys.exit("every inspection fails; see the messages above")
-    if stop:
-        print(f"daily quota reached after {done} URLs: {stop}")
+    stop, start = None, time.time()
+    with concurrent.futures.ThreadPoolExecutor(WORKERS) as pool:
+        for k in range(0, len(todo), 100):
+            batch = todo[k:k + 100]
+            for u, f in zip(batch, [pool.submit(inspect, s, prop, u) for u in batch]):
+                try:
+                    status[u[len(URL):]] = f.result()
+                    done += 1
+                except Quota as ex:
+                    stop = stop or f"daily quota reached: {ex}"
+                except Exception as ex:
+                    failed += 1
+                    if failed <= 5:
+                        print(f"inspection failed for {u}: {ex}")
+            save(status)
+            mins = (time.time() - start) / 60
+            print(f"{done} asked, {failed} failed, {mins:.1f} min")
+            if failed > 20 and not done:
+                sys.exit("every inspection fails; see the messages above")
+            if not stop and mins > MAX_MINUTES:
+                stop = f"time limit of {MAX_MINUTES:g} minutes reached; the next run continues"
+            if stop:
+                print(stop)
+                break
     return done, failed
+
+
+def save(status):
+    os.makedirs(os.path.dirname(STATUS), exist_ok=True)
+    json.dump(status, open(STATUS, "w"), indent=0, sort_keys=True)
 
 
 def write_report(parts, status, before, done):
@@ -170,8 +196,7 @@ if __name__ == "__main__":
     todo = sorted(urls, key=lambda u: status.get(u[len(URL):], {}).get("t", ""))[:BUDGET]
     done, failed = run_inspections(s, prop, todo, status)
     status = {p: status[p] for p in sorted(status) if URL + p in set(urls)}  # URLs that left the sitemap are forgotten
-    os.makedirs(os.path.dirname(STATUS), exist_ok=True)
-    json.dump(status, open(STATUS, "w"), indent=0, sort_keys=True)
+    save(status)
     new_faults = write_report(parts, status, before, done)
     if not done:
         sys.exit("no URL could be inspected")
