@@ -1553,22 +1553,21 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @font-face{font-family:"Inter Fallback";src:local("Arial");size-adjust:107.12%;ascent-override:90.44%;descent-override:22.52%;line-gap-override:0%}
 :root{--font:"Inter","Inter Fallback",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
 
-/* -- Ambient light. Like a TV that lights the wall behind it: each edge of a lesson's picture throws its own colour outward,
-   strongest from the middle of the edge and fading toward the corners. app.js reads the colours once from the picture already
-   on the page and paints one soft band per edge (.ambl i). The light then moves: it leans toward the mouse over the picture,
-   toward the middle of the screen as you scroll, and trails a little behind fast scrolling. That motion only shifts, stretches
-   and dims the four painted bands (transform and opacity), which the graphics card does without repainting anything.
-   Lesson cards light up only on hover, so a grid stays calm. -- */
-:root{--ambo:.85}
-.bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:44px;--amby:44px}
-.pwr{--ambx:64px;--amby:56px;--ambt:22px}  /* short light upward: the sticky header sits just above */
-.vc .thw{--ambx:32px;--amby:32px}
-@media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:10px}}  /* never wider than the page gutter: no sideways scrolling on a phone */
+/* -- Ambient light. Like a TV that lights the wall behind it: each edge of a lesson's picture throws its own colour outward.
+   app.js reads the colours once from the picture already on the page and paints ten large, overlapping pools of light around
+   it (.ambl i), three along the top and bottom, two at each side, each blended with its neighbours, over one even wash of
+   the picture's main colour (.ambw), so the light reads as one soft glow, strongest along the middle of each edge. The pools move on springs of slightly different stiffness: toward the mouse over the picture, toward
+   the middle of the screen as you scroll, trailing behind fast scrolling, so the light flows and changes shape and then
+   settles. That motion only shifts, turns, stretches and dims the painted pools (transform and opacity), which the graphics
+   card does without repainting anything. Lesson cards light up only on hover, so a grid stays calm. -- */
+:root{--ambo:.8}
+.bfv,.pwr,.vc .thw{position:relative;isolation:isolate;--ambx:64px;--amby:64px}
+.pwr{--ambx:96px;--amby:84px;--ambt:30px}  /* short light upward: the sticky header sits just above */
+.vc .thw{--ambx:44px;--amby:44px}
+@media (max-width:759px){.bfv,.pwr,.vc .thw{--ambx:12px}}  /* the page gutter is narrow on a phone */
 .ambl{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .9s ease}
-.ambl i{position:absolute;filter:blur(14px);opacity:.7;will-change:transform,opacity}
-.ambl .t{left:calc(var(--ambx)*-1);right:calc(var(--ambx)*-1);top:calc(var(--ambt,var(--amby))*-1);height:calc(var(--ambt,var(--amby))*2)}
-.ambl .b{left:calc(var(--ambx)*-1);right:calc(var(--ambx)*-1);bottom:calc(var(--amby)*-1);height:calc(var(--amby)*2)}
-.ambl .l,.ambl .r{top:0;bottom:0;width:calc(var(--ambx)*2)}.ambl .l{left:calc(var(--ambx)*-1)}.ambl .r{right:calc(var(--ambx)*-1)}
+.ambl i{position:absolute;opacity:.6;will-change:transform,opacity}
+.ambl .ambw{inset:24px;border-radius:24px}  /* set inside the picture, so its unlit middle never peeks out when it moves */
 .bfv.amb>.ambl,.pwr.amb>.ambl{opacity:var(--ambo)}
 .bfv.amb>.ambl{animation:ambin 1.2s ease both}
 @keyframes ambin{from{opacity:0}}

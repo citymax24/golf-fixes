@@ -84,65 +84,100 @@
     if (h < 70 || h > 330) L2 += .08;  // warm light kept light: dim orange would read as brown
     return [hsl2rgb(h, vivid ? Math.min(.78, Math.max(.55, s * 1.3 + .15)) : .4, L2), (.55 + .45 * Math.min(1, s * 2)) * lit];
   }
-  var ambAll = [], ambRaf = 0, ambY = window.scrollY, ambV = 0, ambStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ambAll = [], ambY = window.scrollY, ambV = 0, ambStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var ambIO = window.IntersectionObserver && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target._amb.vis = e.isIntersecting; }); ambGo(); }, { rootMargin: "120px" });
+  // the ten pools: edge (0 top, 1 bottom, 2 left, 3 right), place along the edge, size along it (%), strength, quickness, scroll lag
+  var POOLS = [[0, .2, 62, .8, .06, .55], [0, .5, 78, 1, .09, .8], [0, .8, 62, .8, .075, 1],
+    [1, .2, 62, .8, .07, .95], [1, .5, 78, 1, .1, .7], [1, .8, 62, .8, .055, .5],
+    [2, .3, 72, .85, .08, .9], [2, .7, 72, .85, .065, .6], [3, .3, 72, .85, .06, .65], [3, .7, 72, .85, .085, 1]];
   function amb(w) {
     var im = w && w.querySelector("img"); if (!im || w.dataset.amb) return; w.dataset.amb = "1";
     var go = function () {
       var d;
       try { ambCv = ambCv || document.createElement("canvas"); ambCv.width = 32; ambCv.height = 18; var cx = ambCv.getContext("2d", { willReadFrequently: true }); var nw = im.naturalWidth, nh = im.naturalHeight, ar = (im.clientWidth / im.clientHeight) || 16 / 9, sw = Math.min(nw, nh * ar), sh = Math.min(nh, nw / ar); cx.drawImage(im, (nw - sw) / 2, (nh - sh) / 2, sw, sh, 0, 0, 32, 18); d = cx.getImageData(0, 0, 32, 18).data; } catch (e) { return; }
-      var spot = function (p, rx, ry, at, k) {  // a soft spot of light, centred on the picture's edge (the middle of its band), fading outward
-        var a = p[1] * k; if (a < .04) return "";
-        return "radial-gradient(ellipse " + rx + " " + ry + " at " + at + ",rgba(" + p[0] + "," + a.toFixed(2) + "),rgba(" + p[0] + "," + (a * .72).toFixed(2) + ") 22%,rgba(" + p[0] + "," + (a * .36).toFixed(2) + ") 48%,rgba(" + p[0] + "," + (a * .1).toFixed(2) + ") 74%,rgba(" + p[0] + ",0))";
+      var patch = function (e, u) {  // the part of the picture behind each pool
+        return e < 2 ? (u < .4 ? [0, 12] : u > .6 ? [20, 32] : [10, 22]).concat(e ? [13, 18] : [0, 5]) : (e === 2 ? [0, 6] : [26, 32]).concat(u < .5 ? [2, 10] : [8, 16]);
       };
-      var edge = function (l) { return l.filter(Boolean).join(","); };
-      var G = [  // per edge: the middle strongest, smaller and weaker spots either side; the corners get only what spills over
-        edge([spot(ambCol(d, 11, 21, 0, 5), "34%", "50%", "50% 50%", 1), spot(ambCol(d, 0, 11, 0, 5), "16%", "40%", "24% 50%", .65), spot(ambCol(d, 21, 32, 0, 5), "16%", "40%", "76% 50%", .65)]),
-        edge([spot(ambCol(d, 11, 21, 13, 18), "34%", "50%", "50% 50%", 1), spot(ambCol(d, 0, 11, 13, 18), "16%", "40%", "24% 50%", .65), spot(ambCol(d, 21, 32, 13, 18), "16%", "40%", "76% 50%", .65)]),
-        edge([spot(ambCol(d, 0, 6, 4, 14), "50%", "36%", "50% 50%", .85)]),
-        edge([spot(ambCol(d, 26, 32, 4, 14), "50%", "36%", "50% 50%", .85)])
-      ];
-      if (!G.join("")) return;
+      // each pool's colour, then blended with its neighbours round the picture, so the light flows instead of breaking into spots
+      var C = POOLS.map(function (q) { var pt = patch(q[0], q[1]), c = ambCol(d, pt[0], pt[1], pt[2], pt[3]); return c[0].split(",").map(Number).concat(c[1] * q[3]); });
+      var RING = [0, 1, 2, 8, 9, 5, 4, 3, 7, 6];  // the pools in order round the picture: top left to right, right side down, bottom right to left, left side up
+      var M = C.map(function (c, i) {
+        var at = RING.indexOf(i), nb = [[i, .5], [RING[(at + 9) % 10], .25], [RING[(at + 1) % 10], .25]], r = 0, g = 0, bl = 0, wsum = 0, st = 0;
+        nb.forEach(function (n) { var o = C[n[0]], k = n[1] * o[3]; r += o[0] * k; g += o[1] * k; bl += o[2] * k; wsum += k; st += k; });
+        return wsum ? [Math.round(r / wsum), Math.round(g / wsum), Math.round(bl / wsum), st] : [255, 255, 255, 0];
+      });
       var box = document.createElement("span"); box.className = "ambl"; box.setAttribute("aria-hidden", "true");
-      var L = ["t", "b", "l", "r"].map(function (c, i) { var e = document.createElement("i"); e.className = c; if (G[i]) e.style.background = G[i]; box.appendChild(e); return e; });
+      var P = [], tot = 0, wr = 0, wg = 0, wb = 0;
+      M.forEach(function (m) { tot += m[3]; wr += m[0] * m[3]; wg += m[1] * m[3]; wb += m[2] * m[3]; });
+      if (tot > .2) {  // under the pools, one even wash of the picture's main colour all round, so there are no gaps
+        var wash = document.createElement("i"); wash.className = "ambw";
+        wash.style.boxShadow = "0 0 calc(var(--amby)*1.2) calc(var(--amby)*.12 + 24px) rgba(" + Math.round(wr / tot) + "," + Math.round(wg / tot) + "," + Math.round(wb / tot) + "," + Math.min(.6, .2 + tot / 10 * .5).toFixed(2) + ")";
+        box.appendChild(wash);
+        wash.style.transition = "transform 1.1s cubic-bezier(.2,.8,.3,1),opacity 1.2s ease";
+        P.push({ el: wash, e: 4, u: .5, lag: .6 });
+      }
+      POOLS.forEach(function (q, qi) {
+        var e = q[0], u = q[1], z = q[2], m = M[qi], a = m[3];
+        if (a < .05) return;
+        var g = function (f) { return "rgba(" + m[0] + "," + m[1] + "," + m[2] + "," + (a * f).toFixed(3) + ")"; };
+        var el = document.createElement("i"), T = "var(--ambt,var(--amby))";
+        el.style.cssText = (e < 2 ? "left:calc(" + (u * 100 - z / 2) + "%);width:" + z + "%;" + (e ? "bottom:calc(var(--amby)*-1);height:calc(var(--amby)*2)" : "top:calc(" + T + "*-1);height:calc(" + T + "*2)")
+          : "top:calc(" + (u * 100 - z / 2) + "%);height:" + z + "%;width:calc(var(--ambx)*2);" + (e === 2 ? "left" : "right") + ":calc(var(--ambx)*-1)")
+          + ";background:radial-gradient(closest-side," + g(1) + "," + g(.82) + " 18%," + g(.55) + " 38%," + g(.3) + " 56%," + g(.12) + " 74%," + g(.03) + " 90%,rgba(" + m[0] + "," + m[1] + "," + m[2] + ",0))";
+        box.appendChild(el);
+        var dur = (.045 / q[4]).toFixed(2);  // softer pools take longer to arrive, so the pools part and meet again: the light changes shape
+        el.style.transition = "transform " + dur + "s cubic-bezier(.22,1.25,.36,1),opacity " + (dur * 1.3).toFixed(2) + "s ease";
+        P.push({ el: el, e: e, u: u, lag: q[5] });
+      });
+      if (!P.length) return;
       w.insertBefore(box, w.firstChild);
-      var A = w._amb = { w: w, L: L, vis: true, mx: 0, my: 0, tx: 0, ty: 0, ax: 20 };
+      var A = w._amb = { w: w, P: P, vis: true, mx: 0, my: 0, on: 0, ax: 20 };
       if (!ambStill) {
         ambAll.push(A); if (ambIO) ambIO.observe(w);
         A.ax = parseFloat(getComputedStyle(w).getPropertyValue("--ambx")) || 20;
-        w.addEventListener("pointermove", function (ev) { if (ev.pointerType === "touch") return; var r = w.getBoundingClientRect(); A.tx = Math.max(-1, Math.min(1, (ev.clientX - r.left) / r.width * 2 - 1)); A.ty = Math.max(-1, Math.min(1, (ev.clientY - r.top) / r.height * 2 - 1)); ambGo(); }, { passive: true });
-        w.addEventListener("pointerleave", function () { A.tx = A.ty = 0; ambGo(); }, { passive: true });
+        // the mouse position is measured against the picture's place from the last update: no extra layout work per mouse move
+        w.addEventListener("pointermove", function (ev) { if (ev.pointerType === "touch") return; var r = A.r || (A.r = w.getBoundingClientRect()); A.mx = Math.max(-1, Math.min(1, (ev.clientX - r.left) / r.width * 2 - 1)); A.my = Math.max(-1, Math.min(1, (ev.clientY - r.top) / r.height * 2 - 1)); A.on = 1; ambGo(); }, { passive: true });
+        w.addEventListener("pointerleave", function () { A.on = 0; ambGo(); }, { passive: true });
+        window.addEventListener("resize", function () { A.r = null; }, { passive: true });
       }
       requestAnimationFrame(function () { w.classList.add("amb"); ambGo(); });
     };
     if (im.complete && im.naturalWidth) go(); else im.addEventListener("load", go, { once: true });
   }
-  function ambGo() { if (!ambRaf && ambAll.length) ambRaf = requestAnimationFrame(ambTick); }
-  function ambTick() {  // one frame of the light's motion: read every position first, then write only transforms and opacities
-    ambRaf = 0;
-    var y = window.scrollY, vh = window.innerHeight, more = false;
-    ambV += (Math.max(-40, Math.min(40, y - ambY)) - ambV) * .18; ambY = y;  // scroll speed, smoothed, so the light trails and settles
-    if (Math.abs(ambV) > .05) more = true; else ambV = 0;
+  // The motion itself runs on the graphics card as CSS transitions; this sets new goals about twelve times a second at most
+  var ambTm = 0, ambLast = 0, ambEnd = 0;
+  function ambGo() {
+    if (ambTm || !ambAll.length) return;
+    ambTm = setTimeout(function () { ambTm = 0; requestAnimationFrame(ambTick); }, Math.max(0, 80 - (performance.now() - ambLast)));
+  }
+  function ambTick() {  // read every position first, then write only transforms and opacities, and only where they changed
+    var now = performance.now(), y = window.scrollY, vh = window.innerHeight, dt = Math.max(16, now - ambLast);
+    ambV = ambV * .35 + Math.max(-40, Math.min(40, (y - ambY) / dt * 16)) * .65; ambY = y; ambLast = now;  // scroll speed in px per frame
+    if (Math.abs(ambV) < .3) ambV = 0; else ambGo();  // keep easing back until the page is still
     var on = ambAll.filter(function (a) { return a.vis && a.w.isConnected; });
     var R = on.map(function (a) { return a.w.getBoundingClientRect(); });
+    var cl = function (x, lo, hi) { return Math.max(lo, Math.min(hi, x)); };
+    var sv = cl(ambV * .03, -.5, .5);  // how hard the light is being pulled by scrolling
     on.forEach(function (a, i) {
-      var r = R[i]; if (!r.width) return;
-      a.mx += (a.tx - a.mx) * .1; a.my += (a.ty - a.my) * .1;
-      if (Math.abs(a.tx - a.mx) > .002 || Math.abs(a.ty - a.my) > .002) more = true;
-      var p = Math.max(-.6, Math.min(.6, (r.top + r.height / 2 - vh / 2) / vh));  // below the middle of the screen: the light leans up, above it: down
-      var reach = Math.min(r.width, r.height) * .09, rx = Math.min(reach, a.ax * .5), tr = Math.max(-14, Math.min(14, ambV * .7)), st = Math.min(.35, Math.abs(ambV) * .015);
-      var f = function (x) { return Math.max(.3, Math.min(1, x)).toFixed(3); };
-      var T = a.L[0].style, B = a.L[1].style, Lf = a.L[2].style, Rt = a.L[3].style;
-      T.transform = "translate3d(" + (a.mx * rx).toFixed(1) + "px," + tr.toFixed(1) + "px,0) scaleY(" + (1 + .3 * Math.max(0, -a.my) + .25 * Math.max(0, p) - (ambV > 0 ? st * .5 : -st)).toFixed(3) + ")";
-      B.transform = "translate3d(" + (a.mx * rx).toFixed(1) + "px," + tr.toFixed(1) + "px,0) scaleY(" + (1 + .3 * Math.max(0, a.my) + .25 * Math.max(0, -p) + (ambV > 0 ? st : -st * .5)).toFixed(3) + ")";
-      Lf.transform = "translate3d(0," + (a.my * reach + tr).toFixed(1) + "px,0) scaleX(" + (1 + .3 * Math.max(0, -a.mx)).toFixed(3) + ")";
-      Rt.transform = "translate3d(0," + (a.my * reach + tr).toFixed(1) + "px,0) scaleX(" + (1 + .3 * Math.max(0, a.mx)).toFixed(3) + ")";
-      T.opacity = f(.7 - .3 * a.my + .35 * p); B.opacity = f(.7 + .3 * a.my - .35 * p);
-      Lf.opacity = f(.7 - .3 * a.mx); Rt.opacity = f(.7 + .3 * a.mx);
+      var r = a.r = R[i]; if (!r.width) return;
+      var p = cl((r.top + r.height / 2 - vh / 2) / vh, -.6, .6);  // below the middle of the screen: the light leans up, above it: down
+      a.P.forEach(function (b) {
+        var e = b.e, ux = b.u * 2 - 1, side = e < 2, along = side ? a.mx : a.my, len = side ? r.width : r.height;
+        var toward = e === 0 ? -a.my : e === 1 ? a.my : e === 2 ? -a.mx : a.mx;  // 1: the mouse is at this edge, -1: at the opposite one
+        var prox = a.on * Math.exp(-(along - ux) * (along - ux) / .5) * (.55 + .45 * toward);
+        var lean = e === 0 ? p : e === 1 ? -p : 0, trail = cl(ambV * b.lag * 1.1, -24, 24);
+        var pull = e === 1 ? Math.max(0, sv) : Math.max(0, -sv);  // the trailing side stretches
+        var slide = cl(a.on * (along - ux) * .2 * len, -(side ? a.ax * .7 : 60), side ? a.ax * .7 : 60);
+        var T = e === 4 ? [a.on * a.mx * 6, cl(a.on * a.my * 5 + trail * .4, -8, 8), 1 + .02 * a.on + .01 * Math.abs(sv), 1 + .02 * a.on + .03 * Math.abs(sv), 0, .7 + .2 * a.on + .1 * Math.abs(sv)] : side
+          ? [slide, trail, 1 + .2 * prox - .12 * Math.abs(sv), 1 + .6 * prox + .3 * Math.max(0, lean) + .9 * pull - .2 * Math.abs(sv), (along - ux) * prox * 9 * (e ? -1 : 1) + (b.u - .5) * sv * 16, .55 + .35 * prox + .25 * lean - .12 * a.on * Math.max(0, -toward)]
+          : [0, slide + trail, 1 + .6 * prox, 1 + .2 * prox + .7 * Math.abs(sv), (b.u - .5) * sv * 14 * (e === 2 ? 1 : -1), .55 + .35 * prox - .12 * a.on * Math.max(0, -toward)];
+        var tf = "translate3d(" + T[0].toFixed(1) + "px," + T[1].toFixed(1) + "px,0) rotate(" + T[4].toFixed(1) + "deg) scale(" + T[2].toFixed(3) + "," + T[3].toFixed(3) + ")", op = cl(T[5], .2, 1).toFixed(2);
+        if (tf !== b.tf) { b.el.style.transform = b.tf = tf; }
+        if (op !== b.op) { b.el.style.opacity = b.op = op; }
+      });
     });
-    if (more) ambGo();
   }
-  window.addEventListener("scroll", ambGo, { passive: true });
+  window.addEventListener("scroll", function () { ambGo(); clearTimeout(ambEnd); ambEnd = setTimeout(ambGo, 140); }, { passive: true });  // and once more when scrolling stops
   $$(".bfv, .pwr").forEach(amb);
   document.addEventListener("pointerover", function (ev) { var w = ev.target.closest && ev.target.closest(".vc .thw"); if (w) amb(w); }, { passive: true });
 
