@@ -334,7 +334,7 @@ html,body{max-width:100%;overflow-x:clip}
 .awt{margin-left:8px;font-size:13px;font-weight:700;letter-spacing:.1px;color:#8A6A1F;white-space:nowrap}
 [data-theme=dark] .awt{color:#E3C16F}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .awt{color:#E3C16F}}
-.awt .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.awt .sr,.ldo .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* hero v2 */
 .welcome h1.hq{font-size:40px;line-height:1.05;letter-spacing:-1.2px;margin:6px 0 14px}
 .welcome h1.hq span{display:block;margin-top:8px;font-size:22px;line-height:1.25;letter-spacing:-.3px;font-weight:700;color:var(--mut)}
