@@ -1713,3 +1713,26 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @media (hover:none) and (prefers-color-scheme:dark){:root:not([data-theme=light]) .ixf{--ixfo:.36;--ixbl:60px}}
 /* while the field shows, the small counts take the text colour: grey on colour would be too faint to read */
 .pickb.lit .ix sup,.pickb.lit .ix:hover sup,.pickb.lit .ix.act sup{color:var(--fg)}
+
+/* -- desktop home (1200px and up): more air and less weight. One gap of 128px separates the hole, the index and the
+   leaderboard (the old `.welcome>h2.pick` margins no longer match since the heading sits inside .pickb). The index words
+   are semibold, a size smaller and rest in the muted grey, so the headline and the hole lead and the index reads as the
+   second way in; the word under the pointer (or the touch highlight) turns green, and while the light field shows the
+   other words take the text colour, since grey on colour is too faint. Scoped to .pickb: problem pages use the same
+   index. Phones and tablets keep their look. -- */
+@media (min-width:1200px){
+  .welcome{margin-bottom:128px}
+  .bfi{min-height:48px}
+  .bfi b{font-weight:500}
+  .pickb{margin-top:128px}
+  .welcome h2.pick{margin-bottom:32px}
+  .pickb .ixs{gap:12px 48px}
+  .pickb .ix{font-size:40px;line-height:52px;font-weight:600;letter-spacing:-.025em}
+  .pickb .ix,.pickb .ix sup{color:var(--mut)}
+  .pickb .ix.act{color:var(--acc)}
+  .pickb.lit .ix:not(:hover):not(.act){color:var(--fg)}
+  .pickb .ix sup{margin-left:6px}
+  .pickb .ixn{margin-top:40px}
+}
+@media (min-width:1200px) and (hover:hover){.pickb .ix:hover{color:var(--acc)}}
+@media (min-width:1440px){.welcome{column-gap:96px}}
