@@ -393,7 +393,8 @@ def problem_index(skip=None, only=None):
     return "".join(entry(p) for p in sorted([p for p in (only if only is not None else PROBLEMS) if p["video_count"] and p["key"] != skip], key=lambda p: -p["total_recs"]))
 
 
-MISSES = [  # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
+MISSES = [  # the home page's share image repeats the spots and the first flight (SPOTS, FLIGHT in build/og.js)
+          # key, end x, end y (in a 320x360 course), label right-handed, label left-handed, flight path, verdict
     ("slice", 262, 96, "Curves right", "Curves left", "M160 326C120 250 150 130 262 96", "That’s a slice."),
     ("hook", 58, 96, "Curves left", "Curves right", "M160 326C200 250 170 130 58 96", "That’s a hook."),
     ("over_the_top", 92, 44, "Pulled left", "Pulled right", "M160 326L92 44", "That’s a pull. Usually over the top."),
