@@ -48,15 +48,21 @@
   }
   // Models in small groups: paper x, paper y, height in units, sprite. Placed so none stands in front of a dot.
   var SPR = ["tree-1", "tree-2", "tree-3", "tree-1", "tree-5", "grass-1", "grass-2", "bush-1", "bush-2"];
+  // Composition (one rule set, not single trees): 1. a dense, overlapping tree line right behind the green, so the red
+  // flag stands against it as the focal point; 2. the large mass on the right in three depths, as the counterweight to
+  // the headline on the left; 3. low shrubs and grass on the pond's rim so it sits in the ground. Every group has one large tree, medium ones beside it and shrubs at its foot. The fairway, the dots and the
+  // area under the headline stay open, and nothing stands near the tee (close to the camera it only blurs). Paper x, paper y, height in units, sprite (0-4 trees, 5-6 grass, 7-8 shrubs).
   var MODELS = [
-    [1150, 90, 1.9, 1], [1060, 140, 1.3, 4], [1210, 150, .6, 7],
-    [1430, 40, 2.2, 2], [1520, 80, 1.7, 0], [1380, 100, .3, 5],
-    [760, 250, 1.8, 0], [830, 320, .6, 8], [780, 180, 1.4, 2],
-    [880, 1160, 1.7, 2], [970, 1180, .32, 6], [950, 1060, .6, 7],
-    [1880, 380, 2, 0], [1960, 310, 1.5, 1], [1830, 440, .3, 5],
-    [1800, 840, 2.2, 1], [1700, 900, .65, 8], [1740, 770, 1.3, 4],
-    [1560, 1250, 1.3, 0], [1510, 1300, .32, 6], [1660, 1230, .6, 7],
-    [870, 960, .3, 5], [1120, 1000, .26, 6]];
+    // 1. behind the green
+    [1030, 120, 1.6, 4], [1095, 60, 2.1, 1], [1160, 135, 1.7, 0], [1225, 30, 2.4, 2], [1300, 95, 1.9, 0],
+    [1365, 20, 2.6, 1], [1430, 110, 2.0, 2], [1495, 55, 1.8, 0], [1560, 140, 1.4, 4],
+    [1120, 185, .55, 7], [1250, 175, .3, 5], [1335, 180, .5, 8], [1475, 190, .55, 7],
+    // 2. the right-hand mass: back, middle, front
+    [1760, 230, 2.4, 0], [1855, 300, 2.0, 2], [1930, 390, 1.7, 1],
+    [1790, 560, 1.9, 4], [1890, 640, 2.4, 0], [1800, 760, 1.4, 1],
+    [1900, 880, 2.0, 2], [1790, 930, .55, 7], [1870, 1010, .45, 8], [1745, 1000, .3, 6], [1930, 1060, .3, 5],
+    // 3. the pond's rim
+    [930, 770, .5, 7], [1010, 755, .32, 6], [865, 830, .45, 8], [985, 1105, .3, 5], [1080, 1085, .25, 6]];
   var FLAG_H = 1.15;
   // Tuned on the prototype (depth of field, focus at rest on the flag, flight, parallax, camera follow, easing).
   var CFG = { dof: 4.5, rest: 18, speed: 1, height: 1, parallax: 1, follow: 1, ease: .07 };
@@ -103,7 +109,7 @@
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
-    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog;uniform vec2 uRes,uC0;out vec4 o;\n" +
+    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog,uHole;uniform vec2 uRes,uC0;out vec4 o;\n" +
     "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.45;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
@@ -112,7 +118,7 @@
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
     "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
     "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
-    "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
+    "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(c,uBg,smoothstep(7.,11.5,length((p.xz-uHole)*vec2(1.,1.15))));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
     "if(c>.7){vec3 a=vec3(0.);float lod=log2(max(c*.3,1.));float rot=hash(px+7.)*6.2832;for(int i=0;i<18;i++){if(float(i)>=uTaps)break;float fi=float(i)+.5;float r=sqrt(fi/uTaps)*c;float th=fi*2.39996+rot;a+=shade(px+r*vec2(cos(th),sin(th)),lod).rgb;}col=a/uTaps;}\n" +
     // the edges of the canvas melt into the page
@@ -126,7 +132,7 @@
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   var aLoc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   var U = {};
-  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog", "uHole"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
   function newTex() {
     var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -258,7 +264,7 @@
     var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0;
     if ((wide || phone) && fh) {
       // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
-      var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
+      var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(phone ? (fh.querySelector(".fhh") || fh) : fh);  // on phones the line under the headline sits below the stage
       Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
       if (textRight) textBox = { x1: textRight + 24, y0: y0 - 16, y1: y1 + 16 };
     }
@@ -272,16 +278,29 @@
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
     var A = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1], d = sub(Wd(S(e[0], e[1])), cam.p); return dot(d, cam.R) / dot(d, cam.F); });
     var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
+    // the pin top and the tee must also fit between the question and the bottom of the finder box (short windows)
+    var Bv = [Wd(S(CUP[0], CUP[1]), FLAG_H), Wd(S(TEE[0], TEE[1]))].map(function (w) { var d = sub(w, cam.p); return dot(d, cam.U) / dot(d, cam.F); });
+    var bmax = Math.max(Bv[0], Bv[1]), bmin = Math.min(Bv[0], Bv[1]), T = boxC.y + 8, Bm = boxC.y + boxC.h - 16, fv = (Bm - T) / (bmax - bmin);
     // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
-    function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
-    base0 = bounds(textRight || W * .3).concat([H / 2]);
+    function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin), fv), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
+    base0 = bounds(textRight || W * .3);
+    var cyRest = H / 2; if (cyRest - bmax * base0[0] < T) cyRest = T + bmax * base0[0]; if (cyRest - bmin * base0[0] > Bm) cyRest = Bm + bmin * base0[0];
+    base0.push(cyRest);
     // with an answer showing, the hole fits the finder box under the question (the answer has the left column)
-    base1 = boxC.w > 40 && boxC.h > 40 ? fit(boxC.x, boxC.y, boxC.w, boxC.h, true) : base0.slice();
+    base1 = ansBase();
     if (base1[0] > base0[0]) base1[0] = base0[0];  // the hole never grows when the answer opens
     par = keepPar; camOff = keepOff; applyAns(); setCam();
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
   // When the answer takes the headline's place, the hole steps right and a little back so the video does not cover it.
+  function ansBase() {
+    if (!boxC || boxC.w < 40 || boxC.h < 40) return base0.slice();
+    var pnl = bf.querySelector(".bfp.in") || bf.querySelector(".bfp:not([hidden]):not(.bf0)"), right = boxC.x - 64, sr = st.getBoundingClientRect();
+    if (pnl) Array.prototype.forEach.call(pnl.querySelectorAll(".bfv,.bfa,.bftt,iframe"), function (e) { var r = e.getBoundingClientRect(); if (r.width) right = Math.max(right === boxC.x - 64 ? 0 : right, r.right - sr.left); });
+    var x0 = Math.min(right + 56, boxC.x), x1 = W - 24, b = fit(x0, boxC.y, x1 - x0, boxC.h, true);
+    if (b[0] > base0[0]) { var k = base0[0] / b[0]; b[0] = base0[0]; b[1] = (x0 + x1) / 2 + (b[1] - (x0 + x1) / 2) * k; b[2] = boxC.y + boxC.h / 2 + (b[2] - boxC.y - boxC.h / 2) * k; }  // never larger than at rest
+    return b;
+  }
   function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = base0[2] + (base1[2] - base0[2]) * e; }
   // The pin top, the tee and the six landing spots must fit the box (bx, by, bw, bh in canvas px), with room for labels.
   function fit(bx, by, bw, bh, onlyCompute) {
@@ -340,7 +359,10 @@
     function off() { if (hoverK !== k) return; hoverK = null; userFocus = true; if (!landedK) focusT = REST; kick(); }
     d.addEventListener("mouseenter", on); d.addEventListener("mouseleave", off); d.addEventListener("focus", on); d.addEventListener("blur", off);
   });
-  new MutationObserver(function () { kick(); }).observe(welcome, { attributes: true, attributeFilter: ["class"] });  // .ans
+  new MutationObserver(function () {  // .ans: measure the answer once it has laid out, then ease the hole into the free area
+    if (ready && !narrow && base0 && welcome.classList.contains("ans")) requestAnimationFrame(function () { base1 = ansBase(); kick(); });
+    kick();
+  }).observe(welcome, { attributes: true, attributeFilter: ["class"] });
   new MutationObserver(function () {
     var l = bf.classList.contains("lh"); if (l === lefty) return;
     lefty = l; placeModels(); trail = []; trailA = 0; rings = [];
@@ -447,7 +469,7 @@
     gl.uniform3fv(U.uPaper, paperCol()); gl.uniform3fv(U.uBg, bg); gl.uniform3fv(U.uP00, pc[0]); gl.uniform3fv(U.uP10, pc[1]); gl.uniform3fv(U.uP01, pc[2]); gl.uniform3fv(U.uP11, pc[3]);
     gl.uniform1f(U.uLight, mode === "light" ? 1 : 0); gl.uniform2f(U.uRes, cv.width, cv.height);
     gl.uniform1f(U.uFoc, foc); gl.uniform2f(U.uC0, cx0, cy0); gl.uniform1f(U.uFocus, focus); gl.uniform1f(U.uAp, ap()); gl.uniform1f(U.uMax, maxc()); gl.uniform1f(U.uDpr, dpr);
-    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18); gl.uniform2f(U.uFog, narrow ? 26 : 16, narrow ? 56 : 40);
+    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18); gl.uniform2f(U.uFog, narrow ? 26 : 16, narrow ? 56 : 40); var hc = S(160, 190); gl.uniform2f(U.uHole, hc[0] / 100, hc[1] / 100);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     layout(); drawTrail();
     if (busy) kick();
