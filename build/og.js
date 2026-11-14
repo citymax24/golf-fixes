@@ -5,6 +5,8 @@
 // when the design changes, because networks cache preview images by URL.
 // Only images whose content changed are drawn again (build/og-hashes.json remembers what each one was drawn from), so a
 // data update commits the few images whose numbers moved, not all fifty. `node build/og.js --all` draws everything.
+// The home page's card is the exception: it is compared by its picture, and while the picture stays the same its recorded
+// hash stays the old one (so that hash can name an earlier stylesheet than the current one).
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const root = path.join(__dirname, '..');
