@@ -7,10 +7,14 @@
    photos). One world unit is 100 px of the 2048 x 1536 sheet; S() places the finder's 320 x 360 course on it. */
 (function () {
   "use strict";
+  function bail() { document.documentElement.classList.remove("gvwill"); }
+  // a time limit: if the stage is not live in 4 s (slow network, a hanging image, an error), the drawn hole shows and the
+  // stage does not take over later
+  var gaveUp = false, giveUp = setTimeout(function () { if (live) return; gaveUp = true; try { teardown(); } catch (err) { bail(); } }, 4000);
   var bf = document.getElementById("bf"), welcome = document.querySelector(".welcome"), me = document.currentScript;
-  if (!bf || !welcome || !me || !window.WebGL2RenderingContext) return;
-  if (navigator.connection && navigator.connection.saveData) return;  // data saver: the drawn hole is enough
-  var bfc = bf.querySelector(".bfc"); if (!bfc) return;
+  if (!bf || !welcome || !me || !window.WebGL2RenderingContext) { bail(); return; }
+  if (navigator.connection && navigator.connection.saveData) { bail(); return; }  // data saver: the drawn hole is enough
+  var bfc = bf.querySelector(".bfc"); if (!bfc) { bail(); return; }
   var base = me.src.replace(/stage\.js.*$/, "stage/"), ver = (me.src.match(/[?&]v=([^&]+)/) || [])[1] || "";
   function src(n) { return base + n + ".webp" + (ver ? "?v=" + ver : ""); }
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -56,7 +60,7 @@
   st.innerHTML = '<div class="gvw"><canvas class="gvgl"></canvas><canvas class="gvtr"></canvas><div class="gvov"></div></div>';
   var wrap = st.firstChild, cv = wrap.children[0], trc = wrap.children[1], ov = wrap.children[2];
   var gl = cv.getContext("webgl2", { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true });
-  if (!gl) return;
+  if (!gl) { bail(); return; }
 
   // ---- camera: above the middle line of the hole, looking along it; foc (px) and the centre (cx0, cy0) are fitted so that
   // the whole hole and its six dots fill the finder box, wherever that box sits in the canvas
@@ -73,7 +77,7 @@
     // a steeper view than the prototype's, so the hole fills the finder box's height instead of lying flat
     var hx = S(MID[0], MID[1])[0] / 100;
     if (narrow) { p = [hx + ox, 8.2 + oy * .15, 19.2 + oz]; t = [hx + ox, 0, 8.0 + oz * .5]; }
-    else { p = [hx + ox, 6.6 + oy * .2, 20.0 + oz]; t = [hx + ox, 0, 8.4 + oz * .5]; }
+    else { var cxw = hx + (lefty ? 2.3 : -2.3); p = [cxw + ox, 4.0 + oy * .2, 20.4 + oz]; t = [cxw + ox, 0, 8.8 + oz * .5]; }
     cam.p = p; cam.F = nrm(sub(t, p)); cam.R = nrm(cross(cam.F, [0, 1, 0])); cam.U = cross(cam.R, cam.F);
   }
   function proj(w) {
@@ -111,7 +115,7 @@
   function shd(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; }
   var pr = gl.createProgram();
   try { gl.attachShader(pr, shd(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, shd(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error("link"); }
-  catch (err) { return; }
+  catch (err) { bail(); return; }
   gl.useProgram(pr);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   var aLoc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
@@ -217,7 +221,7 @@
     narrow = !wide;
     if (wide) {  // the whole width of the page column, from the top of the welcome block to below the finder box
       var main = (welcome.closest(".main") || welcome.parentNode).getBoundingClientRect(), wb = welcome.getBoundingClientRect();
-      sx = main.left - wb.left; sw = main.width; sy = 0; sh = box.y + box.h + 72;
+      sx = main.left - wb.left; sw = main.width; sy = 0; sh = Math.max(box.y + box.h + 40, Math.min(800, Math.max(560, sw * .52)));
     } else { sx = box.x; sy = box.y; sw = box.w; sh = box.h; }
     var sig = [wide, sx, sy, sw, sh, box.x, box.y, box.w, box.h, lefty, window.devicePixelRatio].map(function (v) { return typeof v === "number" ? Math.round(v) : v; }).join();
     if (sig === lastSig && !force) return; lastSig = sig;
@@ -227,9 +231,31 @@
     dpr = Math.min(touch ? 1.25 : 1.35, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); trc.width = cv.width; trc.height = cv.height;
     gl.viewport(0, 0, cv.width, cv.height);
-    fit(box.x - sx, box.y - sy, box.w, box.h);
+    // the headline's box in canvas px: models behind the text step back so it stays readable
+    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0; colRight = box.x - sx - 48;
+    if (wide && fh) {
+      // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
+      var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
+      Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
+      if (textRight) textBox = { x1: textRight + 24, y0: y0 - 16, y1: y1 + 16 };
+    }
+    if (wide) frameWide(); else fit(box.x - sx, box.y - sy, box.w, box.h);
     inkDirty = staticDirty = true; if (ready) frame(performance.now());
   }
+  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null;
+  function frameWide() {  // a centred pinhole with the prototype's field of view (tan .36 of half the height)
+    foc0 = H / 2 / .36;
+    var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
+    var A = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1], d = sub(Wd(S(e[0], e[1])), cam.p); return dot(d, cam.R) / dot(d, cam.F); });
+    var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
+    // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
+    function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
+    base0 = bounds(textRight || W * .3); base1 = bounds(Math.max(colRight, W * .5));
+    par = keepPar; camOff = keepOff; applyAns(); setCam();
+    REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
+  }
+  // When the answer takes the headline's place, the hole steps right and a little back so the video does not cover it.
+  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = H / 2; }
   // The pin top, the tee and the six landing spots must fit the box (bx, by, bw, bh in canvas px), with room for labels.
   function fit(bx, by, bw, bh) {
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
@@ -286,6 +312,7 @@
     function off() { if (hoverK !== k) return; hoverK = null; userFocus = true; if (!landedK) focusT = REST; kick(); }
     d.addEventListener("mouseenter", on); d.addEventListener("mouseleave", off); d.addEventListener("focus", on); d.addEventListener("blur", off);
   });
+  new MutationObserver(function () { kick(); }).observe(welcome, { attributes: true, attributeFilter: ["class"] });  // .ans
   new MutationObserver(function () {
     var l = bf.classList.contains("lh"); if (l === lefty) return;
     lefty = l; placeModels(); trail = []; trailA = 0; rings = [];
@@ -327,7 +354,9 @@
     e.style.width = pw.toFixed(1) + "px"; e.style.transform = "translate(" + (b.x - pw * ax).toFixed(1) + "px," + (b.y - ph * (1 - sink)).toFixed(1) + "px)";
     e.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
-    e.style.opacity = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48)).toFixed(2);
+    var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
+    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph < textBox.y1) op *= .18;
+    e.style.opacity = op.toFixed(2);
   }
   function layout() {
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
@@ -374,6 +403,7 @@
     } else for (var ci = 0; ci < 2; ci++) { var dc = camOffT[ci] - camOff[ci]; if (Math.abs(dc) > .002) { camOff[ci] += dc * (reduce ? 1 : .06); busy = true; } }
     var df = focusT - focus; if (Math.abs(df) > .01) { focus += df * (reduce ? 1 : (mouseFocus && userFocus ? .2 : .085)); busy = true; } else focus = focusT;
     for (var i = 0; i < 2; i++) { var dp = parT[i] - par[i]; if (Math.abs(dp) > .002) { par[i] += dp * (reduce ? 1 : CFG.ease); busy = true; } }
+    if (!narrow) { ansT = welcome.classList.contains("ans") ? 1 : 0; var da = ansT - ans; if (Math.abs(da) > .002) { ans += da * (reduce ? 1 : .06); busy = true; } else ans = ansT; applyAns(); }
     setCam();
     if (staticDirty) { drawStatic(); staticDirty = false; }
     if (inkDirty) { drawDyn(); inkDirty = false; }
@@ -401,34 +431,35 @@
   }
   function teardown() {
     if (flight) { var f = flight; flight = null; clearTimeout(f.guard); try { f.done(); } catch (err) {} }
-    ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); if (st.parentNode) st.remove();
+    ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); bail(); if (st.parentNode) st.remove();
     dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; });
   }
   var uniq = {}; SPR.forEach(function (n) { uniq[n] = 1; });
   function start() {
-    if (bf.classList.contains("used")) return;  // the visitor is already on an answer: leave the drawn hole
+    if (bf.classList.contains("used")) { bail(); return; }  // the visitor is already on an answer: leave the drawn hole
     var spr = Object.keys(uniq).concat(["flag"]);
     Promise.all([loadPaper(mode)].concat(spr.map(function (n) { return loadImg(src(n)); }))).then(function (imgs) {
       try {
-        if (bf.classList.contains("used")) return;
+        if (bf.classList.contains("used")) { bail(); return; }
         var bySrc = {}; spr.forEach(function (n, i) { bySrc[n] = imgs[i + 1].src; });
         models.forEach(function (t) { t.el.src = bySrc[SPR[t.k]]; }); flag.src = bySrc.flag;
         welcome.insertBefore(st, welcome.firstChild);
         ready = true; size(true);
         var goLive = function () {
-          if (live || !ready) return;
+          if (live || !ready || gaveUp) return;
           if (bf.classList.contains("used")) { teardown(); return; }
-          live = true; welcome.classList.add("gvon"); window.gvStage = { on: true, fly: fly }; kick();
+          clearTimeout(giveUp); live = true; welcome.classList.add("gvon"); window.gvStage = { on: true, fly: fly }; kick();
         };
-        st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 900);
+        st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 700);
         requestAnimationFrame(function () { st.classList.add("in"); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (ready) size(true); });  // the headline's real width
         if ("ResizeObserver" in window) new ResizeObserver(function () { if (ready) size(); }).observe(welcome); else window.addEventListener("resize", function () { if (ready) size(); });
         if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) kick(); }).observe(st);
         new MutationObserver(setTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
         if (window.matchMedia) { var mq = matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", setTheme); }
       } catch (err) { teardown(); }
-    }, function () { /* an image failed: the drawn hole stays */ });
+    }, function () { bail(); /* an image failed: the drawn hole stays */ });
   }
   cv.addEventListener("webglcontextlost", function (e) { e.preventDefault(); teardown(); });
-  if (document.readyState === "complete") start(); else window.addEventListener("load", start);
+  start();
 })();

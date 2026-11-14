@@ -1865,7 +1865,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
    The stage sits behind the welcome block (wide screens) or fills the finder box (narrow); the drawn SVG hole stays in
    the page as the fallback and is only hidden once the stage has loaded. Dots and labels are the finder's own. -- */
 .welcome.gvon{position:relative}
-.gvst{position:absolute;z-index:0;pointer-events:none;opacity:0;transition:opacity .6s ease}
+.gvst{position:absolute;z-index:0;pointer-events:none;opacity:0;transition:opacity .4s ease}
 .welcome>.gvst{grid-column:auto;grid-row:auto}   /* absolutely placed against the welcome block, not a grid area */
 .gvst.in{opacity:1}
 .gvw{position:absolute;inset:0}
@@ -1876,6 +1876,12 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .gvball{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff 0,#f1f1ee 38%,#b9bdba 78%,#8d918f 100%);box-shadow:inset -2px -3px 5px rgba(0,0,0,.18);will-change:transform,filter}
 .gvon>:not(.gvst),.gvon .bf>*,.gvon .bfr>*{position:relative;z-index:1}
 .gvon .bfc{background:none!important;overflow:visible}
-.gvon .bfc svg{visibility:hidden}
+.gvon .bfc svg{visibility:hidden!important}
+/* html.gvwill (set before first paint where the stage can run): the drawn hole and its dots wait for the stage instead of
+   showing first; if the stage never comes they appear after 4.5 s anyway (stage.js itself gives up at 4 s), and stage.js removes the class when it gives up */
+.gvwill .welcome:not(.gvon) .bfc svg,.gvwill .welcome:not(.gvon) .bfd{visibility:hidden;animation:gvback 0s 4.5s forwards}
+@keyframes gvback{to{visibility:visible}}
+/* wide screens: the question stands top right, flush with the page edge, as on the approved stage */
+@media (min-width:1200px){.welcome .bfq{flex-direction:column;align-items:flex-end;text-align:right;gap:2px}}
 .gvon .bfd{transition:none}
 @media (prefers-reduced-motion:reduce){.gvst{transition:none}}
