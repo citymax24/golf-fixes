@@ -239,6 +239,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="preload" href="{BASE}/static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>{THEME_JS}</script>
+<noscript><style>@media (min-width:1001px){{.top .search{{display:flex}}.top #stoggle{{display:none}}}}</style></noscript>
 {''.join(f'<script type="application/ld+json">{json.dumps(x)}</script>' for x in (ld if isinstance(ld, list) else [ld])) if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
