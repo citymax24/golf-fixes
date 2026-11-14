@@ -18,6 +18,9 @@ README.md describes the project for readers; this file is what a Claude session 
   duplicate titles, thin pages). Any ERROR fails the run; warnings only print.
 - `build/refresh_youtube.py`, `fetch_thumbs.py`: YouTube metadata refresh and self-hosted preview images.
 - `build/gsc_report.py`: Search Console index report (needs `google-auth`, `requests`).
+- `build/site_check.js` (Playwright, axe-core optional): browser check of `_site/` (every key page at five widths,
+  script/CSP errors, sideways scrolling, the ambient light, the topic field, WCAG A/AA contrast). `build/check.sh` runs the
+  build, then `seo_check.py` and `site_check.js` side by side.
 - `build/og.js` (Playwright): share images in `static/og4/`; `build/og-hashes.json` records what was drawn.
 - `build/make_*.py`, `badge_art.py`, `badge-png.js`: asset generators (logo, course art, coach badges).
 - `data/`: JSON inputs, see next section. `static/`: CSS, JS, fonts, thumbs, badges, share images.
@@ -32,6 +35,11 @@ The build needs Python 3.12 (as in CI); the system `python3` may be older. Use u
 
 Run both after any change to build.py, data or static assets. `--live` needs network and is what CI runs;
 it fails if a deploy would drop more than 2% of the live URLs without a redirect. Do not hand-edit `_site/`.
+
+One command for all of it before a merge (about 20 s; for the accessibility part first `npm i --no-save axe-core`):
+
+    build/check.sh --live          # build, then indexing gate and browser check side by side; exit 1 on any failure
+    node build/site_check.js --url https://golfvotes.com/   # the browser check against the live site after a deploy
 
 ## Data files and who owns them
 Machine-written, do not hand-edit counts or stats; a hand edit is overwritten at the next run and can make counts
@@ -120,7 +128,11 @@ The data files above are produced by the monthly pipeline run in a separate priv
 
 ## Working rules
 - Work on a branch and open a PR; do not push to `main` directly. Merging to `main` is a production deploy, so
-  review before merging: an architecture review and a devops review.
+  review before merging: an architecture review and a devops review. Start the reviews at the same time as
+  `build/check.sh --live`, not after it. A small client-only change (only `static/*.css`/`static/*.js`; no new host,
+  script, embed or tracking; no data, workflow or `build.py` change) gets one review agent with both lenses.
+- Visual work: build variants and show them as short videos (desktop and phone, light and dark) within minutes; no
+  multi-agent judge panels for questions of taste. Details: `docs/process/design-rounds.md`.
 - Do not commit or push unless asked.
 - Commits are authored by the owner. Before the first commit in a clone run
   `git config user.name "Max Bollich"` and `git config user.email "229967805+citymax24@users.noreply.github.com"`.
