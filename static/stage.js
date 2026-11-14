@@ -280,7 +280,7 @@
     var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
     // the pin top and the tee must also fit between the question and the bottom of the finder box (short windows)
     var Bv = [Wd(S(CUP[0], CUP[1]), FLAG_H), Wd(S(TEE[0], TEE[1]))].map(function (w) { var d = sub(w, cam.p); return dot(d, cam.U) / dot(d, cam.F); });
-    var bmax = Math.max(Bv[0], Bv[1]), bmin = Math.min(Bv[0], Bv[1]), T = boxC.y + 8, Bm = boxC.y + boxC.h - 16, fv = (Bm - T) / (bmax - bmin);
+    var bmax = Math.max(Bv[0], Bv[1]), bmin = Math.min(Bv[0], Bv[1]), T = boxC.y + 8, Bm = boxC.y + boxC.h - 16, fv = Math.max(40, (Bm - T) / (bmax - bmin));
     // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
     function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin), fv), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
     base0 = bounds(textRight || W * .3);
@@ -297,7 +297,7 @@
     if (!boxC || boxC.w < 40 || boxC.h < 40) return base0.slice();
     var pnl = bf.querySelector(".bfp.in") || bf.querySelector(".bfp:not([hidden]):not(.bf0)"), right = boxC.x - 64, sr = st.getBoundingClientRect();
     if (pnl) Array.prototype.forEach.call(pnl.querySelectorAll(".bfv,.bfa,.bftt,iframe"), function (e) { var r = e.getBoundingClientRect(); if (r.width) right = Math.max(right === boxC.x - 64 ? 0 : right, r.right - sr.left); });
-    var x0 = Math.min(right + 56, boxC.x), x1 = W - 24, b = fit(x0, boxC.y, x1 - x0, boxC.h, true);
+    var x0 = Math.min(right + 56, boxC.x), x1 = W - 24; if (x1 - x0 < 240) x0 = x1 - 240; var b = fit(x0, boxC.y, x1 - x0, boxC.h, true);
     if (b[0] > base0[0]) { var k = base0[0] / b[0]; b[0] = base0[0]; b[1] = (x0 + x1) / 2 + (b[1] - (x0 + x1) / 2) * k; b[2] = boxC.y + boxC.h / 2 + (b[2] - boxC.y - boxC.h / 2) * k; }  // never larger than at rest
     return b;
   }
