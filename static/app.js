@@ -348,6 +348,11 @@
   function closeSearch() { document.body.classList.remove("searching"); $("#stoggle").setAttribute("aria-expanded", "false"); }
   $("#stoggle").onclick = function () { document.body.classList.contains("searching") ? closeSearch() : openSearch(); };
   $("#q").addEventListener("keydown", function (ev) { if (ev.key === "Escape") { closeSearch(); $("#stoggle").focus(); } });
+  // desktop: the search box is shown on demand (the magnifier or "/"); left empty, it folds away again
+  $("#q").addEventListener("blur", function (ev) {
+    if (window.innerWidth <= 1000 || $("#q").value || ev.relatedTarget === $("#stoggle") || location.pathname === B + "/search/") return;
+    setTimeout(function () { if (document.activeElement !== $("#q") && !$("#q").value) closeSearch(); }, 160);
+  });
   var topbar = $("#top"), onScroll = function () { topbar.classList.toggle("scrolled", window.scrollY > 0); };
   window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
@@ -636,7 +641,7 @@
       }
       ixs.addEventListener("mouseenter", function (ev) {
         measure(); point(ev);
-        if (!blk.classList.contains("lit")) {  // it blooms out from where the pointer came in, instead of flying in from a corner
+        if (!blk.classList.contains("lit") && !blk.classList.contains("idle")) {  // it blooms out from where the pointer came in, instead of flying in from a corner (where the quiet glow is already there, it just flows over)
           S.forEach(function (s) { s.x = s.tx * .6 + px * .4; s.y = s.ty * .6 + py * .4; s.vx = s.vy = 0; });
           pls = plv = 0;
         }
@@ -645,6 +650,16 @@
       ixs.addEventListener("mousemove", function (ev) { point(ev); if (calm) S.forEach(function (s) { s.x = s.tx; s.y = s.ty; }); kick(); });
       ixs.addEventListener("mouseleave", function () { blk.classList.remove("lit"); });  // it fades where it is
       window.addEventListener("resize", function () { if (blk.classList.contains("lit")) measure(); }, { passive: true });
+      // Before the pointer comes, and after it has gone: a quiet glow rests in the block and drifts (CSS), first in the brand's
+      // colours, later in those of the last topic. Only while the block is on screen.
+      if (window.IntersectionObserver) new IntersectionObserver(function (es) {
+        var on = es[es.length - 1].isIntersecting;
+        if (on && !blk._glow && !blk.classList.contains("lit")) {
+          blk._glow = 1; measure(); px = W * .42; py = H * .5; aim();
+          S.forEach(function (s) { s.x = s.tx; s.y = s.ty; s.vx = s.vy = 0; }); src._onpal(null); kick();
+        }
+        blk.classList.toggle("idle", on);
+      }).observe(blk);
       }
   // Home index of problems: the picture of a problem's top lesson floats beside the pointer (mouse only).
   var ixs = $(".ixs");
@@ -653,26 +668,31 @@
     pv.className = "ixp"; pvi.alt = ""; pv.appendChild(pvi); document.body.appendChild(pv);
     pvi.addEventListener("load", function () { amb(pv, true); });  // each topic's picture brings its own light, which trails behind as it flies
     var follow = function () {
-      var k = calm ? 1 : .2, ox = cx, oy = cy; cx += (tx - cx) * k; cy += (ty - cy) * k;
+      var k = calm ? 1 : .14, ox = cx, oy = cy; cx += (tx - cx) * k; cy += (ty - cy) * k;
       pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
       var A = pv._amb; if (A) { A.vx = A.vx * .6 + (cx - ox) * .4; A.vy = A.vy * .6 + (cy - oy) * .4; if (Math.abs(A.vx) + Math.abs(A.vy) > .3) ambGo(); }
       pr = pv.classList.contains("on") || Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(follow) : 0;
     };
-    ixs.addEventListener("mousemove", function (ev) {
+    var place = function (ev) {  // where the picture belongs: beside the pointer, on the side that has room
       var x = ev.clientX + 24, y = ev.clientY + 24;
       if (x + 248 > window.innerWidth) x = ev.clientX - 264;
       if (y + 143 > window.innerHeight) y = ev.clientY - 159;
-      tx = x; ty = y; if (!pr) pr = requestAnimationFrame(follow);
-    });
+      tx = x; ty = y;
+    };
+    ixs.addEventListener("mousemove", function (ev) { place(ev); if (!pr) pr = requestAnimationFrame(follow); });
     $$(".ix", ixs).forEach(function (a) {
-      a.addEventListener("mouseenter", function () {
+      a.addEventListener("mouseenter", function (ev) {
+        // the word last touched stays the chosen one while the pointer crosses the gaps between words, so nothing blinks
+        $$(".ix.cur", ixs).forEach(function (x) { x.classList.remove("cur"); }); a.classList.add("cur"); ixs.classList.add("pk");
+        place(ev);  // this comes before the first mousemove: without it the picture would start in the corner of the screen
         if (!a.dataset.vid) { pv.classList.remove("on"); if (pv._amb) pv._amb.vis = false; return; }
         pvi.src = B + "/static/thumbs/mq2/" + a.dataset.vid + ".webp";
-        if (!pv.classList.contains("on")) { cx = tx; cy = ty; }
+        if (!pv.classList.contains("on")) { cx = tx; cy = ty; pv.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)"; }  // it appears where the pointer is
+        if (!pr) pr = requestAnimationFrame(follow);
         pv.classList.add("on"); if (pv._amb) pv._amb.vis = true;
       });
     });
-    ixs.addEventListener("mouseleave", function () { pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
+    ixs.addEventListener("mouseleave", function () { ixs.classList.remove("pk"); $$(".ix.cur", ixs).forEach(function (x) { x.classList.remove("cur"); }); pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
     // On the home page the whole "Or pick it by name" block takes on the colours of the topic under the pointer. Four soft colour
     // blobs sit in ONE container with a large blur, so they melt into a single field: on dark they add up like light in fog, on
     // light they lie over each other like ink in water. The picture's colours are first pulled into the brand's family (fresh green
@@ -748,7 +768,7 @@
   [["liked", "/liked/"], ["later", "/later/"], ["history", "/history/"]].forEach(function (x) {
     var a = $('#side a[href="' + B + x[1] + '"]'); if (a && !load(x[0]).length && location.pathname !== B + x[1]) a.hidden = true;
   });
-  if (location.pathname === B + "/search/" && window.innerWidth <= 760) document.body.classList.add("searching");
+  if (location.pathname === B + "/search/" && (window.innerWidth <= 760 || window.innerWidth > 1000)) document.body.classList.add("searching");  // the search page keeps its box open
 
   // ---------- plan box only when following a plan ----------
   var planParam = new URLSearchParams(location.search).get("plan");

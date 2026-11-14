@@ -1730,7 +1730,6 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .pickb .ix{font-size:40px;line-height:52px;font-weight:600;letter-spacing:-.025em}
   .pickb .ix,.pickb .ix sup{color:var(--mut)}
   .pickb .ix.act,.pickb .ix.act sup,.pickb .ix:focus-visible{color:var(--acc)}
-  .pickb.lit .ix:not(:hover):not(.act){color:var(--fg)}
   .pickb .ix sup{margin-left:6px}
   .pickb .ixn{margin-top:40px}
 }
@@ -1743,13 +1742,13 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
    search smaller, logo and menu sit at the edges. CSS only: the markup and its order are unchanged. body.home is set by
    build_home(). Phones and tablets keep the stacked hero. -- */
 @media (min-width:1200px){
-  body.home .top{height:88px;padding:0 32px}
+  body.home .top{height:72px;padding:0 32px}
   body.home .search{flex:0 0 288px;margin-left:auto}
   body.home .tnav{gap:12px}
   body.home .main{max-width:1680px;padding-top:0}
   body.home .welcome{--strip:96px;padding-top:0;margin-top:0;column-gap:96px;
     grid-template-columns:minmax(0,1fr) clamp(400px,min(calc((100vh - 316px)*.8889),40vw),680px);
-    grid-template-rows:minmax(calc(min(100vh,1080px) - 88px - var(--strip) - 24px),auto) minmax(var(--strip),auto) auto}
+    grid-template-rows:minmax(calc(min(100vh,1080px) - 72px - var(--strip) - 24px),auto) minmax(var(--strip),auto) auto}
   body.home .welcome>.fh{grid-row:1;align-self:center}
   body.home .welcome h1.hq.fhh{font-size:clamp(64px,4.6vw,92px);line-height:1.02;letter-spacing:-.04em;margin:0 0 28px}
   body.home .fp{margin:0}
@@ -1779,3 +1778,31 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.home .bfi.sel{color:var(--acc)}
   body.home .bfi.sel b::before{background:var(--acc);border-color:var(--acc)}
 }
+
+/* -- the home index under a mouse: one flow. The word last touched (.cur, set by app.js) stays green while the pointer
+   crosses the gaps between words; the others step back a little and keep their colour, and every change takes half a
+   second, so nothing blinks. The floating picture grows in where the pointer is. A quiet glow (.idle) rests in the block
+   while it is on screen and the pointer is elsewhere. -- */
+@media (hover:hover) and (pointer:fine){
+  .pickb .ix,.pickb .ix sup{transition:color .5s ease,opacity .6s ease}
+  .pickb .ixs.pk .ix:not(.cur){opacity:.5}
+  .pickb .ix.cur,.pickb .ix.cur sup,.pickb.lit .ix.cur sup{color:var(--acc)}
+  .ixp{scale:.9;transition:opacity .4s ease,scale .5s cubic-bezier(.2,.7,.2,1)}
+  .ixp.on{scale:1}
+  .pickb.idle:not(.lit) .ixf{opacity:calc(var(--ixfo)*.5);visibility:visible;transition:opacity 1.6s ease,visibility 0s}
+}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.pickb.idle .ixb{animation-play-state:running}}
+@media (hover:hover) and (pointer:fine) and (min-width:1200px){.pickb.lit .ix:not(.cur) sup{color:var(--mut)}}
+
+/* -- desktop header (from 1001px, where the menu shows): quieter. The search box is not needed at first sight, so only a
+   magnifier stands at the end of the menu; a click on it or the "/" key unfolds the box beside the menu, and an empty
+   box folds away again (app.js). The search page keeps it open. Phones and tablets keep their header. -- */
+@media (min-width:1001px){
+  .top .search{display:none}
+  body.searching .top .search{display:flex;flex:0 1 340px;margin-left:auto;animation:sfold .28s cubic-bezier(.2,.7,.2,1)}
+  .top #stoggle{display:grid;margin:0 -8px 0 4px;color:var(--mut)}
+  .top #stoggle:hover,body.searching .top #stoggle{color:var(--fg)}
+  .tnav a{color:var(--mut)}
+}
+@keyframes sfold{from{opacity:0;transform:translateX(12px)}}
+@media (prefers-reduced-motion:reduce){body.searching .top .search{animation:none}}
