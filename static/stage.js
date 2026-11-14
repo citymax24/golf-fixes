@@ -445,7 +445,10 @@
       var q2 = at(m, u), tee = S(TEE[0], TEE[1]); ballS = S(q2[0], q2[1]); ballH = h; inkDirty = true;
       focusT = proj(Wd(ballS, ballH)).z; focus += (focusT - focus) * .32;
       camOffT = [(ballS[0] - tee[0]) / 100 * .16, -Math.min(1.1, (tee[1] - ballS[1]) / 100 * .12)];
-      trail.push([ballS[0], ballS[1], ballH]); busy = true;
+      // the tracer draws the flight in the air only, as on television: it ends where the ball first lands
+      if (el < f.carry) trail.push([ballS[0], ballS[1], ballH]);
+      else if (!f.traced) { f.traced = 1; var lp2 = at(m, LAND), ls = S(lp2[0], lp2[1]); trail.push([ls[0], ls[1], 0]); }
+      busy = true;
       if (over) finish();
     }
     if (!flight && trailA > .4 && landedK) { trailA = Math.max(.4, trailA - .012); busy = true; }
