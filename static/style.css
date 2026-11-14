@@ -1860,3 +1860,22 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.wpage .cms:not(:has(>.cm:nth-of-type(2))){columns:1;max-width:760px}
 }
 @media (min-width:1440px){body.wpage .wr{grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 16px}}   /* four across: the grid ends about where the text beside it does */
+
+/* -- Paper stage (static/stage.js, home only): where WebGL 2 runs, the hole is a drawing on paper seen from behind the tee.
+   The stage sits behind the welcome block (wide screens) or fills the finder box (narrow); the drawn SVG hole stays in
+   the page as the fallback and is only hidden once the stage has loaded. Dots and labels are the finder's own. -- */
+.welcome.gvon{position:relative}
+.gvst{position:absolute;z-index:0;pointer-events:none;opacity:0;transition:opacity .6s ease}
+.welcome>.gvst{grid-column:auto;grid-row:auto}   /* absolutely placed against the welcome block, not a grid area */
+.gvst.in{opacity:1}
+.gvw{position:absolute;inset:0}
+.gvgl,.gvtr{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gvtr{z-index:1}
+.gvov{position:absolute;inset:0;z-index:2}
+.gvsp{position:absolute;left:0;top:0;display:block;max-width:none;height:auto;will-change:transform,filter}
+.gvball{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff 0,#f1f1ee 38%,#b9bdba 78%,#8d918f 100%);box-shadow:inset -2px -3px 5px rgba(0,0,0,.18);will-change:transform,filter}
+.gvon>:not(.gvst),.gvon .bf>*,.gvon .bfr>*{position:relative;z-index:1}
+.gvon .bfc{background:none!important;overflow:visible}
+.gvon .bfc svg{visibility:hidden}
+.gvon .bfd{transition:none}
+@media (prefers-reduced-motion:reduce){.gvst{transition:none}}

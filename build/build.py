@@ -3,7 +3,7 @@
 Usage: python3 build/build.py  -> writes _site/
 Inputs: data/site.json, data/problems.json, data/videos.json, data/links.json (optional), data/years.json (optional)
 """
-import base64
+import glob, base64
 import hashlib, html, json, os, re, shutil, sys, urllib.parse
 from collections import Counter, defaultdict
 
@@ -40,6 +40,9 @@ PNAME = {p["key"]: p for p in PROBLEMS}
 SITEMAP = []
 _h = lambda f: hashlib.md5(open(os.path.join(ROOT, "static", f), "rb").read()).hexdigest()[:8]
 ASSET_V = {"css": _h("style.css"), "js": _h("app.js"), "count": _h("count.js")}
+# the home page's paper stage: one version for the script and its images, so a new image reloads too
+_STAGE = [os.path.join(ROOT, "static", "stage.js")] + sorted(glob.glob(os.path.join(ROOT, "static", "stage", "*.webp")))
+ASSET_V["stage"] = hashlib.md5(b"".join(open(f, "rb").read() for f in _STAGE)).hexdigest()[:8]
 # The home page's share image, also the fallback for pages without their own: home.png once the share-images workflow has
 # drawn it (build/og.js), default.png until then.
 OG_HOME = "/static/og4/" + ("home.png" if os.path.exists(os.path.join(ROOT, "static", "og4", "home.png")) else "default.png")
@@ -264,7 +267,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <div class="ftw" aria-hidden="true">{WORDMARK.replace(' role="img" aria-label="GolfVotes"', '')}</div>
   <div class="fte"><p>Not affiliated with Reddit or YouTube.</p><button class="tbtn" id="theme" aria-pressed="false">Dark mode</button></div></footer>
 </main>
-<script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>
+<script src="{BASE}/static/app.js?v={ASSET_V['js']}" defer></script>{f'<script src="{BASE}/static/stage.js?v={ASSET_V["stage"]}" defer></script>' if cls == "home" else ''}
 <script data-goatcounter="https://golfvotes.goatcounter.com/count" async src="{BASE}/static/count.js?v={ASSET_V['count']}"></script>
 </body></html>"""
     dest = os.path.join(OUT, path.strip("/"), "index.html") if not path.endswith(".html") else os.path.join(OUT, path.strip("/"))

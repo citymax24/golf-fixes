@@ -23,6 +23,11 @@ README.md describes the project for readers; this file is what a Claude session 
   build, then `seo_check.py` and `site_check.js` side by side.
 - `build/og.js` (Playwright): share images in `static/og4/`; `build/og-hashes.json` records what was drawn.
 - `build/make_*.py`, `badge_art.py`, `badge-png.js`: asset generators (logo, course art, coach badges).
+- `static/stage.js` + `static/stage/`: the home page's paper stage (WebGL 2), a progressive upgrade of the finder's SVG hole;
+  app.js hands the ball flight to `window.gvStage` when it exists. The paper sheets are generated from `build/course.svg`'s
+  hole (keep its geometry: the finder's dots and `MISSES` ends must still line up); the models are keyed photos. Images are
+  edited by hand and versioned together with the script (`ASSET_V["stage"]`). The stage uses only same-origin images, WebGL
+  and canvas: no new host, so no CSP or Privacy change. The share card (`build/og.js`) does not load it.
 - `data/`: JSON inputs, see next section. `static/`: CSS, JS, fonts, thumbs, badges, share images.
 - `seo/`: written by the Index report workflow (`index_report.md`, `index_status.json`); it does not exist until that first runs.
 

@@ -457,7 +457,8 @@
           // phones: let the landing be seen for a moment, then bring the answer to the top of the screen
           if (window.innerWidth < 760) setTimeout(function () { var r = $(".bfr", bff); window.scrollTo({ top: r.getBoundingClientRect().top + window.scrollY - 60, behavior: still ? "auto" : "smooth" }); }, still ? 0 : 650);
         };
-        if (still || !line || !line.getTotalLength) land(); else shot(line, land);
+        if (window.gvStage && window.gvStage.on) window.gvStage.fly(k, land);  // the paper stage (static/stage.js) flies the ball itself
+        else if (still || !line || !line.getTotalLength) land(); else shot(line, land);
       });
     });
     // The list of misses beside the course: a row and its dot light up together, the flight shows as a preview, a click plays it.
