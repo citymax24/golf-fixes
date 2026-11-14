@@ -36,7 +36,11 @@
     driver_distance: { c: [[160, 326], [160, 158]], fly: { pk: 1.05, ap: 1.5, land: .85, b: 1, t: 1 } },
     iron_contact: { c: [[160, 326], [160, 262]], fly: { pk: 1.45, ap: 1.15, land: .96, b: .45, t: 1.05 } }
   };
-  Object.keys(MISS).forEach(function (k) { var m = MISS[k]; m.cw = m.c; m.cn = m.c.map(function (p) { return [160 + (p[0] - 160) * .76, p[1]]; }); });
+  Object.keys(MISS).forEach(function (k) {
+    var m = MISS[k], n = m.c.length; m.cw = m.c;
+    // hook and slice land a little shorter on phones, so their dots and labels clear the pull's (which lands just above)
+    m.cn = m.c.map(function (p, i) { return [160 + (p[0] - 160) * .86, p[1] + (i === n - 1 && (k === "hook" || k === "slice") ? 30 : 0)]; });
+  });
   var phone = false;
   function at(m, t) {
     var c = m.c; if (c.length === 2) return [c[0][0] + (c[1][0] - c[0][0]) * t, c[0][1] + (c[1][1] - c[0][1]) * t];
@@ -100,7 +104,7 @@
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
     "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog;uniform vec2 uRes,uC0;out vec4 o;\n" +
-    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):t+(uPaper-pp);}\n" +
+    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.45;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
     "vec3 d=normalize(uF+uR*(x-uC0.x)/uFoc+uU*(uC0.y-y)/uFoc);if(d.y>-.002)return vec4(uBg,1000.);\n" +
@@ -149,7 +153,7 @@
   function isDark() { var t = document.documentElement.getAttribute("data-theme"); if (t) return t === "dark"; return !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
   var mode = isDark() ? "dark" : "light";
   function bgCol() { return mode === "dark" ? [.059, .059, .059] : [1, 1, 1]; }
-  function paperCol() { return mode === "dark" ? [.075, .075, .075] : [.985, .985, .985]; }
+  function paperCol() { return mode === "dark" ? [.135, .137, .14] : [.985, .985, .985]; }
 
   // ---- models
   function mk(cls, tag) { var e = document.createElement(tag || "div"); e.className = cls; ov.appendChild(e); return e; }
@@ -218,7 +222,17 @@
   // ---- layout: where the stage sits, and the camera that puts the hole where the finder box is
   function rel(el) { var a = el.getBoundingClientRect(), b = welcome.getBoundingClientRect(); return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height }; }
   var lastSig = "";
+  // phones: the finder box ends above the bottom of the visible screen (room for Safari's floating bar); set once per
+  // width, so the toolbar collapsing while scrolling does not resize it
+  function phoneBox() {
+    var w = document.documentElement.clientWidth;
+    if (window.innerWidth >= 760) { if (phoneW) { bfc.style.height = ""; phoneW = 0; } return; }
+    if (w === phoneW) return; phoneW = w;
+    var top = bfc.getBoundingClientRect().top + window.scrollY, h = Math.round(window.innerHeight - top - 84);
+    bfc.style.height = Math.max(360, Math.min(w * 1.5, 640, h)) + "px";
+  }
   function size(force) {
+    phoneBox();
     var wide = window.innerWidth >= 1200, box = rel(bfc), sx, sy, sw, sh;
     narrow = !wide; var ph = window.innerWidth < 760;
     if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; } }
@@ -244,10 +258,11 @@
       Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
       if (textRight) textBox = { x1: textRight + 24, y0: y0 - 16, y1: y1 + 16 };
     }
+    boxC = { x: box.x - sx, y: box.y - sy, w: box.w, h: box.h };
     if (wide) frameWide(); else fit(box.x - sx, box.y - sy, box.w, box.h);
     inkDirty = staticDirty = true; if (ready) frame(performance.now());
   }
-  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null;
+  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null, boxC = null, phoneW = 0;
   function frameWide() {  // a centred pinhole with the prototype's field of view (tan .36 of half the height)
     foc0 = H / 2 / .36;
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
@@ -255,24 +270,27 @@
     var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
     // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
     function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
-    base0 = bounds(textRight || W * .3); base1 = bounds(Math.max(colRight, W * .5));
+    base0 = bounds(textRight || W * .3).concat([H / 2]);
+    // with an answer showing, the hole fits the finder box under the question (the answer has the left column)
+    base1 = fit(boxC.x, boxC.y, boxC.w, boxC.h, true);
     par = keepPar; camOff = keepOff; applyAns(); setCam();
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
   // When the answer takes the headline's place, the hole steps right and a little back so the video does not cover it.
-  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = H / 2; }
+  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = base0[2] + (base1[2] - base0[2]) * e; }
   // The pin top, the tee and the six landing spots must fit the box (bx, by, bw, bh in canvas px), with room for labels.
-  function fit(bx, by, bw, bh) {
+  function fit(bx, by, bw, bh, onlyCompute) {
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
     var pts = [Wd(S(CUP[0], CUP[1]), FLAG_H), Wd(S(TEE[0], TEE[1]))];
     Object.keys(MISS).forEach(function (k) { var c = MISS[k].c, e = c[c.length - 1]; pts.push(Wd(S(e[0], e[1]))); });
     var A = pts.map(function (w) { var d = sub(w, cam.p), z = dot(d, cam.F); return [dot(d, cam.R) / z, dot(d, cam.U) / z]; });
     var a0 = Math.min.apply(null, A.map(function (v) { return v[0]; })), a1 = Math.max.apply(null, A.map(function (v) { return v[0]; }));
     var b0 = Math.min.apply(null, A.map(function (v) { return v[1]; })), b1 = Math.max.apply(null, A.map(function (v) { return v[1]; }));
-    var mx = phone ? .12 : narrow ? .16 : .12, mtop = phone ? .1 : narrow ? .08 : .06, mbot = phone ? .08 : narrow ? .1 : .08;
-    foc = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
-    cx0 = bx + bw / 2 - (a0 + a1) / 2 * foc;
-    cy0 = by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * foc) / 2 + b1 * foc;
+    var mx = phone ? .15 : .12, mtop = phone ? .1 : narrow ? .08 : .1, mbot = phone ? .08 : narrow ? .1 : .08;
+    var f = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
+    var r = [f, bx + bw / 2 - (a0 + a1) / 2 * f, by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * f) / 2 + b1 * f];
+    if (onlyCompute) { par = keepPar; camOff = keepOff; return r; }
+    foc = r[0]; cx0 = r[1]; cy0 = r[2];
     par = keepPar; camOff = keepOff;
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
@@ -437,7 +455,7 @@
   function teardown() {
     if (flight) { var f = flight; flight = null; clearTimeout(f.guard); try { f.done(); } catch (err) {} }
     ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); bail(); if (st.parentNode) st.remove();
-    dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; });
+    dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; }); bfc.style.height = "";
   }
   var uniq = {}; SPR.forEach(function (n) { uniq[n] = 1; });
   function start() {
