@@ -349,8 +349,9 @@
   $("#stoggle").onclick = function () { document.body.classList.contains("searching") ? closeSearch() : openSearch(); };
   $("#q").addEventListener("keydown", function (ev) { if (ev.key === "Escape") { closeSearch(); $("#stoggle").focus(); } });
   // desktop: the search box is shown on demand (the magnifier or "/"); left empty, it folds away again
+  $("#stoggle").addEventListener("mousedown", function (ev) { ev.preventDefault(); });  // the magnifier does not take the focus from the box, so its click alone decides
   $("#q").addEventListener("blur", function (ev) {
-    if (window.innerWidth <= 1000 || $("#q").value || ev.relatedTarget === $("#stoggle") || location.pathname === B + "/search/") return;
+    if (window.innerWidth <= 1000 || $("#q").value || location.pathname === B + "/search/") return;
     setTimeout(function () { if (document.activeElement !== $("#q") && !$("#q").value) closeSearch(); }, 160);
   });
   var topbar = $("#top"), onScroll = function () { topbar.classList.toggle("scrolled", window.scrollY > 0); };
@@ -692,6 +693,8 @@
         pv.classList.add("on"); if (pv._amb) pv._amb.vis = true;
       });
     });
+    // a page restored from the back-forward cache gets no mouseleave: it starts clean
+    window.addEventListener("pageshow", function (ev) { if (ev.persisted) ixs.dispatchEvent(new Event("mouseleave")); });
     ixs.addEventListener("mouseleave", function () { ixs.classList.remove("pk"); $$(".ix.cur", ixs).forEach(function (x) { x.classList.remove("cur"); }); pv.classList.remove("on"); if (pv._amb) { pv._amb.vis = false; pv._amb.vx = pv._amb.vy = 0; } });
     // On the home page the whole "Or pick it by name" block takes on the colours of the topic under the pointer. Four soft colour
     // blobs sit in ONE container with a large blur, so they melt into a single field: on dark they add up like light in fog, on
