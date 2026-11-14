@@ -1817,7 +1817,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.wpage .watch{--gap:112px;grid-template-columns:minmax(0,5fr) minmax(0,8fr);column-gap:64px;row-gap:0;max-width:none;
     grid-template-rows:repeat(10,auto) 1fr auto}   /* row 11, the only flexible one, takes what the next lessons need beyond the text; the video's extra height spreads evenly over the rows beside it */
   body.wpage .wl{display:contents}
-  body.wpage .wl>.pbar{grid-column:1/-1;grid-row:1}
+  body.wpage .wl>.pbar{grid-column:1/-1;grid-row:1;margin-top:16px}
   body.wpage .wl>.pwr{grid-column:2;grid-row:2/9;align-self:center;margin-top:32px}
   body.wpage .wl>.vt{grid-column:1;grid-row:3;margin:32px 0 12px;font-size:36px;line-height:1.08;font-weight:800;letter-spacing:-.03em;word-spacing:.04em}
   body.wpage .wl>.vch{grid-column:1;grid-row:4;margin:0}
@@ -1840,8 +1840,11 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   body.wpage .un .ldbar{max-width:none}
   body.wpage .wl>.cms{grid-column:1/-1;grid-row:12;margin-top:var(--gap);columns:3;column-gap:48px}
   body.wpage .cms>h2,body.wpage .cms>p{column-span:all}
-  body.wpage .cms>h2{font-size:36px;line-height:1.08;letter-spacing:-.03em}
+  body.wpage .cms>h2{font-size:28px;line-height:32px}   /* below the page's title in size */
   body.wpage .cms>h2+p{margin-bottom:24px}
-  body.wpage .cm{break-inside:avoid;padding:20px 0}
+  body.wpage .cms>.cm,body.wpage .cms>.cm:first-of-type{break-inside:avoid;padding:20px 0;border-top:1px solid var(--line);border-bottom:0}   /* every column starts with a rule */
+  body.wpage .cms>.morecm{column-span:all}
+  body.wpage .cms:not(:has(>.cm:nth-of-type(3))){columns:2}   /* few comments: no empty columns */
+  body.wpage .cms:not(:has(>.cm:nth-of-type(2))){columns:1;max-width:760px}
 }
 @media (min-width:1440px){body.wpage .wr{grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 16px}}   /* four across: the grid ends about where the text beside it does */
