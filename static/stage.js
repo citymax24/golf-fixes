@@ -110,7 +110,7 @@
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
     "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog,uHole;uniform vec2 uRes,uC0;out vec4 o;\n" +
-    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.45;}\n" +
+    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.9;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
     "vec3 d=normalize(uF+uR*(x-uC0.x)/uFoc+uU*(uC0.y-y)/uFoc);if(d.y>-.002)return vec4(uBg,1000.);\n" +
@@ -159,7 +159,7 @@
   function isDark() { var t = document.documentElement.getAttribute("data-theme"); if (t) return t === "dark"; return !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
   var mode = isDark() ? "dark" : "light";
   function bgCol() { return mode === "dark" ? [.059, .059, .059] : [1, 1, 1]; }
-  function paperCol() { return mode === "dark" ? [.135, .137, .14] : [.985, .985, .985]; }
+  function paperCol() { return mode === "dark" ? [.072, .073, .075] : [.985, .985, .985]; }  // dark: nearly the page's black, no grey sheet
 
   // ---- models
   function mk(cls, tag) { var e = document.createElement(tag || "div"); e.className = cls; ov.appendChild(e); return e; }
