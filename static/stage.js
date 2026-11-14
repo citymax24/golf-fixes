@@ -49,17 +49,17 @@
   // Models in small groups: paper x, paper y, height in units, sprite. Placed so none stands in front of a dot.
   var SPR = ["tree-1", "tree-2", "tree-3", "tree-1", "tree-5", "grass-1", "grass-2", "bush-1", "bush-2"];
   var MODELS = [
-    [1150, 90, 1.25, 1], [1080, 130, .85, 4], [1200, 140, .4, 7],
-    [1420, 40, 1.45, 2], [1500, 70, 1.1, 0], [1380, 95, .2, 5],
-    [760, 250, 1.15, 0], [820, 310, .38, 8], [790, 190, .9, 2],
-    [880, 1160, 1.1, 2], [960, 1170, .22, 6], [950, 1060, .4, 7],
-    [1880, 380, 1.3, 0], [1950, 320, 1, 1], [1830, 430, .2, 5],
-    [1800, 840, 1.5, 1], [1700, 900, .45, 8], [1740, 780, .9, 4],
-    [1560, 1250, .85, 0], [1520, 1300, .22, 6], [1660, 1220, .42, 7],
-    [870, 960, .2, 5], [1120, 1000, .18, 6]];
-  var FLAG_H = .92;
+    [1150, 90, 1.9, 1], [1060, 140, 1.3, 4], [1210, 150, .6, 7],
+    [1430, 40, 2.2, 2], [1520, 80, 1.7, 0], [1380, 100, .3, 5],
+    [760, 250, 1.8, 0], [830, 320, .6, 8], [780, 180, 1.4, 2],
+    [880, 1160, 1.7, 2], [970, 1180, .32, 6], [950, 1060, .6, 7],
+    [1880, 380, 2, 0], [1960, 310, 1.5, 1], [1830, 440, .3, 5],
+    [1800, 840, 2.2, 1], [1700, 900, .65, 8], [1740, 770, 1.3, 4],
+    [1560, 1250, 1.3, 0], [1510, 1300, .32, 6], [1660, 1230, .6, 7],
+    [870, 960, .3, 5], [1120, 1000, .26, 6]];
+  var FLAG_H = 1.15;
   // Tuned on the prototype (depth of field, focus at rest on the flag, flight, parallax, camera follow, easing).
-  var CFG = { dof: 8, rest: 18, speed: 1, height: 1, parallax: 1, follow: 1, ease: .07 };
+  var CFG = { dof: 4.5, rest: 18, speed: 1, height: 1, parallax: 1, follow: 1, ease: .07 };
 
   // ---- the stage element, behind the welcome block (wide screens) or inside the finder box (narrow)
   var st = document.createElement("div"); st.className = "gvst"; st.setAttribute("aria-hidden", "true");
@@ -97,7 +97,7 @@
   }
   var REST = CFG.rest, focus = REST, focusT = REST, started = false;
   function ap() { var a = touch ? CFG.dof * .6 : CFG.dof; return narrow ? Math.min(a, 3.6) : a; }
-  function maxc() { return ap() * 1.15 + .5; }
+  function maxc() { return ap() * .9 + .4; }
   function coc(z) { return Math.min(maxc(), ap() * Math.abs(z - focus) / z); }
 
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
@@ -328,7 +328,7 @@
     var r = st.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     if (x < 0 || y < 0 || x > W || y > H) return;
     if (!reduce) parT = [x / W - .5, .5 - y / H];
-    if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : Math.max(6, depthAt(x, y)); mouseFocus = true; }
+    if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : REST; mouseFocus = oz !== null; }
     kick();
   });
   welcome.addEventListener("pointerleave", function () { parT = [0, 0]; mouseFocus = false; if (!flight && !landedK && !hoverK) { focusT = REST; userFocus = true; } kick(); });
@@ -383,10 +383,13 @@
     e.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
     var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
-    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph < textBox.y1) op *= .18;
+    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph * .6 < textBox.y1) op *= .18;
+    for (var si = 0; si < spotScr.length; si++) { var q = spotScr[si]; if (q.z > b.z && q.x > b.x - pw * .45 - 50 && q.x < b.x + pw * .45 + 50 && q.y > b.y - ph - 8 && q.y < b.y + 34) { op *= .22; break; } }
     e.style.opacity = op.toFixed(2);
   }
+  var spotScr = [];
   function layout() {
+    spotScr = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1]; return proj(Wd(S(e[0], e[1]))); });
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
     stand(flag, S(CUP[0], CUP[1]), FLAG_H, .06, .01);
     var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = coc(bp.z);
