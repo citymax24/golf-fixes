@@ -36,6 +36,8 @@
     driver_distance: { c: [[160, 326], [160, 158]], fly: { pk: 1.05, ap: 1.5, land: .85, b: 1, t: 1 } },
     iron_contact: { c: [[160, 326], [160, 262]], fly: { pk: 1.45, ap: 1.15, land: .96, b: .45, t: 1.05 } }
   };
+  Object.keys(MISS).forEach(function (k) { var m = MISS[k]; m.cw = m.c; m.cn = m.c.map(function (p) { return [160 + (p[0] - 160) * .76, p[1]]; }); });
+  var phone = false;
   function at(m, t) {
     var c = m.c; if (c.length === 2) return [c[0][0] + (c[1][0] - c[0][0]) * t, c[0][1] + (c[1][1] - c[0][1]) * t];
     var u = 1 - t; return [u * u * u * c[0][0] + 3 * u * u * t * c[1][0] + 3 * u * t * t * c[2][0] + t * t * t * c[3][0], u * u * u * c[0][1] + 3 * u * u * t * c[1][1] + 3 * u * t * t * c[2][1] + t * t * t * c[3][1]];
@@ -72,7 +74,7 @@
   function nrm(a) { var l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; }
   function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
   function setCam() {
-    var ox = par[0] * .35 * CFG.parallax + camOff[0] * CFG.follow, oz = camOff[1] * CFG.follow, oy = par[1] * CFG.parallax, p, t;
+    var fl = phone ? CFG.follow * .35 : CFG.follow, ox = par[0] * .35 * CFG.parallax + camOff[0] * fl, oz = camOff[1] * fl, oy = par[1] * CFG.parallax, p, t;
     // camera and target share x, so the far edge of the sheet and the horizon stay level
     // a steeper view than the prototype's, so the hole fills the finder box's height instead of lying flat
     var hx = S(MID[0], MID[1])[0] / 100;
@@ -97,7 +99,7 @@
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
-    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uRes,uC0;out vec4 o;\n" +
+    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog;uniform vec2 uRes,uC0;out vec4 o;\n" +
     "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):t+(uPaper-pp);}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
@@ -106,7 +108,7 @@
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
     "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
     "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
-    "c=mix(c,uBg,smoothstep(16.,40.,z));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
+    "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
     "if(c>.7){vec3 a=vec3(0.);float lod=log2(max(c*.3,1.));float rot=hash(px+7.)*6.2832;for(int i=0;i<18;i++){if(float(i)>=uTaps)break;float fi=float(i)+.5;float r=sqrt(fi/uTaps)*c;float th=fi*2.39996+rot;a+=shade(px+r*vec2(cos(th),sin(th)),lod).rgb;}col=a/uTaps;}\n" +
     // the edges of the canvas melt into the page
@@ -120,7 +122,7 @@
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   var aLoc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   var U = {};
-  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
   function newTex() {
     var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -218,10 +220,13 @@
   var lastSig = "";
   function size(force) {
     var wide = window.innerWidth >= 1200, box = rel(bfc), sx, sy, sw, sh;
-    narrow = !wide;
+    narrow = !wide; var ph = window.innerWidth < 760;
+    if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; } }
     if (wide) {  // the whole width of the page column, from the top of the welcome block to below the finder box
       var main = (welcome.closest(".main") || welcome.parentNode).getBoundingClientRect(), wb = welcome.getBoundingClientRect();
       sx = main.left - wb.left; sw = main.width; sy = 0; sh = Math.max(box.y + box.h + 40, Math.min(800, Math.max(560, sw * .52)));
+    } else if (phone) {  // the stage runs edge to edge from the top of the welcome block, the headline stands on the paper
+      var wb3 = welcome.getBoundingClientRect(); sx = -wb3.left; sw = document.documentElement.clientWidth; sy = 0; sh = box.y + box.h + 24;
     } else { sx = box.x; sy = box.y; sw = box.w; sh = box.h; }
     var sig = [wide, sx, sy, sw, sh, box.x, box.y, box.w, box.h, lefty, window.devicePixelRatio].map(function (v) { return typeof v === "number" ? Math.round(v) : v; }).join();
     if (sig === lastSig && !force) return; lastSig = sig;
@@ -233,7 +238,7 @@
     gl.viewport(0, 0, cv.width, cv.height);
     // the headline's box in canvas px: models behind the text step back so it stays readable
     var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0; colRight = box.x - sx - 48;
-    if (wide && fh) {
+    if ((wide || phone) && fh) {
       // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
       var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
       Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
@@ -264,7 +269,7 @@
     var A = pts.map(function (w) { var d = sub(w, cam.p), z = dot(d, cam.F); return [dot(d, cam.R) / z, dot(d, cam.U) / z]; });
     var a0 = Math.min.apply(null, A.map(function (v) { return v[0]; })), a1 = Math.max.apply(null, A.map(function (v) { return v[0]; }));
     var b0 = Math.min.apply(null, A.map(function (v) { return v[1]; })), b1 = Math.max.apply(null, A.map(function (v) { return v[1]; }));
-    var mx = narrow ? .16 : .12, mtop = narrow ? .08 : .06, mbot = narrow ? .1 : .08;
+    var mx = phone ? .12 : narrow ? .16 : .12, mtop = phone ? .1 : narrow ? .08 : .06, mbot = phone ? .08 : narrow ? .1 : .08;
     foc = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
     cx0 = bx + bw / 2 - (a0 + a1) / 2 * foc;
     cy0 = by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * foc) / 2 + b1 * foc;
@@ -416,7 +421,7 @@
     gl.uniform3fv(U.uPaper, paperCol()); gl.uniform3fv(U.uBg, bg); gl.uniform3fv(U.uP00, pc[0]); gl.uniform3fv(U.uP10, pc[1]); gl.uniform3fv(U.uP01, pc[2]); gl.uniform3fv(U.uP11, pc[3]);
     gl.uniform1f(U.uLight, mode === "light" ? 1 : 0); gl.uniform2f(U.uRes, cv.width, cv.height);
     gl.uniform1f(U.uFoc, foc); gl.uniform2f(U.uC0, cx0, cy0); gl.uniform1f(U.uFocus, focus); gl.uniform1f(U.uAp, ap()); gl.uniform1f(U.uMax, maxc()); gl.uniform1f(U.uDpr, dpr);
-    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18);
+    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18); gl.uniform2f(U.uFog, narrow ? 26 : 16, narrow ? 56 : 40);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     layout(); drawTrail();
     if (busy) kick();

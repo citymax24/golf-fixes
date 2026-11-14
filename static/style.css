@@ -1874,13 +1874,24 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .gvov{position:absolute;inset:0;z-index:2}
 .gvsp{position:absolute;left:0;top:0;display:block;max-width:none;height:auto;will-change:transform,filter}
 .gvball{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff 0,#f1f1ee 38%,#b9bdba 78%,#8d918f 100%);box-shadow:inset -2px -3px 5px rgba(0,0,0,.18);will-change:transform,filter}
-.gvon>:not(.gvst),.gvon .bf>*,.gvon .bfr>*{position:relative;z-index:1}
+.gvon>:not(.gvst),.gvon .bf>*,.gvon .bfr>*,.gvon .fh>*{position:relative;z-index:1}
 .gvon .bfc{background:none!important;overflow:visible}
 .gvon .bfc svg{visibility:hidden!important}
 /* html.gvwill (set before first paint where the stage can run): the drawn hole and its dots wait for the stage instead of
    showing first; if the stage never comes they appear after 4.5 s anyway (stage.js itself gives up at 4 s), and stage.js removes the class when it gives up */
 .gvwill .welcome:not(.gvon) .bfc svg,.gvwill .welcome:not(.gvon) .bfd{visibility:hidden;animation:gvback 0s 4.5s forwards}
 @keyframes gvback{to{visibility:visible}}
+/* phones (where the stage can run): the stage fills the first screen and the headline stands on the paper above the hole;
+   the line with the numbers moves under the stage, and the finder box grows so the hole can be large */
+@media (max-width:759px){
+  .gvwill .welcome{display:flex;flex-direction:column}
+  .gvwill .welcome>.fh{display:contents}
+  .gvwill .welcome .fhh{order:1;font-size:clamp(34px,10.5vw,46px)}
+  .gvwill .welcome>#bf{order:2}
+  .gvwill .welcome .fp{order:3;margin-top:4px}
+  .gvwill .welcome>.pickb{order:4}
+  .gvwill .welcome .bfc{aspect-ratio:auto;height:min(150vw,640px)}
+}
 /* wide screens: the question stands top right, flush with the page edge, as on the approved stage */
 @media (min-width:1200px){.welcome .bfq{flex-direction:column;align-items:flex-end;text-align:right;gap:2px}}
 .gvon .bfd{transition:none}
