@@ -1890,7 +1890,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .gvwill .welcome>#bf{order:2}
   .gvwill .welcome .fp{order:3;margin-top:4px}
   .gvwill .welcome>.pickb{order:4}
-  .gvwill .welcome .bfc{aspect-ratio:auto;height:min(150vw,640px)}
+  .gvwill .welcome .bfc{aspect-ratio:auto;height:max(360px,min(150vw,640px,calc(100svh - 400px)))}   /* close to what stage.js sets, so nothing jumps */
 }
 /* wide screens: the question stands top right, flush with the page edge, as on the approved stage */
 @media (min-width:1200px){.welcome .bfq{flex-direction:column;align-items:flex-end;text-align:right;gap:2px}}

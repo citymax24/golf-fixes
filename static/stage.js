@@ -36,7 +36,11 @@
     driver_distance: { c: [[160, 326], [160, 158]], fly: { pk: 1.05, ap: 1.5, land: .85, b: 1, t: 1 } },
     iron_contact: { c: [[160, 326], [160, 262]], fly: { pk: 1.45, ap: 1.15, land: .96, b: .45, t: 1.05 } }
   };
-  Object.keys(MISS).forEach(function (k) { var m = MISS[k]; m.cw = m.c; m.cn = m.c.map(function (p) { return [160 + (p[0] - 160) * .76, p[1]]; }); });
+  Object.keys(MISS).forEach(function (k) {
+    var m = MISS[k], n = m.c.length; m.cw = m.c;
+    // hook and slice land a little shorter on phones, so their dots and labels clear the pull's (which lands just above)
+    m.cn = m.c.map(function (p, i) { return [160 + (p[0] - 160) * .86, p[1] + (i === n - 1 && (k === "hook" || k === "slice") ? 30 : 0)]; });
+  });
   var phone = false;
   function at(m, t) {
     var c = m.c; if (c.length === 2) return [c[0][0] + (c[1][0] - c[0][0]) * t, c[0][1] + (c[1][1] - c[0][1]) * t];
@@ -45,17 +49,17 @@
   // Models in small groups: paper x, paper y, height in units, sprite. Placed so none stands in front of a dot.
   var SPR = ["tree-1", "tree-2", "tree-3", "tree-1", "tree-5", "grass-1", "grass-2", "bush-1", "bush-2"];
   var MODELS = [
-    [1150, 90, 1.25, 1], [1080, 130, .85, 4], [1200, 140, .4, 7],
-    [1420, 40, 1.45, 2], [1500, 70, 1.1, 0], [1380, 95, .2, 5],
-    [760, 250, 1.15, 0], [820, 310, .38, 8], [790, 190, .9, 2],
-    [880, 1160, 1.1, 2], [960, 1170, .22, 6], [950, 1060, .4, 7],
-    [1880, 380, 1.3, 0], [1950, 320, 1, 1], [1830, 430, .2, 5],
-    [1800, 840, 1.5, 1], [1700, 900, .45, 8], [1740, 780, .9, 4],
-    [1560, 1250, .85, 0], [1520, 1300, .22, 6], [1660, 1220, .42, 7],
-    [870, 960, .2, 5], [1120, 1000, .18, 6]];
-  var FLAG_H = .92;
+    [1150, 90, 1.9, 1], [1060, 140, 1.3, 4], [1210, 150, .6, 7],
+    [1430, 40, 2.2, 2], [1520, 80, 1.7, 0], [1380, 100, .3, 5],
+    [760, 250, 1.8, 0], [830, 320, .6, 8], [780, 180, 1.4, 2],
+    [880, 1160, 1.7, 2], [970, 1180, .32, 6], [950, 1060, .6, 7],
+    [1880, 380, 2, 0], [1960, 310, 1.5, 1], [1830, 440, .3, 5],
+    [1800, 840, 2.2, 1], [1700, 900, .65, 8], [1740, 770, 1.3, 4],
+    [1560, 1250, 1.3, 0], [1510, 1300, .32, 6], [1660, 1230, .6, 7],
+    [870, 960, .3, 5], [1120, 1000, .26, 6]];
+  var FLAG_H = 1.15;
   // Tuned on the prototype (depth of field, focus at rest on the flag, flight, parallax, camera follow, easing).
-  var CFG = { dof: 8, rest: 18, speed: 1, height: 1, parallax: 1, follow: 1, ease: .07 };
+  var CFG = { dof: 4.5, rest: 18, speed: 1, height: 1, parallax: 1, follow: 1, ease: .07 };
 
   // ---- the stage element, behind the welcome block (wide screens) or inside the finder box (narrow)
   var st = document.createElement("div"); st.className = "gvst"; st.setAttribute("aria-hidden", "true");
@@ -93,14 +97,14 @@
   }
   var REST = CFG.rest, focus = REST, focusT = REST, started = false;
   function ap() { var a = touch ? CFG.dof * .6 : CFG.dof; return narrow ? Math.min(a, 3.6) : a; }
-  function maxc() { return ap() * 1.15 + .5; }
+  function maxc() { return ap() * .9 + .4; }
   function coc(z) { return Math.min(maxc(), ap() * Math.abs(z - focus) / z); }
 
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
     "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog;uniform vec2 uRes,uC0;out vec4 o;\n" +
-    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):t+(uPaper-pp);}\n" +
+    "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.45;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
     "vec3 d=normalize(uF+uR*(x-uC0.x)/uFoc+uU*(uC0.y-y)/uFoc);if(d.y>-.002)return vec4(uBg,1000.);\n" +
@@ -149,7 +153,7 @@
   function isDark() { var t = document.documentElement.getAttribute("data-theme"); if (t) return t === "dark"; return !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
   var mode = isDark() ? "dark" : "light";
   function bgCol() { return mode === "dark" ? [.059, .059, .059] : [1, 1, 1]; }
-  function paperCol() { return mode === "dark" ? [.075, .075, .075] : [.985, .985, .985]; }
+  function paperCol() { return mode === "dark" ? [.135, .137, .14] : [.985, .985, .985]; }
 
   // ---- models
   function mk(cls, tag) { var e = document.createElement(tag || "div"); e.className = cls; ov.appendChild(e); return e; }
@@ -218,7 +222,21 @@
   // ---- layout: where the stage sits, and the camera that puts the hole where the finder box is
   function rel(el) { var a = el.getBoundingClientRect(), b = welcome.getBoundingClientRect(); return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height }; }
   var lastSig = "";
+  // phones: the finder box ends above the bottom of the visible screen (room for Safari's floating bar); set once per
+  // width, so the toolbar collapsing while scrolling does not resize it
+  function phoneBox(force) {
+    var w = document.documentElement.clientWidth;
+    if (window.innerWidth >= 760) { if (phoneW) { bfc.style.height = ""; phoneW = 0; } return; }
+    if (w === phoneW && !force) return;
+    // after a turn the width updates before the height: measure again once the turn has settled
+    if (w !== phoneW && phoneW) setTimeout(function () { phoneBox(true); if (ready) size(true); }, 400);
+    phoneW = w;
+    var vh = window.visualViewport ? Math.min(window.innerHeight, window.visualViewport.height) : window.innerHeight;
+    var top = bfc.getBoundingClientRect().top + window.scrollY, h = Math.round(vh - top - 84);
+    bfc.style.height = Math.max(360, Math.min(w * 1.5, 640, h)) + "px";
+  }
   function size(force) {
+    phoneBox();
     var wide = window.innerWidth >= 1200, box = rel(bfc), sx, sy, sw, sh;
     narrow = !wide; var ph = window.innerWidth < 760;
     if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; } }
@@ -237,17 +255,18 @@
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); trc.width = cv.width; trc.height = cv.height;
     gl.viewport(0, 0, cv.width, cv.height);
     // the headline's box in canvas px: models behind the text step back so it stays readable
-    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0; colRight = box.x - sx - 48;
+    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0;
     if ((wide || phone) && fh) {
       // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
       var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
       Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
       if (textRight) textBox = { x1: textRight + 24, y0: y0 - 16, y1: y1 + 16 };
     }
+    boxC = { x: box.x - sx, y: box.y - sy, w: box.w, h: box.h };
     if (wide) frameWide(); else fit(box.x - sx, box.y - sy, box.w, box.h);
     inkDirty = staticDirty = true; if (ready) frame(performance.now());
   }
-  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null;
+  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, base0 = null, base1 = null, boxC = null, phoneW = 0;
   function frameWide() {  // a centred pinhole with the prototype's field of view (tan .36 of half the height)
     foc0 = H / 2 / .36;
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
@@ -255,24 +274,28 @@
     var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
     // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
     function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
-    base0 = bounds(textRight || W * .3); base1 = bounds(Math.max(colRight, W * .5));
+    base0 = bounds(textRight || W * .3).concat([H / 2]);
+    // with an answer showing, the hole fits the finder box under the question (the answer has the left column)
+    base1 = boxC.w > 40 && boxC.h > 40 ? fit(boxC.x, boxC.y, boxC.w, boxC.h, true) : base0.slice();
+    if (base1[0] > base0[0]) base1[0] = base0[0];  // the hole never grows when the answer opens
     par = keepPar; camOff = keepOff; applyAns(); setCam();
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
   // When the answer takes the headline's place, the hole steps right and a little back so the video does not cover it.
-  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = H / 2; }
+  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = base0[2] + (base1[2] - base0[2]) * e; }
   // The pin top, the tee and the six landing spots must fit the box (bx, by, bw, bh in canvas px), with room for labels.
-  function fit(bx, by, bw, bh) {
+  function fit(bx, by, bw, bh, onlyCompute) {
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
     var pts = [Wd(S(CUP[0], CUP[1]), FLAG_H), Wd(S(TEE[0], TEE[1]))];
     Object.keys(MISS).forEach(function (k) { var c = MISS[k].c, e = c[c.length - 1]; pts.push(Wd(S(e[0], e[1]))); });
     var A = pts.map(function (w) { var d = sub(w, cam.p), z = dot(d, cam.F); return [dot(d, cam.R) / z, dot(d, cam.U) / z]; });
     var a0 = Math.min.apply(null, A.map(function (v) { return v[0]; })), a1 = Math.max.apply(null, A.map(function (v) { return v[0]; }));
     var b0 = Math.min.apply(null, A.map(function (v) { return v[1]; })), b1 = Math.max.apply(null, A.map(function (v) { return v[1]; }));
-    var mx = phone ? .12 : narrow ? .16 : .12, mtop = phone ? .1 : narrow ? .08 : .06, mbot = phone ? .08 : narrow ? .1 : .08;
-    foc = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
-    cx0 = bx + bw / 2 - (a0 + a1) / 2 * foc;
-    cy0 = by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * foc) / 2 + b1 * foc;
+    var mx = phone ? .15 : .12, mtop = phone ? .1 : narrow ? .08 : .1, mbot = phone ? .08 : narrow ? .1 : .08;
+    var f = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
+    var r = [f, bx + bw / 2 - (a0 + a1) / 2 * f, by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * f) / 2 + b1 * f];
+    if (onlyCompute) { par = keepPar; camOff = keepOff; return r; }
+    foc = r[0]; cx0 = r[1]; cy0 = r[2];
     par = keepPar; camOff = keepOff;
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
@@ -305,7 +328,7 @@
     var r = st.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     if (x < 0 || y < 0 || x > W || y > H) return;
     if (!reduce) parT = [x / W - .5, .5 - y / H];
-    if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : Math.max(6, depthAt(x, y)); mouseFocus = true; }
+    if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : REST; mouseFocus = oz !== null; }
     kick();
   });
   welcome.addEventListener("pointerleave", function () { parT = [0, 0]; mouseFocus = false; if (!flight && !landedK && !hoverK) { focusT = REST; userFocus = true; } kick(); });
@@ -360,10 +383,13 @@
     e.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
     var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
-    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph < textBox.y1) op *= .18;
+    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph * .6 < textBox.y1) op *= .18;
+    for (var si = 0; si < spotScr.length; si++) { var q = spotScr[si]; if (q.z > b.z && q.x > b.x - pw * .45 - 50 && q.x < b.x + pw * .45 + 50 && q.y > b.y - ph - 8 && q.y < b.y + 34) { op *= .22; break; } }
     e.style.opacity = op.toFixed(2);
   }
+  var spotScr = [];
   function layout() {
+    spotScr = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1]; return proj(Wd(S(e[0], e[1]))); });
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
     stand(flag, S(CUP[0], CUP[1]), FLAG_H, .06, .01);
     var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = coc(bp.z);
@@ -437,7 +463,7 @@
   function teardown() {
     if (flight) { var f = flight; flight = null; clearTimeout(f.guard); try { f.done(); } catch (err) {} }
     ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); bail(); if (st.parentNode) st.remove();
-    dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; });
+    dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; }); bfc.style.height = "";
   }
   var uniq = {}; SPR.forEach(function (n) { uniq[n] = 1; });
   function start() {
@@ -457,7 +483,8 @@
         };
         st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 700);
         requestAnimationFrame(function () { st.classList.add("in"); });
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (ready) size(true); });  // the headline's real width
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { phoneBox(true); if (ready) size(true); });
+        window.addEventListener("orientationchange", function () { setTimeout(function () { phoneBox(true); if (ready) size(true); }, 400); });  // the headline's real width
         if ("ResizeObserver" in window) new ResizeObserver(function () { if (ready) size(); }).observe(welcome); else window.addEventListener("resize", function () { if (ready) size(); });
         if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) kick(); }).observe(st);
         new MutationObserver(setTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
