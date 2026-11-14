@@ -1806,3 +1806,45 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 }
 @keyframes sfold{from{opacity:0;transform:translateX(12px)}}
 @media (prefers-reduced-motion:reduce){body.searching .top .search{animation:none}}
+
+/* -- lesson page on desktop (1200px and up): the stage, like the home page. First screen: the title, the channel, the
+   best quote and the buttons on the left, the video on the right, and the four counts as a strip below. Second screen:
+   why golfers recommend it on the left, the next lessons as a grid of pictures on the right; then the comments in three
+   columns. CSS only: .wl becomes display:contents so its children and the aside share one grid; the markup and its order
+   are unchanged. Phones and tablets keep the stacked page. -- */
+@media (min-width:1200px){
+  body.wpage .main{padding-top:0}
+  body.wpage .watch{--gap:112px;grid-template-columns:minmax(0,5fr) minmax(0,8fr);column-gap:64px;row-gap:0;max-width:none;
+    grid-template-rows:repeat(10,auto) 1fr auto}   /* row 11, the only flexible one, takes what the next lessons need beyond the text; the video's extra height spreads evenly over the rows beside it */
+  body.wpage .wl{display:contents}
+  body.wpage .wl>.pbar{grid-column:1/-1;grid-row:1;margin-top:16px}
+  body.wpage .wl>.pwr{grid-column:2;grid-row:2/9;align-self:center;margin-top:32px}
+  body.wpage .wl>.vt{grid-column:1;grid-row:3;margin:32px 0 12px;font-size:36px;line-height:1.08;font-weight:800;letter-spacing:-.03em;word-spacing:.04em}
+  body.wpage .wl>.vch{grid-column:1;grid-row:4;margin:0}
+  body.wpage .wl>.vaw{grid-column:1;grid-row:5;margin:8px 0 0}
+  body.wpage .wl>.tq{grid-column:1;grid-row:6;margin:28px 0 0;padding:2px 0 2px 18px;border-left:3px solid var(--acc);border-radius:0;background:none;
+    font-size:20px;line-height:28px;text-indent:0}
+  body.wpage .wl>.acts{grid-column:1;grid-row:7;margin:28px 0 0}
+  body.wpage .wl>.vsb{grid-column:1/-1;grid-row:9;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);column-gap:32px;
+    margin:56px 0 0;padding:20px 0 0;border-top:1px solid var(--line);border-bottom:0}
+  body.wpage .vsb>*{padding:0;border:0}
+  body.wpage .vsb b{font-size:56px;line-height:1;letter-spacing:-.04em}
+  body.wpage .vsb .nw b{font-size:36px;line-height:56px;letter-spacing:-.03em}
+  body.wpage .vsb span{display:block;margin-top:8px;font-size:15px;line-height:20px}
+  body.wpage .wl>.desc{grid-column:1;grid-row:10;margin:var(--gap) 0 0;padding:0;background:none;border-radius:0;font-size:17px;line-height:26px}
+  body.wpage .desc .tag{background:var(--chip)}
+  body.wpage .wl>.vote{grid-column:1;grid-row:11;align-self:start;margin:40px 0 0;padding:24px 0 0;border:0;border-top:1px solid var(--line);border-radius:0}
+  body.wpage .wr{grid-column:2;grid-row:10/12;align-self:start;margin-top:var(--gap);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 20px}
+  body.wpage .wr h2{grid-column:1/-1;margin:0;font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em}
+  body.wpage .un{grid-template-columns:minmax(0,1fr);gap:10px;margin:0;align-content:start}
+  body.wpage .un .ldbar{max-width:none}
+  body.wpage .wl>.cms{grid-column:1/-1;grid-row:12;margin-top:var(--gap);columns:3;column-gap:48px}
+  body.wpage .cms>h2,body.wpage .cms>p{column-span:all}
+  body.wpage .cms>h2{font-size:28px;line-height:32px}   /* below the page's title in size */
+  body.wpage .cms>h2+p{margin-bottom:24px}
+  body.wpage .cms>.cm,body.wpage .cms>.cm:first-of-type{break-inside:avoid;padding:20px 0;border-top:1px solid var(--line);border-bottom:0}   /* every column starts with a rule */
+  body.wpage .cms>.morecm{column-span:all}
+  body.wpage .cms:not(:has(>.cm:nth-of-type(3))){columns:2}   /* few comments: no empty columns */
+  body.wpage .cms:not(:has(>.cm:nth-of-type(2))){columns:1;max-width:760px}
+}
+@media (min-width:1440px){body.wpage .wr{grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 16px}}   /* four across: the grid ends about where the text beside it does */
