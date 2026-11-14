@@ -286,6 +286,13 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appeara
 
 /* never allow sideways scrolling on phones */
 html,body{max-width:100%;overflow-x:clip}
+/* Safari on iPhone ignores the clip on html and body when it sizes the page after a turn to landscape and back: anything that
+   pokes out sideways (the index's colour field reaches 96px past the text) then keeps the page wider than the screen, and the
+   video, the hole and the text run off the right edge. Clipping inside main leaves nothing for it to count. Up to 1366px
+   (phones and every iPad, both ways round) main is as wide as the screen, so the cut falls on the screen edge; on wider
+   screens main is centred at 1360px and the field may glow past it. Landscape font inflation is turned off for the same turn. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (max-width:1366px){.main{overflow-x:clip}}
 .vote{margin:20px 0 4px;padding:14px 16px;border:1px solid var(--line);border-radius:12px}
 .vote h2{font-size:16px;margin:0 0 8px}.vbtns{display:flex;gap:8px;flex-wrap:wrap;margin:0}
 .vbtns .pill:disabled{opacity:.55;cursor:default}.vbtns .pill.on{opacity:1;background:var(--fg);color:var(--bg)}
