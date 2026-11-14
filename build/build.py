@@ -239,6 +239,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
 {f'<meta name="google-site-verification" content="{e(SITE["google_verification"])}">' if SITE.get("google_verification") else ''}
 <link rel="preload" href="{BASE}/static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{BASE}/static/style.css?v={ASSET_V['css']}">
 <script>{THEME_JS}</script>
+<noscript><style>@media (min-width:1001px){{.top .search{{display:flex}}.top #stoggle{{display:none}}}}</style></noscript>
 {''.join(f'<script type="application/ld+json">{json.dumps(x)}</script>' for x in (ld if isinstance(ld, list) else [ld])) if ld else ''}
 </head><body class="{cls}" data-base="{BASE}">
 <a class="skip" href="#main">Skip to content</a>
@@ -246,7 +247,7 @@ def page(path, title, desc, body, nav="", og=None, ld=None, canonical=True, cls=
   <div class="left"><button class="icon" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="side">{svg('menu')}</button>
   <a class="brand" href="{BASE}/" aria-label="{e(SITE['name'])} home">{WORDMARK}</a></div>
   <form class="search" id="searchform" action="{BASE}/search/" role="search"><span class="si" aria-hidden="true">{svg('search')}</span><input name="q" id="q" type="search" placeholder="Search a problem or lesson" autocomplete="off" aria-label="Search a problem or lesson" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list"><kbd class="kh" aria-hidden="true">/</kbd><ul class="sugg" id="sugg" role="listbox" hidden></ul></form>
-  <div class="right"><nav class="tnav" aria-label="Main">{tnav}</nav><button class="icon" id="stoggle" aria-label="Search" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
+  <div class="right"><nav class="tnav" aria-label="Main">{tnav}</nav><button class="icon" id="stoggle" aria-label="Search" title="Search ( / )" aria-expanded="false" aria-controls="searchform">{svg('search')}</button></div>
 </header>
 <nav class="side" id="side">{side}
 </nav>
