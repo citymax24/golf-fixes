@@ -5,6 +5,8 @@
 // when the design changes, because networks cache preview images by URL.
 // Only images whose content changed are drawn again (build/og-hashes.json remembers what each one was drawn from), so a
 // data update commits the few images whose numbers moved, not all fifty. `node build/og.js --all` draws everything.
+// The home page's card is the exception: it is compared by its picture, and while the picture stays the same its recorded
+// hash stays the old one (so that hash can name an earlier stylesheet than the current one).
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const root = path.join(__dirname, '..');
@@ -111,18 +113,24 @@ ${SPOTS.map(([x, y], i) => `<a class="bfd${i ? '' : ' on'}" style="--x:${(x / 3.
   if (!(await p.evaluate(() => document.fonts.check('800 20px Inter') && document.fonts.check('500 20px Inter')))) {
     console.error('The Inter font is not installed: the images would be drawn in a fallback font. Nothing written.'); await b.close(); process.exit(1);
   }
-  const shot = async (name, html) => {
+  // byLook: the card's HTML carries the whole stylesheet, so its hash moves with every CSS change, also one that does not
+  // touch the card. Such a card is drawn and compared with the file: if the picture is the same, the file and the recorded
+  // hash stay as they are, so nothing is committed and no second deploy follows.
+  const shot = async (name, html, byLook) => {
     const h = crypto.createHash('sha1').update(html).digest('hex'); hashes[name] = h;
     const file = path.join(out, name + '.png');
     if (old[name] === h && fs.existsSync(file)) return;
-    await p.setContent(html, { waitUntil: 'load' }); await p.evaluate(() => document.fonts.ready); await p.screenshot({ path: file }); drawn++;
+    await p.setContent(html, { waitUntil: 'load' }); await p.evaluate(() => document.fonts.ready);
+    const png = await p.screenshot();
+    if (byLook && old[name] && fs.existsSync(file) && fs.readFileSync(file).equals(png)) { hashes[name] = old[name]; return; }
+    fs.writeFileSync(file, png); drawn++;
   };
   const top = [...videos].sort((a, b) => (b.recs + 0.75 * (b.success || 0)) - (a.recs + 0.75 * (a.success || 0)));
   const all = top.map(v => ({ v, n: v.recs, ok: v.success || 0 }));
   // 'home' is the home page's card and the fallback for pages without one (build.py). It replaced default.png, which
   // stays in the folder for links that were shared before, because networks keep preview images by URL.
   await shot('home', stage('Fix your miss with the lesson other golfers recommend.',
-    `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`));
+    `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`), true);
   await shot('report', tpl('The data', 'What golfers recommend to each other', `${site.stats.comments_scanned} comments read. ${n(totalRecs)} recommendations counted.`, all));
   for (const pr of problems) {
     const r = rankFor(pr.key); if (!r.length) continue;
