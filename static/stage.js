@@ -224,11 +224,15 @@
   var lastSig = "";
   // phones: the finder box ends above the bottom of the visible screen (room for Safari's floating bar); set once per
   // width, so the toolbar collapsing while scrolling does not resize it
-  function phoneBox() {
+  function phoneBox(force) {
     var w = document.documentElement.clientWidth;
     if (window.innerWidth >= 760) { if (phoneW) { bfc.style.height = ""; phoneW = 0; } return; }
-    if (w === phoneW) return; phoneW = w;
-    var top = bfc.getBoundingClientRect().top + window.scrollY, h = Math.round(window.innerHeight - top - 84);
+    if (w === phoneW && !force) return;
+    // after a turn the width updates before the height: measure again once the turn has settled
+    if (w !== phoneW && phoneW) setTimeout(function () { phoneBox(true); if (ready) size(true); }, 400);
+    phoneW = w;
+    var vh = window.visualViewport ? Math.min(window.innerHeight, window.visualViewport.height) : window.innerHeight;
+    var top = bfc.getBoundingClientRect().top + window.scrollY, h = Math.round(vh - top - 84);
     bfc.style.height = Math.max(360, Math.min(w * 1.5, 640, h)) + "px";
   }
   function size(force) {
@@ -251,7 +255,7 @@
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); trc.width = cv.width; trc.height = cv.height;
     gl.viewport(0, 0, cv.width, cv.height);
     // the headline's box in canvas px: models behind the text step back so it stays readable
-    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0; colRight = box.x - sx - 48;
+    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0;
     if ((wide || phone) && fh) {
       // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
       var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
@@ -262,7 +266,7 @@
     if (wide) frameWide(); else fit(box.x - sx, box.y - sy, box.w, box.h);
     inkDirty = staticDirty = true; if (ready) frame(performance.now());
   }
-  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null, boxC = null, phoneW = 0;
+  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, base0 = null, base1 = null, boxC = null, phoneW = 0;
   function frameWide() {  // a centred pinhole with the prototype's field of view (tan .36 of half the height)
     foc0 = H / 2 / .36;
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
@@ -272,7 +276,8 @@
     function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
     base0 = bounds(textRight || W * .3).concat([H / 2]);
     // with an answer showing, the hole fits the finder box under the question (the answer has the left column)
-    base1 = fit(boxC.x, boxC.y, boxC.w, boxC.h, true);
+    base1 = boxC.w > 40 && boxC.h > 40 ? fit(boxC.x, boxC.y, boxC.w, boxC.h, true) : base0.slice();
+    if (base1[0] > base0[0]) base1[0] = base0[0];  // the hole never grows when the answer opens
     par = keepPar; camOff = keepOff; applyAns(); setCam();
     REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
   }
@@ -475,7 +480,8 @@
         };
         st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 700);
         requestAnimationFrame(function () { st.classList.add("in"); });
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (ready) size(true); });  // the headline's real width
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { phoneBox(true); if (ready) size(true); });
+        window.addEventListener("orientationchange", function () { setTimeout(function () { phoneBox(true); if (ready) size(true); }, 400); });  // the headline's real width
         if ("ResizeObserver" in window) new ResizeObserver(function () { if (ready) size(); }).observe(welcome); else window.addEventListener("resize", function () { if (ready) size(); });
         if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) kick(); }).observe(st);
         new MutationObserver(setTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
