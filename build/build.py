@@ -54,7 +54,9 @@ OG_HOME = "/static/og4/" + ("home.png" if os.path.exists(os.path.join(ROOT, "sta
 # visitor toggles back to what the system shows. The old key gv_theme pinned a pick forever and is removed.
 THEME_JS = ('try{var r=document.documentElement,L=localStorage,s=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",t=null;'
             'L.removeItem("gv_theme");try{t=JSON.parse(L.getItem("gv_theme2"))}catch(e){}'
-            'if(t&&t.s===s&&t.t!==s&&(t.t==="dark"||t.t==="light"))r.dataset.theme=t.t;else L.removeItem("gv_theme2")}catch(e){}')
+            'if(t&&t.s===s&&t.t!==s&&(t.t==="dark"||t.t==="light"))r.dataset.theme=t.t;else L.removeItem("gv_theme2")}catch(e){}'
+            # where the home page's paper stage (static/stage.js) will run, the drawn hole is not shown first
+            'try{if(window.WebGL2RenderingContext&&!(navigator.connection&&navigator.connection.saveData))document.documentElement.classList.add("gvwill")}catch(e){}')
 CSP = ("default-src 'self'; script-src 'self' 'sha256-" + base64.b64encode(hashlib.sha256(THEME_JS.encode()).digest()).decode() + "'; style-src 'self' 'unsafe-inline'; "
        "img-src 'self' data: https://golfvotes.goatcounter.com; connect-src 'self' https://golfvotes.goatcounter.com; frame-src https://www.youtube-nocookie.com; "
        "object-src 'none'; base-uri 'self'; form-action 'self'")

@@ -7,10 +7,14 @@
    photos). One world unit is 100 px of the 2048 x 1536 sheet; S() places the finder's 320 x 360 course on it. */
 (function () {
   "use strict";
+  function bail() { document.documentElement.classList.remove("gvwill"); }
+  // a time limit: if the stage is not live in 4 s (slow network, a hanging image, an error), the drawn hole shows and the
+  // stage does not take over later
+  var gaveUp = false, giveUp = setTimeout(function () { if (live) return; gaveUp = true; try { teardown(); } catch (err) { bail(); } }, 4000);
   var bf = document.getElementById("bf"), welcome = document.querySelector(".welcome"), me = document.currentScript;
-  if (!bf || !welcome || !me || !window.WebGL2RenderingContext) return;
-  if (navigator.connection && navigator.connection.saveData) return;  // data saver: the drawn hole is enough
-  var bfc = bf.querySelector(".bfc"); if (!bfc) return;
+  if (!bf || !welcome || !me || !window.WebGL2RenderingContext) { bail(); return; }
+  if (navigator.connection && navigator.connection.saveData) { bail(); return; }  // data saver: the drawn hole is enough
+  var bfc = bf.querySelector(".bfc"); if (!bfc) { bail(); return; }
   var base = me.src.replace(/stage\.js.*$/, "stage/"), ver = (me.src.match(/[?&]v=([^&]+)/) || [])[1] || "";
   function src(n) { return base + n + ".webp" + (ver ? "?v=" + ver : ""); }
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -32,6 +36,8 @@
     driver_distance: { c: [[160, 326], [160, 158]], fly: { pk: 1.05, ap: 1.5, land: .85, b: 1, t: 1 } },
     iron_contact: { c: [[160, 326], [160, 262]], fly: { pk: 1.45, ap: 1.15, land: .96, b: .45, t: 1.05 } }
   };
+  Object.keys(MISS).forEach(function (k) { var m = MISS[k]; m.cw = m.c; m.cn = m.c.map(function (p) { return [160 + (p[0] - 160) * .76, p[1]]; }); });
+  var phone = false;
   function at(m, t) {
     var c = m.c; if (c.length === 2) return [c[0][0] + (c[1][0] - c[0][0]) * t, c[0][1] + (c[1][1] - c[0][1]) * t];
     var u = 1 - t; return [u * u * u * c[0][0] + 3 * u * u * t * c[1][0] + 3 * u * t * t * c[2][0] + t * t * t * c[3][0], u * u * u * c[0][1] + 3 * u * u * t * c[1][1] + 3 * u * t * t * c[2][1] + t * t * t * c[3][1]];
@@ -56,7 +62,7 @@
   st.innerHTML = '<div class="gvw"><canvas class="gvgl"></canvas><canvas class="gvtr"></canvas><div class="gvov"></div></div>';
   var wrap = st.firstChild, cv = wrap.children[0], trc = wrap.children[1], ov = wrap.children[2];
   var gl = cv.getContext("webgl2", { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true });
-  if (!gl) return;
+  if (!gl) { bail(); return; }
 
   // ---- camera: above the middle line of the hole, looking along it; foc (px) and the centre (cx0, cy0) are fitted so that
   // the whole hole and its six dots fill the finder box, wherever that box sits in the canvas
@@ -68,12 +74,12 @@
   function nrm(a) { var l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; }
   function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
   function setCam() {
-    var ox = par[0] * .35 * CFG.parallax + camOff[0] * CFG.follow, oz = camOff[1] * CFG.follow, oy = par[1] * CFG.parallax, p, t;
+    var fl = phone ? CFG.follow * .35 : CFG.follow, ox = par[0] * .35 * CFG.parallax + camOff[0] * fl, oz = camOff[1] * fl, oy = par[1] * CFG.parallax, p, t;
     // camera and target share x, so the far edge of the sheet and the horizon stay level
     // a steeper view than the prototype's, so the hole fills the finder box's height instead of lying flat
     var hx = S(MID[0], MID[1])[0] / 100;
     if (narrow) { p = [hx + ox, 8.2 + oy * .15, 19.2 + oz]; t = [hx + ox, 0, 8.0 + oz * .5]; }
-    else { p = [hx + ox, 6.6 + oy * .2, 20.0 + oz]; t = [hx + ox, 0, 8.4 + oz * .5]; }
+    else { var cxw = hx + (lefty ? 2.3 : -2.3); p = [cxw + ox, 4.0 + oy * .2, 20.4 + oz]; t = [cxw + ox, 0, 8.8 + oz * .5]; }
     cam.p = p; cam.F = nrm(sub(t, p)); cam.R = nrm(cross(cam.F, [0, 1, 0])); cam.U = cross(cam.R, cam.F);
   }
   function proj(w) {
@@ -93,7 +99,7 @@
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
-    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uRes,uC0;out vec4 o;\n" +
+    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog;uniform vec2 uRes,uC0;out vec4 o;\n" +
     "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):t+(uPaper-pp);}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
@@ -102,7 +108,7 @@
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
     "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
     "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
-    "c=mix(c,uBg,smoothstep(16.,40.,z));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
+    "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
     "if(c>.7){vec3 a=vec3(0.);float lod=log2(max(c*.3,1.));float rot=hash(px+7.)*6.2832;for(int i=0;i<18;i++){if(float(i)>=uTaps)break;float fi=float(i)+.5;float r=sqrt(fi/uTaps)*c;float th=fi*2.39996+rot;a+=shade(px+r*vec2(cos(th),sin(th)),lod).rgb;}col=a/uTaps;}\n" +
     // the edges of the canvas melt into the page
@@ -111,12 +117,12 @@
   function shd(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; }
   var pr = gl.createProgram();
   try { gl.attachShader(pr, shd(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, shd(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error("link"); }
-  catch (err) { return; }
+  catch (err) { bail(); return; }
   gl.useProgram(pr);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   var aLoc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   var U = {};
-  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
   function newTex() {
     var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -214,10 +220,13 @@
   var lastSig = "";
   function size(force) {
     var wide = window.innerWidth >= 1200, box = rel(bfc), sx, sy, sw, sh;
-    narrow = !wide;
+    narrow = !wide; var ph = window.innerWidth < 760;
+    if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; } }
     if (wide) {  // the whole width of the page column, from the top of the welcome block to below the finder box
       var main = (welcome.closest(".main") || welcome.parentNode).getBoundingClientRect(), wb = welcome.getBoundingClientRect();
-      sx = main.left - wb.left; sw = main.width; sy = 0; sh = box.y + box.h + 72;
+      sx = main.left - wb.left; sw = main.width; sy = 0; sh = Math.max(box.y + box.h + 40, Math.min(800, Math.max(560, sw * .52)));
+    } else if (phone) {  // the stage runs edge to edge from the top of the welcome block, the headline stands on the paper
+      var wb3 = welcome.getBoundingClientRect(); sx = -wb3.left; sw = document.documentElement.clientWidth; sy = 0; sh = box.y + box.h + 24;
     } else { sx = box.x; sy = box.y; sw = box.w; sh = box.h; }
     var sig = [wide, sx, sy, sw, sh, box.x, box.y, box.w, box.h, lefty, window.devicePixelRatio].map(function (v) { return typeof v === "number" ? Math.round(v) : v; }).join();
     if (sig === lastSig && !force) return; lastSig = sig;
@@ -227,9 +236,31 @@
     dpr = Math.min(touch ? 1.25 : 1.35, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); trc.width = cv.width; trc.height = cv.height;
     gl.viewport(0, 0, cv.width, cv.height);
-    fit(box.x - sx, box.y - sy, box.w, box.h);
+    // the headline's box in canvas px: models behind the text step back so it stays readable
+    var fh = welcome.querySelector(".fh"); textBox = null; textRight = 0; colRight = box.x - sx - 48;
+    if ((wide || phone) && fh) {
+      // where the words end, not the column: the right edge of the headline's and the line under it's line boxes
+      var rg = document.createRange(), wb2 = welcome.getBoundingClientRect(), y0 = 1e9, y1 = -1e9; rg.selectNodeContents(fh);
+      Array.prototype.forEach.call(rg.getClientRects(), function (r) { if (!r.width) return; textRight = Math.max(textRight, r.right - wb2.left - sx); y0 = Math.min(y0, r.top - wb2.top - sy); y1 = Math.max(y1, r.bottom - wb2.top - sy); });
+      if (textRight) textBox = { x1: textRight + 24, y0: y0 - 16, y1: y1 + 16 };
+    }
+    if (wide) frameWide(); else fit(box.x - sx, box.y - sy, box.w, box.h);
     inkDirty = staticDirty = true; if (ready) frame(performance.now());
   }
+  var foc0 = 500, ans = 0, ansT = 0, textBox = null, textRight = 0, colRight = 0, base0 = null, base1 = null;
+  function frameWide() {  // a centred pinhole with the prototype's field of view (tan .36 of half the height)
+    foc0 = H / 2 / .36;
+    var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
+    var A = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1], d = sub(Wd(S(e[0], e[1])), cam.p); return dot(d, cam.R) / dot(d, cam.F); });
+    var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A);
+    // no dot or label may touch the words on the left (or, with an answer showing, the answer's column); shrink if it must
+    function bounds(left) { var L = left + 60, R = W - 80, f = Math.min(foc0, (R - L) / (amax - amin)), c = W / 2; if (c + amin * f < L) c = L - amin * f; if (c + amax * f > R) c = R - amax * f; return [f, c]; }
+    base0 = bounds(textRight || W * .3); base1 = bounds(Math.max(colRight, W * .5));
+    par = keepPar; camOff = keepOff; applyAns(); setCam();
+    REST = proj(Wd(S(CUP[0], CUP[1]), FLAG_H * .5)).z; if (userFocus && !flight && !landedK && !mouseFocus) { focusT = REST; if (!started) { focus = reduce ? REST : REST * .55; started = true; } }
+  }
+  // When the answer takes the headline's place, the hole steps right and a little back so the video does not cover it.
+  function applyAns() { if (!base0) return; var e = ans * ans * (3 - 2 * ans); foc = base0[0] + (base1[0] - base0[0]) * e; cx0 = base0[1] + (base1[1] - base0[1]) * e; cy0 = H / 2; }
   // The pin top, the tee and the six landing spots must fit the box (bx, by, bw, bh in canvas px), with room for labels.
   function fit(bx, by, bw, bh) {
     var keepPar = par, keepOff = camOff; par = [0, 0]; camOff = [0, 0]; setCam();
@@ -238,7 +269,7 @@
     var A = pts.map(function (w) { var d = sub(w, cam.p), z = dot(d, cam.F); return [dot(d, cam.R) / z, dot(d, cam.U) / z]; });
     var a0 = Math.min.apply(null, A.map(function (v) { return v[0]; })), a1 = Math.max.apply(null, A.map(function (v) { return v[0]; }));
     var b0 = Math.min.apply(null, A.map(function (v) { return v[1]; })), b1 = Math.max.apply(null, A.map(function (v) { return v[1]; }));
-    var mx = narrow ? .16 : .12, mtop = narrow ? .08 : .06, mbot = narrow ? .1 : .08;
+    var mx = phone ? .12 : narrow ? .16 : .12, mtop = phone ? .1 : narrow ? .08 : .06, mbot = phone ? .08 : narrow ? .1 : .08;
     foc = Math.min(bw * (1 - 2 * mx) / (a1 - a0), bh * (1 - mtop - mbot) / (b1 - b0));
     cx0 = bx + bw / 2 - (a0 + a1) / 2 * foc;
     cy0 = by + bh * mtop + (bh * (1 - mtop - mbot) - (b1 - b0) * foc) / 2 + b1 * foc;
@@ -286,6 +317,7 @@
     function off() { if (hoverK !== k) return; hoverK = null; userFocus = true; if (!landedK) focusT = REST; kick(); }
     d.addEventListener("mouseenter", on); d.addEventListener("mouseleave", off); d.addEventListener("focus", on); d.addEventListener("blur", off);
   });
+  new MutationObserver(function () { kick(); }).observe(welcome, { attributes: true, attributeFilter: ["class"] });  // .ans
   new MutationObserver(function () {
     var l = bf.classList.contains("lh"); if (l === lefty) return;
     lefty = l; placeModels(); trail = []; trailA = 0; rings = [];
@@ -327,7 +359,9 @@
     e.style.width = pw.toFixed(1) + "px"; e.style.transform = "translate(" + (b.x - pw * ax).toFixed(1) + "px," + (b.y - ph * (1 - sink)).toFixed(1) + "px)";
     e.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
-    e.style.opacity = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48)).toFixed(2);
+    var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
+    if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph < textBox.y1) op *= .18;
+    e.style.opacity = op.toFixed(2);
   }
   function layout() {
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
@@ -374,6 +408,7 @@
     } else for (var ci = 0; ci < 2; ci++) { var dc = camOffT[ci] - camOff[ci]; if (Math.abs(dc) > .002) { camOff[ci] += dc * (reduce ? 1 : .06); busy = true; } }
     var df = focusT - focus; if (Math.abs(df) > .01) { focus += df * (reduce ? 1 : (mouseFocus && userFocus ? .2 : .085)); busy = true; } else focus = focusT;
     for (var i = 0; i < 2; i++) { var dp = parT[i] - par[i]; if (Math.abs(dp) > .002) { par[i] += dp * (reduce ? 1 : CFG.ease); busy = true; } }
+    if (!narrow) { ansT = welcome.classList.contains("ans") ? 1 : 0; var da = ansT - ans; if (Math.abs(da) > .002) { ans += da * (reduce ? 1 : .06); busy = true; } else ans = ansT; applyAns(); }
     setCam();
     if (staticDirty) { drawStatic(); staticDirty = false; }
     if (inkDirty) { drawDyn(); inkDirty = false; }
@@ -386,7 +421,7 @@
     gl.uniform3fv(U.uPaper, paperCol()); gl.uniform3fv(U.uBg, bg); gl.uniform3fv(U.uP00, pc[0]); gl.uniform3fv(U.uP10, pc[1]); gl.uniform3fv(U.uP01, pc[2]); gl.uniform3fv(U.uP11, pc[3]);
     gl.uniform1f(U.uLight, mode === "light" ? 1 : 0); gl.uniform2f(U.uRes, cv.width, cv.height);
     gl.uniform1f(U.uFoc, foc); gl.uniform2f(U.uC0, cx0, cy0); gl.uniform1f(U.uFocus, focus); gl.uniform1f(U.uAp, ap()); gl.uniform1f(U.uMax, maxc()); gl.uniform1f(U.uDpr, dpr);
-    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18);
+    gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18); gl.uniform2f(U.uFog, narrow ? 26 : 16, narrow ? 56 : 40);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     layout(); drawTrail();
     if (busy) kick();
@@ -401,34 +436,35 @@
   }
   function teardown() {
     if (flight) { var f = flight; flight = null; clearTimeout(f.guard); try { f.done(); } catch (err) {} }
-    ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); if (st.parentNode) st.remove();
+    ready = false; live = false; window.gvStage = null; welcome.classList.remove("gvon"); bail(); if (st.parentNode) st.remove();
     dots.forEach(function (d) { d.style.left = ""; d.style.top = ""; });
   }
   var uniq = {}; SPR.forEach(function (n) { uniq[n] = 1; });
   function start() {
-    if (bf.classList.contains("used")) return;  // the visitor is already on an answer: leave the drawn hole
+    if (bf.classList.contains("used")) { bail(); return; }  // the visitor is already on an answer: leave the drawn hole
     var spr = Object.keys(uniq).concat(["flag"]);
     Promise.all([loadPaper(mode)].concat(spr.map(function (n) { return loadImg(src(n)); }))).then(function (imgs) {
       try {
-        if (bf.classList.contains("used")) return;
+        if (bf.classList.contains("used")) { bail(); return; }
         var bySrc = {}; spr.forEach(function (n, i) { bySrc[n] = imgs[i + 1].src; });
         models.forEach(function (t) { t.el.src = bySrc[SPR[t.k]]; }); flag.src = bySrc.flag;
         welcome.insertBefore(st, welcome.firstChild);
         ready = true; size(true);
         var goLive = function () {
-          if (live || !ready) return;
+          if (live || !ready || gaveUp) return;
           if (bf.classList.contains("used")) { teardown(); return; }
-          live = true; welcome.classList.add("gvon"); window.gvStage = { on: true, fly: fly }; kick();
+          clearTimeout(giveUp); live = true; welcome.classList.add("gvon"); window.gvStage = { on: true, fly: fly }; kick();
         };
-        st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 900);
+        st.addEventListener("transitionend", goLive, { once: true }); setTimeout(goLive, reduce ? 0 : 700);
         requestAnimationFrame(function () { st.classList.add("in"); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (ready) size(true); });  // the headline's real width
         if ("ResizeObserver" in window) new ResizeObserver(function () { if (ready) size(); }).observe(welcome); else window.addEventListener("resize", function () { if (ready) size(); });
         if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) kick(); }).observe(st);
         new MutationObserver(setTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
         if (window.matchMedia) { var mq = matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", setTheme); }
       } catch (err) { teardown(); }
-    }, function () { /* an image failed: the drawn hole stays */ });
+    }, function () { bail(); /* an image failed: the drawn hole stays */ });
   }
   cv.addEventListener("webglcontextlost", function (e) { e.preventDefault(); teardown(); });
-  if (document.readyState === "complete") start(); else window.addEventListener("load", start);
+  start();
 })();
