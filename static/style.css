@@ -1786,7 +1786,8 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 @media (hover:hover) and (pointer:fine){
   .pickb .ix,.pickb .ix sup{transition:color .5s ease,opacity .6s ease}
   .pickb .ixs.pk .ix:not(.cur){opacity:.5}
-  .pickb .ix.cur,.pickb .ix.cur sup,.pickb.lit .ix.cur sup{color:var(--acc)}
+  .pickb .ix.cur,.pickb .ix.cur sup{color:var(--acc)}
+  .pickb.lit .ix.cur sup{color:var(--fg)}  /* on the coloured field a small green count falls below 4.5:1; the word itself stays green */
   .ixp{scale:.9;transition:opacity .4s ease,scale .5s cubic-bezier(.2,.7,.2,1)}
   .ixp.on{scale:1}
   .pickb.idle:not(.lit) .ixf{opacity:calc(var(--ixfo)*.5);visibility:visible;transition:opacity 1.6s ease,visibility 0s}
