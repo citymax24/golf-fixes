@@ -122,6 +122,10 @@ The data files above are produced by the monthly pipeline run in a separate priv
 - Work on a branch and open a PR; do not push to `main` directly. Merging to `main` is a production deploy, so
   review before merging: an architecture review and a devops review.
 - Do not commit or push unless asked.
+- Commits are authored by the owner. Before the first commit in a clone run
+  `git config user.name "Max Bollich"` and `git config user.email "229967805+citymax24@users.noreply.github.com"`.
+  A commit made with Claude ends with exactly `Co-Authored-By: Claude <noreply@anthropic.com>`: no model name and
+  no session link, in commit messages and in PR text.
 - Documentation is written in English under `docs/` in a fitting subdirectory (check the existing structure first).
 - Keep this file under 500 lines and update it whenever workflows, data ownership or the rules above change.
 - Ad-hoc model work in a Claude session (classifying, labelling, summaries) runs through subagents, never with an

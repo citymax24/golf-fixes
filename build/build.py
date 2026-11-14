@@ -189,6 +189,7 @@ KW = {"slice": "How to Fix a Slice", "hook": "How to Fix a Hook", "shank": "How 
       "practice_method": "How to Practice Golf", "course_management": "Golf Course Management", "mental": "The Mental Game of Golf", "fundamentals_general": "Golf Swing Fundamentals"}
 YEAR = VDATA["generated"][:4]
 UPDATED = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%B %Y")
+DATA_DATE = __import__("datetime").date.fromisoformat(VDATA["generated"]).strftime("%-d %B %Y")  # the day of the data run, for the Stats page
 # Year pages: only finished calendar years with enough data. The Reddit archive is thin before mid-2021, so 2021 and
 # earlier stay out by the threshold. A year counts as finished from March on: the archive takes in late comments for
 # a while, and the monthly update runs early in the month.
@@ -1083,6 +1084,7 @@ def build_report():
     cb = "".join(f'<div class="bar"><a href="{BASE}/coach/{s}/">{e(c["name"])}</a><span class="b" style="--w:{100 * c["recs"] / cmx:.1f}%"></span><span>{c["recs"]:,}</span></div>' for s, c in COACHES[:15])
     body = f"""<div class="prose"><h1 class="ptitle">What golfers recommend to each other</h1>
 <div class="kpis"><div><b>{st['comments_scanned']}</b>comments read</div><div><b>{st['yt_comments']}</b>with a YouTube link</div><div><b>{TOTAL_RECS:,}</b>lesson recommendations</div><div><b>{len(WATCH):,}</b>lessons ranked</div></div>
+<p class="dim">Data as of <time datetime="{VDATA['generated']}">{DATA_DATE}</time>. Recommendations are counted again every month; video titles, views and lengths are refreshed every two weeks.</p>
 <h2>Problems golfers ask about most</h2><div class="bars">{bars}</div><h2>Most recommended coaches</h2><div class="bars">{cb}</div>
 <p>Guides: <a href="{BASE}/guides/best-golf-youtube-channels/">Best golf instruction channels on YouTube</a> · <a href="{BASE}/guides/best-golf-drills/">Most recommended golf drills</a></p>
 {f'<p>By year: {" · ".join(f"<a href={chr(34)}{BASE}/year/{y}/{chr(34)}>{y}</a>" for y in YEARS)}</p>' if YEARS else ''}
