@@ -442,7 +442,7 @@
         if (a.classList.contains("on")) return;
         bff.classList.add("used");
         liftStop();  // a new tap: an earlier landing no longer moves the page
-        if (lifting) { lifting = 0; window.scrollTo({ top: window.scrollY, behavior: "instant" }); }  // and a move already under way stops where it is
+        if (lifting) { clearTimeout(lifting); lifting = 0; try { window.scrollTo({ top: window.scrollY, behavior: "instant" }); } catch (e) { window.scrollTo(0, window.scrollY); } }  // and a move already under way stops where it is
         $$(".bfp.in:not(.bf0)", bff).forEach(function (p) { p.classList.remove("in"); p.classList.add("out"); });  // the old answer fades while the ball flies
         ambStop("cut");  // another miss: the old light goes at once
         var nim = $("#bf-" + k + " .bfv img", bff); if (nim) { nim.loading = "eager"; if (nim.decode) nim.decode().catch(function () {}); }  // the answer's picture is ready when the ball lands
@@ -464,9 +464,9 @@
             liftStop();
             lift = setTimeout(function () {
               liftStop(); var r = $(".bfr", bff); window.scrollTo({ top: r.getBoundingClientRect().top + window.scrollY - 60, behavior: still ? "auto" : "smooth" });
-              if (!still) { lifting = setTimeout(function () { lifting = 0; }, 1200); }  // about as long as a smooth scroll takes
+              if (!still) { clearTimeout(lifting); lifting = setTimeout(function () { lifting = 0; }, 1200); }  // about as long as a smooth scroll takes
             }, still ? 0 : 650);
-            liftOn = setTimeout(function () { liftOn = 0; ["pointerdown", "wheel", "keydown"].forEach(function (n) { window.addEventListener(n, liftStop, { passive: true }); }); }, 0);
+            liftOn = setTimeout(function () { liftOn = 0; LIFT_EV.forEach(function (n) { window.addEventListener(n, liftStop, { passive: true }); }); }, 0);
           }
         };
         if (window.gvStage && window.gvStage.on) window.gvStage.fly(k, land);  // the paper stage (static/stage.js) flies the ball itself
@@ -487,8 +487,8 @@
     $$(".bfi", bff).forEach(function (x) {
       x.addEventListener("click", function (ev) { ev.preventDefault(); hot(x.dataset.k, false); var d = $('.bfd[data-k="' + x.dataset.k + '"]', bff); if (d) d.click(); });
     });
-    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, lift = 0, liftOn = 0, lifting = 0;
-    function liftStop() { clearTimeout(lift); clearTimeout(liftOn); lift = liftOn = 0; ["pointerdown", "wheel", "keydown"].forEach(function (n) { window.removeEventListener(n, liftStop, { passive: true }); }); }
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, lift = 0, liftOn = 0, lifting = 0, LIFT_EV = ["pointerdown", "touchstart", "wheel", "keydown"];
+    function liftStop() { clearTimeout(lift); clearTimeout(liftOn); lift = liftOn = 0; LIFT_EV.forEach(function (n) { window.removeEventListener(n, liftStop, { passive: true }); }); }
     // The shot: a ball leaves the tee and flies the line of this miss, the tracer draws behind it. The ball is an HTML
     // element above the labels (it is in the air), its shadow stays in the drawing, on the ground.
     function shot(line, done) {
