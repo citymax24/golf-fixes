@@ -454,7 +454,7 @@
     // like the paper, a model fades out towards the stage's edges instead of being cut off
     var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
     // (wide screens: the headline fades out as soon as a miss is tapped, so the models behind it come forward with it)
-    if (textBox && !(!narrow && bf.classList.contains(hasSel ? "used" : "ans")) && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph * .6 < textBox.y1) op *= .18;
+    if (textBox && !(!narrow && (hasSel ? bf.classList.contains("used") : welcome.classList.contains("ans"))) && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph * .6 < textBox.y1) op *= .18;
     for (var si = 0; si < spotScr.length; si++) { var q = spotScr[si]; if (q.z > b.z && q.x > b.x - pw * .45 - 50 && q.x < b.x + pw * .45 + 50 && q.y > b.y - ph - 8 && q.y < b.y + 34) { op *= .22; break; } }
     // every change of a model's opacity eases (the headline leaves, the camera moves a dot in front of a tree)
     if (opSnap || reduce || e._o === undefined) e._o = op; else { var dO = op - e._o; if (Math.abs(dO) > .004) { e._o += dO * .12; opBusy = true; } else e._o = op; }

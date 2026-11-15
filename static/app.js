@@ -432,7 +432,7 @@
     });
     bff.addEventListener("keydown", function (ev) { if (ev.key === " " && ev.target.classList.contains("bfd")) { ev.preventDefault(); ev.target.click(); } });
     bff.addEventListener("click", function (ev) {  // "Change": back to the hole, which still shows the flight drawn
-      var ch = ev.target.closest(".fm a"); if (!ch) return; ev.preventDefault();
+      var ch = ev.target.closest(".fm a"); if (!ch) return; ev.preventDefault(); liftStop();
       var q = $(".bfq", bff); window.scrollTo({ top: q.getBoundingClientRect().top + window.scrollY - 68, behavior: still ? "auto" : "smooth" });
     });
     $$(".bfd", bff).forEach(function (a) {
@@ -442,6 +442,7 @@
         if (a.classList.contains("on")) return;
         bff.classList.add("used");
         liftStop();  // a new tap: an earlier landing no longer moves the page
+        if (lifting) { lifting = 0; window.scrollTo({ top: window.scrollY, behavior: "instant" }); }  // and a move already under way stops where it is
         $$(".bfp.in:not(.bf0)", bff).forEach(function (p) { p.classList.remove("in"); p.classList.add("out"); });  // the old answer fades while the ball flies
         ambStop("cut");  // another miss: the old light goes at once
         var nim = $("#bf-" + k + " .bfv img", bff); if (nim) { nim.loading = "eager"; if (nim.decode) nim.decode().catch(function () {}); }  // the answer's picture is ready when the ball lands
@@ -456,13 +457,16 @@
           $$(".bfp", bff).forEach(function (p) { p.hidden = p.id !== "bf-" + k; p.classList.remove("out"); p.classList.toggle("in", !p.hidden); });
           ambCue($("#bf-" + k, bff));  // the light comes last, once the answer has settled
           var c = $("#bf-" + k + " [data-cnt]", bff); if (c && !still) countUp(c);
-          // phones: let the landing be seen for a moment, then bring the answer to the top of the screen; a touch, a
-          // wheel or a key in that moment (the visitor is about to tap another miss, or scrolls) cancels the move, so the
+          // phones: let the landing be seen for a moment, then bring the answer to the top of the screen; a touch or
+          // click, a wheel or a key in that moment (the visitor is about to tap another miss, or scrolls) cancels the move, so the
           // page never runs down while the next ball flies and then back up
           if (window.innerWidth < 760) {
             liftStop();
-            lift = setTimeout(function () { liftStop(); var r = $(".bfr", bff); window.scrollTo({ top: r.getBoundingClientRect().top + window.scrollY - 60, behavior: still ? "auto" : "smooth" }); }, still ? 0 : 650);
-            ["touchstart", "wheel", "keydown"].forEach(function (n) { window.addEventListener(n, liftStop, { passive: true }); });
+            lift = setTimeout(function () {
+              liftStop(); var r = $(".bfr", bff); window.scrollTo({ top: r.getBoundingClientRect().top + window.scrollY - 60, behavior: still ? "auto" : "smooth" });
+              if (!still) { lifting = setTimeout(function () { lifting = 0; }, 1200); }  // about as long as a smooth scroll takes
+            }, still ? 0 : 650);
+            liftOn = setTimeout(function () { liftOn = 0; ["pointerdown", "wheel", "keydown"].forEach(function (n) { window.addEventListener(n, liftStop, { passive: true }); }); }, 0);
           }
         };
         if (window.gvStage && window.gvStage.on) window.gvStage.fly(k, land);  // the paper stage (static/stage.js) flies the ball itself
@@ -483,8 +487,8 @@
     $$(".bfi", bff).forEach(function (x) {
       x.addEventListener("click", function (ev) { ev.preventDefault(); hot(x.dataset.k, false); var d = $('.bfd[data-k="' + x.dataset.k + '"]', bff); if (d) d.click(); });
     });
-    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, lift = 0;
-    function liftStop() { clearTimeout(lift); lift = 0; ["touchstart", "wheel", "keydown"].forEach(function (n) { window.removeEventListener(n, liftStop, { passive: true }); }); }
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, lift = 0, liftOn = 0, lifting = 0;
+    function liftStop() { clearTimeout(lift); clearTimeout(liftOn); lift = liftOn = 0; ["pointerdown", "wheel", "keydown"].forEach(function (n) { window.removeEventListener(n, liftStop, { passive: true }); }); }
     // The shot: a ball leaves the tee and flies the line of this miss, the tracer draws behind it. The ball is an HTML
     // element above the labels (it is in the air), its shadow stays in the drawing, on the ground.
     function shot(line, done) {
