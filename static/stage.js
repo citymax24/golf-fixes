@@ -121,7 +121,7 @@
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
     "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
     "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
-    "if(uLight<.5){float li=lampAt(p.xz);c=uBg+(c-uBg)*(uAmb+(1.-uAmb)*li)*mix(vec3(1.),vec3(1.,.9,.74),li);c+=vec3(.085,.058,.03)*li*m;}\n" +
+    "if(uLight<.5){float li=lampAt(p.xz);c=uBg+(c-uBg)*(uAmb+(1.-uAmb)*li)*mix(vec3(1.),vec3(1.,.9,.74),li);c+=vec3(.085,.058,.03)*li*m*(1.-smoothstep(4.,8.,length(p.xz-uHole)));vec3 hk=max(c-.72,0.);c-=hk*hk/(hk+.18)*.6;}\n" +
     "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(c,uBg,smoothstep(7.,11.5,length((p.xz-uHole)*vec2(1.,1.15))));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
     "if(c>.7){vec3 a=vec3(0.);float lod=log2(max(c*.3,1.));float rot=hash(px+7.)*6.2832;for(int i=0;i<18;i++){if(float(i)>=uTaps)break;float fi=float(i)+.5;float r=sqrt(fi/uTaps)*c;float th=fi*2.39996+rot;a+=shade(px+r*vec2(cos(th),sin(th)),lod).rgb;}col=a/uTaps;}\n" +
@@ -370,7 +370,7 @@
     if (x < 0 || y < 0 || x > W || y > H) return;
     if (!reduce) parT = [x / W - .5, .5 - y / H];
     if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : REST; mouseFocus = oz !== null; }
-    if (!flight) { lampT = paperAt(x, y); lampK = .07; }
+    if (!flight) { var lp = paperAt(x, y), lh = lampHome(), ldx = lp[0] - lh[0], ldz = lp[1] - lh[1], ld = Math.hypot(ldx, ldz), lc = ld > 260 ? 260 / ld : 1; lampT = [lh[0] + ldx * lc, lh[1] + ldz * lc]; lampK = .07; }
     kick();
   });
   welcome.addEventListener("pointerleave", function () { parT = [0, 0]; mouseFocus = false; if (!flight) { lampT = lampHome(); lampK = .04; } if (!flight && !landedK && !hoverK) { focusT = REST; userFocus = true; } kick(); });
@@ -437,7 +437,7 @@
     spotScr = Object.keys(MISS).map(function (k) { var c = MISS[k].c, e = c[c.length - 1]; return proj(Wd(S(e[0], e[1]))); });
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
     stand(flag, S(CUP[0], CUP[1]), FLAG_H, .06, .01);
-    var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = coc(bp.z);
+    var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = flight ? coc(bp.z) : Math.min(coc(bp.z), 1.5);
     ball.style.width = ball.style.height = (2 * br).toFixed(1) + "px";
     ball.style.transform = "translate(" + (bp.x - br).toFixed(1) + "px," + (bp.y - br).toFixed(1) + "px)";
     var bfl = (bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "") + lit(ballS) || "none"; if (ball._fl !== bfl) { ball._fl = bfl; ball.style.filter = bfl; } ball.style.zIndex = Math.round(2000 - bp.z * 20) + 1;
