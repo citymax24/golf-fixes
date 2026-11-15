@@ -115,12 +115,21 @@
     "float lampAt(vec2 q){float r=length(q-uLamp.xy)/uLamp.z;return exp(-r*r*1.6);}\n" +
     "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.9;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
-    "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
-    "vec3 d=normalize(uF+uR*(x-uC0.x)/uFoc+uU*(uC0.y-y)/uFoc);if(d.y>-.002)return vec4(uBg,1000.);\n" +
+    // value noise for the paper's tooth
+    "float vn(vec2 q){vec2 i=floor(q),f=fract(q);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);}\n" +
+    "vec3 ray(vec2 px){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;return normalize(uF+uR*(x-uC0.x)/uFoc+uU*(uC0.y-y)/uFoc);}\n" +
+    "vec2 uvAt(vec2 px){vec3 d=ray(px);return (uCam.xz+d.xz*(-uCam.y/min(d.y,-.002)))/vec2(20.48,15.36);}\n" +
+    "vec4 shade(vec2 px,float lod){" +
+    "vec3 d=ray(px);if(d.y>-.002)return vec4(uBg,1000.);\n" +
     "float t=-uCam.y/d.y;vec3 p=uCam+d*t;float z=dot(p-uCam,uF);vec2 uv=p.xz/vec2(20.48,15.36);\n" +
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
-    "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
-    "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
+    // exact screen-space footprint of one device pixel on the sheet: textureGrad lets the GPU filter anisotropically,
+    // so outlines seen at a grazing angle stay lines instead of crumbling into a blurred mip
+    "float sc=exp2(lod);vec2 gx=(uvAt(px+vec2(1.,0.))-uv)*sc,gy=(uvAt(px+vec2(0.,1.))-uv)*sc;" +
+    "vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureGrad(uTex,pv,gx,gy).rgb,pv),m);" +
+    // the paper's tooth, only where one pixel covers less than about two sheet px (else it would shimmer)
+    "float fw=max(length(gx),length(gy))*2048.;float ta=(1.-smoothstep(.8,2.2,fw))*m;if(ta>.01&&lod<.01){float n=vn(p.xz*36.)*.65+vn(p.xz*90.)*.35;c=uLight>.5?c*(1.-.05*ta*n):c+(n-.5)*.035*ta;}\n" +
+    "vec4 k=textureGrad(uInk,uv,gx,gy)*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
     "if(uLight<.5){float li=lampAt(p.xz);c=uBg+(c-uBg)*(uAmb+(1.-uAmb)*li)*mix(vec3(1.),vec3(1.,.9,.74),li);c+=vec3(.085,.058,.03)*li*m*(1.-smoothstep(4.,8.,length(p.xz-uHole)));vec3 hk=max(c-.72,0.);c-=hk*hk/(hk+.18)*.6;}\n" +
     "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(c,uBg,smoothstep(7.,11.5,length((p.xz-uHole)*vec2(1.,1.15))));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
@@ -140,8 +149,11 @@
   function newTex() {
     var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(touch ? 4 : 8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    return t;
   }
+  var aniso = gl.getExtension("EXT_texture_filter_anisotropic");
   var TEX = {}, PAPER = {}, inkTex = newTex(), dynTex = newTex();
   gl.bindTexture(gl.TEXTURE_2D, dynTex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   var ink = document.createElement("canvas"); ink.width = 1024; ink.height = 768; var ix = ink.getContext("2d");
