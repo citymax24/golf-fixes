@@ -109,7 +109,10 @@
   // ---- GL: one full-screen pass draws paper, fog, the ink layer and depth of field
   var VS = "#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
   var FS = "#version 300 es\nprecision highp float;uniform sampler2D uTex,uInk,uDyn;uniform vec3 uCam,uR,uU,uF,uPaper,uBg,uP00,uP10,uP01,uP11;" +
-    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps;uniform vec2 uFog,uHole;uniform vec2 uRes,uC0;out vec4 o;\n" +
+    "uniform float uLight,uFoc,uFocus,uAp,uMax,uDpr,uW,uH,uMir,uTaps,uAmb;uniform vec2 uFog,uHole;uniform vec3 uLamp;uniform vec2 uRes,uC0;out vec4 o;\n" +
+    // dark mode: a desk lamp over the drawing; its warm pool (uLamp: x, z, radius in units) lights the paper and the ink,
+    // the rest of the desk falls back to uAmb
+    "float lampAt(vec2 q){float r=length(q-uLamp.xy)/uLamp.z;return exp(-r*r*1.6);}\n" +
     "vec3 tn(vec3 t,vec2 uv){vec2 q=clamp(uv,0.,1.);vec3 pp=mix(mix(uP00,uP10,q.x),mix(uP01,uP11,q.x),q.y);return uLight>.5?t*(uPaper/pp):uPaper+(t-pp)*1.9;}\n" +
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n" +
     "vec4 shade(vec2 px,float lod){float x=px.x/uDpr,y=(uRes.y-px.y)/uDpr;" +
@@ -118,6 +121,7 @@
     "vec2 e=smoothstep(vec2(0.),vec2(.08,.16),uv)*smoothstep(vec2(0.),vec2(.08,.16),1.-uv);float m=e.x*e.y;\n" +
     "float fp=z/uFoc*100.*sqrt(max(1.,z/uCam.y));float L=log2(max(fp,1.))+lod;vec2 pv=vec2(mix(uv.x,1.-uv.x,uMir),uv.y);vec3 c=mix(uPaper,tn(textureLod(uTex,pv,L).rgb,pv),m);" +
     "vec4 k=textureLod(uInk,uv,max(L-1.,0.))*m;c=c*(1.-k.a)+k.rgb;vec4 k2=texture(uDyn,uv)*m;c=c*(1.-k2.a)+k2.rgb;\n" +
+    "if(uLight<.5){float li=lampAt(p.xz);c=uBg+(c-uBg)*(uAmb+(1.-uAmb)*li)*mix(vec3(1.),vec3(1.,.9,.74),li);c+=vec3(.085,.058,.03)*li*m;}\n" +
     "c=mix(c,uBg,smoothstep(uFog.x,uFog.y,z));c=mix(c,uBg,smoothstep(7.,11.5,length((p.xz-uHole)*vec2(1.,1.15))));c=mix(uBg,c,smoothstep(.0,.085,-d.y));return vec4(c,z);}\n" +
     "void main(){vec2 px=gl_FragCoord.xy;vec4 s=shade(px,0.);float z=s.a;float c=z>900.?0.:min(uMax,uAp*abs(z-uFocus)/z)*uDpr;vec3 col=s.rgb;\n" +
     "if(c>.7){vec3 a=vec3(0.);float lod=log2(max(c*.3,1.));float rot=hash(px+7.)*6.2832;for(int i=0;i<18;i++){if(float(i)>=uTaps)break;float fi=float(i)+.5;float r=sqrt(fi/uTaps)*c;float th=fi*2.39996+rot;a+=shade(px+r*vec2(cos(th),sin(th)),lod).rgb;}col=a/uTaps;}\n" +
@@ -132,7 +136,7 @@
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   var aLoc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
   var U = {};
-  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog", "uHole"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  ["uTex", "uInk", "uDyn", "uCam", "uR", "uU", "uF", "uPaper", "uBg", "uP00", "uP10", "uP01", "uP11", "uLight", "uFoc", "uFocus", "uAp", "uMax", "uDpr", "uW", "uH", "uRes", "uC0", "uMir", "uTaps", "uFog", "uHole", "uLamp", "uAmb"].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
   function newTex() {
     var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -174,6 +178,24 @@
   var flight = null, landedK = null, ballS = S(TEE[0], TEE[1]), ballH = 0, rings = [], trail = [], trailA = 0;
   var inkDirty = true, staticDirty = true, raf = 0, userFocus = true, mouseFocus = false, ready = false, live = false, visible = true;
   var dots = Array.prototype.slice.call(bf.querySelectorAll(".bfd"));
+  // the desk lamp (dark mode): it rests over the green, follows the pointer across the paper and the ball in flight, and
+  // stays on the landing spot; sheet px, eased towards lampT
+  var LAMP_REST = [160, 95], lamp = S(LAMP_REST[0], LAMP_REST[1]), lampT = lamp.slice(), lampK = .07;
+  function lampHome() { var e = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : LAMP_REST; return S(e[0], e[1]); }
+  function lampR() { return phone ? 4.6 : narrow ? 4.2 : 3.9; }
+  function lampAmb() { return phone ? .5 : .36; }
+  function lampAt(s) { var r = Math.hypot(s[0] - lamp[0], s[1] - lamp[1]) / 100 / lampR(); return Math.exp(-r * r * 1.6); }
+  function paperAt(px, py) {  // the point on the sheet under a canvas pixel (beyond the horizon: the far edge)
+    var a = (px - cx0) / foc, b = (cy0 - py) / foc;
+    var d = nrm([cam.F[0] + cam.R[0] * a + cam.U[0] * b, cam.F[1] + cam.R[1] * a + cam.U[1] * b, cam.F[2] + cam.R[2] * a + cam.U[2] * b]);
+    var t = d[1] < -.02 ? -cam.p[1] / d[1] : 60, x = (cam.p[0] + d[0] * t) * 100, z = (cam.p[2] + d[2] * t) * 100;
+    return [Math.max(200, Math.min(1848, x)), Math.max(0, Math.min(1400, z))];
+  }
+  // a model, the flag and the ball in the lamp's light: dimmer away from it, a little warmer in it
+  function lit(s) {
+    if (mode !== "dark") return ""; var li = lampAt(s), k = lampAmb() + (1 - lampAmb()) * li;
+    return " brightness(" + k.toFixed(2) + ") sepia(" + (li * .22).toFixed(2) + ")";
+  }
 
   // ---- the ink layer: what lies on the paper itself (shadows, plan marks under each model, the rings of tee shot and landing)
   function shadow(s, r, a) {
@@ -245,7 +267,7 @@
     phoneBox();
     var wide = window.innerWidth >= 1200, box = rel(bfc), sx, sy, sw, sh;
     narrow = !wide; var ph = window.innerWidth < 760;
-    if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; } }
+    if (ph !== phone) { phone = ph; Object.keys(MISS).forEach(function (k) { MISS[k].c = phone ? MISS[k].cn : MISS[k].cw; }); var le = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; if (!flight) { ballS = S(le[0], le[1]); ballH = 0; lamp = lampHome(); lampT = lamp.slice(); } }
     if (wide) {  // the whole width of the page column, from the top of the welcome block to below the finder box
       var main = (welcome.closest(".main") || welcome.parentNode).getBoundingClientRect(), wb = welcome.getBoundingClientRect();
       sx = main.left - wb.left; sw = main.width; sy = 0; sh = Math.max(box.y + box.h + 40, Math.min(800, Math.max(560, sw * .52)));
@@ -348,9 +370,10 @@
     if (x < 0 || y < 0 || x > W || y > H) return;
     if (!reduce) parT = [x / W - .5, .5 - y / H];
     if (userFocus && !flight && !hoverK) { var oz = objectDepthAt(x, y); focusT = oz !== null ? oz : REST; mouseFocus = oz !== null; }
+    if (!flight) { lampT = paperAt(x, y); lampK = .07; }
     kick();
   });
-  welcome.addEventListener("pointerleave", function () { parT = [0, 0]; mouseFocus = false; if (!flight && !landedK && !hoverK) { focusT = REST; userFocus = true; } kick(); });
+  welcome.addEventListener("pointerleave", function () { parT = [0, 0]; mouseFocus = false; if (!flight) { lampT = lampHome(); lampK = .04; } if (!flight && !landedK && !hoverK) { focusT = REST; userFocus = true; } kick(); });
   var hoverK = null;
   function spotZ(k) { var m = MISS[k]; return proj(Wd(S(m.c[m.c.length - 1][0], m.c[m.c.length - 1][1]))).z; }
   dots.forEach(function (d) {
@@ -367,14 +390,14 @@
     var l = bf.classList.contains("lh"); if (l === lefty) return;
     lefty = l; placeModels(); trail = []; trailA = 0; rings = [];
     var e = landedK ? MISS[landedK].c[MISS[landedK].c.length - 1] : TEE; ballS = S(e[0], e[1]); ballH = 0;
-    staticDirty = true; if (ready) size(true);
+    lamp = lampHome(); lampT = lamp.slice(); staticDirty = true; if (ready) size(true);
   }).observe(bf, { attributes: true, attributeFilter: ["class"] });
 
   // ---- the shot: drag on the way out, a late apex, two hops and a roll; the focus and the camera ride with the ball
   function fly(k, done) {
     var m = MISS[k]; if (!m || !ready) { done(); return; }
     camRet = null; hoverK = null; landedK = null; flight = null;
-    if (reduce || !visible || document.hidden) { var e = at(m, 1); ballS = S(e[0], e[1]); ballH = 0; landedK = k; focusT = spotZ(k); inkDirty = true; kick(); done(); return; }
+    if (reduce || !visible || document.hidden) { var e = at(m, 1); ballS = S(e[0], e[1]); ballH = 0; landedK = k; focusT = spotZ(k); lampT = ballS.slice(); inkDirty = true; kick(); done(); return; }
     var end = m.c[m.c.length - 1], len = Math.hypot(end[0] - TEE[0], end[1] - TEE[1]) / 100;
     flight = { k: k, m: m, t0: performance.now(), carry: (900 + len * 190) * m.fly.t / CFG.speed, done: done };
     flight.guard = setTimeout(function () { if (flight && flight.k === k) land(); }, 7000);
@@ -382,7 +405,7 @@
   }
   function finish() {
     var f = flight; if (!f) return; flight = null; clearTimeout(f.guard); landedK = f.k; camRet = { from: camOff.slice(), t0: performance.now() + 750, dur: 2300 };
-    focusT = proj(Wd(ballS)).z; inkDirty = true; kick(); f.done();
+    focusT = proj(Wd(ballS)).z; lampT = ballS.slice(); lampK = .1; inkDirty = true; kick(); f.done();
   }
 
   function land() {  // put the ball down at once (a hidden tab, a lost context, a stalled loop) and give app.js its answer
@@ -402,7 +425,7 @@
   function stand(e, s, h, ax, sink) {
     var b = proj(Wd(s)), top = proj(Wd(s, h)), ph = b.y - top.y, r = e.naturalWidth ? e.naturalHeight / e.naturalWidth : 1.3, pw = ph / r, bl = coc(proj(Wd(s, h * .5)).z);
     e.style.width = pw.toFixed(1) + "px"; e.style.transform = "translate(" + (b.x - pw * ax).toFixed(1) + "px," + (b.y - ph * (1 - sink)).toFixed(1) + "px)";
-    e.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; e.style.zIndex = Math.round(2000 - b.z * 20);
+    var fl = (bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "") + lit(s) || "none"; if (e._fl !== fl) { e._fl = fl; e.style.filter = fl; } e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
     var op = Math.max(0, Math.min(1, (Math.min(b.x, W - b.x) - 8) / 64, (b.y - 20) / 48, (H - b.y) / 48));
     if (textBox && !welcome.classList.contains("ans") && b.x - pw / 2 < textBox.x1 && b.y > textBox.y0 && b.y - ph * .6 < textBox.y1) op *= .18;
@@ -417,7 +440,7 @@
     var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = coc(bp.z);
     ball.style.width = ball.style.height = (2 * br).toFixed(1) + "px";
     ball.style.transform = "translate(" + (bp.x - br).toFixed(1) + "px," + (bp.y - br).toFixed(1) + "px)";
-    ball.style.filter = bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "none"; ball.style.zIndex = Math.round(2000 - bp.z * 20) + 1;
+    var bfl = (bl > .4 ? "blur(" + bl.toFixed(1) + "px)" : "") + lit(ballS) || "none"; if (ball._fl !== bfl) { ball._fl = bfl; ball.style.filter = bfl; } ball.style.zIndex = Math.round(2000 - bp.z * 20) + 1;
     // the finder's own dots follow the drawing: their place on the paper, in the finder box's coordinates
     if (live) dots.forEach(function (d) {
       var m = MISS[d.dataset.k]; if (!m) return; var e = m.c[m.c.length - 1], p = proj(Wd(S(e[0], e[1])));
@@ -443,7 +466,7 @@
         else { var rr = Math.min(1, (r - B1 - B2) / ROLL); u = LAND + REM * (.65 + .35 * (1 - Math.pow(1 - rr, 2.2))); over = rr >= 1; }
       }
       var q2 = at(m, u), tee = S(TEE[0], TEE[1]); ballS = S(q2[0], q2[1]); ballH = h; inkDirty = true;
-      focusT = proj(Wd(ballS, ballH)).z; focus += (focusT - focus) * .32;
+      focusT = proj(Wd(ballS, ballH)).z; focus += (focusT - focus) * .32; lampT = ballS.slice(); lampK = .16;
       camOffT = [(ballS[0] - tee[0]) / 100 * .16, -Math.min(1.1, (tee[1] - ballS[1]) / 100 * .12)];
       // the tracer draws the flight in the air only, as on television: it ends where the ball first lands
       if (el < f.carry) trail.push([ballS[0], ballS[1], ballH]);
@@ -458,6 +481,8 @@
       camOff = [camRet.from[0] * (1 - re), camRet.from[1] * (1 - re)]; camOffT = camOff.slice(); if (rp >= 1) { camRet = null; camOff = [0, 0]; camOffT = [0, 0]; } busy = true;
     } else for (var ci = 0; ci < 2; ci++) { var dc = camOffT[ci] - camOff[ci]; if (Math.abs(dc) > .002) { camOff[ci] += dc * (reduce ? 1 : .06); busy = true; } }
     var df = focusT - focus; if (Math.abs(df) > .01) { focus += df * (reduce ? 1 : (mouseFocus && userFocus ? .2 : .085)); busy = true; } else focus = focusT;
+    // the lamp only shows in dark mode: in light mode it jumps, so it costs no frames
+    for (var li2 = 0; li2 < 2; li2++) { var dl = lampT[li2] - lamp[li2]; if (Math.abs(dl) > 2 && mode === "dark") { lamp[li2] += dl * (reduce ? 1 : lampK); busy = true; } else lamp[li2] = lampT[li2]; }
     for (var i = 0; i < 2; i++) { var dp = parT[i] - par[i]; if (Math.abs(dp) > .002) { par[i] += dp * (reduce ? 1 : CFG.ease); busy = true; } }
     if (!narrow) { ansT = welcome.classList.contains("ans") ? 1 : 0; var da = ansT - ans; if (Math.abs(da) > .002) { ans += da * (reduce ? 1 : .06); busy = true; } else ans = ansT; applyAns(); }
     setCam();
@@ -473,6 +498,7 @@
     gl.uniform1f(U.uLight, mode === "light" ? 1 : 0); gl.uniform2f(U.uRes, cv.width, cv.height);
     gl.uniform1f(U.uFoc, foc); gl.uniform2f(U.uC0, cx0, cy0); gl.uniform1f(U.uFocus, focus); gl.uniform1f(U.uAp, ap()); gl.uniform1f(U.uMax, maxc()); gl.uniform1f(U.uDpr, dpr);
     gl.uniform1f(U.uW, W); gl.uniform1f(U.uH, H); gl.uniform1f(U.uMir, lefty ? 1 : 0); gl.uniform1f(U.uTaps, touch ? 10 : 18); gl.uniform2f(U.uFog, narrow ? 26 : 16, narrow ? 56 : 40); var hc = S(160, 190); gl.uniform2f(U.uHole, hc[0] / 100, hc[1] / 100);
+    gl.uniform3f(U.uLamp, lamp[0] / 100, lamp[1] / 100, lampR()); gl.uniform1f(U.uAmb, lampAmb());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     layout(); drawTrail();
     if (busy) kick();
