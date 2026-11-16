@@ -1870,7 +1870,7 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
 .gvst.in{opacity:1}
 .gvw{position:absolute;inset:0}
 .gvgl,.gvtr{position:absolute;inset:0;width:100%;height:100%;display:block}
-.gvtr{z-index:1}
+.gvtr{z-index:3}   /* the tracer above the models: stage.js cuts it out where a model stands in front of it */
 .gvov{position:absolute;inset:0;z-index:2}
 .gvsp{position:absolute;left:0;top:0;display:block;max-width:none;height:auto;will-change:transform,filter}
 .gvball{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff 0,#f1f1ee 38%,#b9bdba 78%,#8d918f 100%);box-shadow:inset -2px -3px 5px rgba(0,0,0,.18);will-change:transform,filter}
