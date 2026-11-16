@@ -100,9 +100,14 @@ const stageShot = async (b, base) => {
       try { await pg.waitForFunction(() => window.gvStage && window.gvStage.on, null, { timeout: 8000 }); break; }
       catch (e) { if (i >= 3) throw new Error('The stage did not start on the home page (is WebGL 2 available?)'); }
     }
+    const t0 = Date.now(), log = s => console.log(`home card: ${s} after ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+    log('stage live');
     await pg.waitForTimeout(1500);
-    await pg.click(`.bfd[data-k="${FLIGHT_K}"]`);
-    await pg.waitForFunction(() => document.querySelector('.welcome').classList.contains('ans'), null, { timeout: 20000 });
+    // a click from script: Playwright's own click first waits for the page to draw steady frames, which a slow software GL
+    // may not give within its time limit
+    await pg.evaluate(k => document.querySelector(`.bfd[data-k="${k}"]`).click(), FLIGHT_K);
+    await pg.waitForFunction(() => document.querySelector('.welcome').classList.contains('ans'), null, { timeout: 60000 });
+    log('ball landed');
     await pg.addStyleTag({ content: '#top,.fh,.bfr>.bfp,.bfq,.bfis,.bfh,.pickb,.bfr>.bf0{visibility:hidden!important}' });
     // The camera and the light ease back after the landing, a step per frame, so on a slow software GL the end comes late and
     // at a different time on every machine: take the picture once two shots in a row are the same (the stage has stopped
@@ -112,9 +117,10 @@ const stageShot = async (b, base) => {
     for (let i = 0; i < 60; i++) {
       await pg.waitForTimeout(800);
       const cur = await pg.screenshot({ clip, timeout: 120000 });
-      if (prev && cur.equals(prev)) return cur;
+      if (prev && cur.equals(prev)) { log('picture steady'); return cur; }
       prev = cur;
     }
+    log('picture still moving, taken anyway');
     return prev;
   } finally { await c.close(); }
 };
