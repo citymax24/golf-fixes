@@ -42,7 +42,10 @@ jobs:
         run: python3 build/build.py
       - name: Draw the images that changed
         run: node build/og.js
+      - name: What changed (a run on another branch, by hand, only shows this and commits nothing)
+        run: git status --short static/og4 build/og-hashes.json
       - name: Commit and deploy if an image changed
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
