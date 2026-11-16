@@ -1,11 +1,11 @@
 name: Share images
 
 # The preview images for shared links (static/og4) carry the counts, so they are drawn again whenever the data,
-# the drawing script or the wordmark changes; the home page's card is drawn with the stylesheet and the course, so those too. Only images whose content changed are committed (build/og-hashes.json).
+# the drawing script or the wordmark changes; the home page's card is a picture of the page's own stage (stylesheet, app.js, stage.js and its images, build.py), so those too. Only images whose content changed are committed (build/og-hashes.json).
 on:
   push:
     branches: [main]
-    paths: ["data/**", "build/og.js", "build/course.svg", "static/style.css", "static/logo-word.svg", ".github/workflows/share-images.yml"]
+    paths: ["data/**", "build/og.js", "build/course.svg", "build/build.py", "static/style.css", "static/app.js", "static/stage.js", "static/stage/**", "static/logo-word.svg", ".github/workflows/share-images.yml"]
   workflow_dispatch:
 
 permissions:
@@ -32,6 +32,11 @@ jobs:
           fc-list | grep -i "inter" | head -3
           npm install --no-save --silent playwright
           npx playwright install --with-deps chromium
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Build the site (the home card is a picture of the home page's stage)
+        run: python3 build/build.py
       - name: Draw the images that changed
         run: node build/og.js
       - name: Commit and deploy if an image changed

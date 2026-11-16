@@ -71,44 +71,68 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
 </div></body></html>`;
 };
 
-// The home page's card is the desktop stage: the headline and the hole, drawn with the site's own stylesheet in the dark
-// theme, so the card follows the page. SPOTS are the landing spots of MISSES in build.py (x, y in the 320x360 course);
-// the first one is shown as the chosen miss with its flight. The flag, cup and labels repeat course_svg() and finder() there.
-// The card depends on static/style.css and build/course.svg, so the share-images workflow also runs when they change.
-// The stylesheet names its own Inter file by a relative address, which a page made with setContent cannot load; a face
-// that fails would hide the installed Inter too. So the file goes in as a data URI: the card is set in the site's font.
-const inter = 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(root, 'static/fonts/inter.woff2')).toString('base64') + ')';
-const css = fs.readFileSync(path.join(root, 'static/style.css'), 'utf8').replace(/<\/style/gi, '').split('url(fonts/inter.woff2)').join(inter);
-const course = fs.readFileSync(path.join(root, 'build/course.svg'), 'utf8').trim();
-const SPOTS = [[262, 96], [58, 96], [92, 44], [252, 236], [160, 158], [160, 262]];
-const FLIGHT = 'M160 326C120 250 150 130 262 96', FLIGHT_NAME = 'Curves right';
-const stage = (title, sub) =>   // title and sub are put in as HTML: pass only text that is escaped or written here
-  `<!doctype html><html data-theme="dark"><head><meta charset="utf-8"><style>${css}</style><style>
-*,*::before,*::after{animation:none!important;transition:none!important}
+// The home page's card is the page's own hero: the real home page (the paper stage of static/stage.js) is loaded from the
+// built _site/ in the dark theme, a ball is flown to one miss, and the picture of the stage is set beside the headline.
+// So the card follows the page and is not a second drawing. It needs WebGL 2 (software GL is enough), a built _site/
+// (python3 build/build.py) and the stage's files; the share-images workflow runs again when any of them changes.
+// OG_CHANNEL=chrome draws it with an installed Chrome instead of Playwright's Chromium (for a machine without the latter).
+const SITE = path.join(root, '_site');
+const STAGE_KEY = () => crypto.createHash('sha1').update([
+  path.join(root, 'build/build.py'), path.join(root, 'build/course.svg'), path.join(root, 'static/style.css'), path.join(root, 'static/app.js'), path.join(root, 'static/stage.js'),
+  ...fs.readdirSync(path.join(root, 'static/stage')).sort().map(f => path.join(root, 'static/stage', f))
+].map(f => fs.readFileSync(f)).reduce((a, x) => Buffer.concat([a, x]), Buffer.alloc(0))).digest('hex');
+const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json', '.jpg': 'image/jpeg' };
+const serveSite = () => new Promise(res => {
+  const srv = require('http').createServer((q, r) => {
+    let f = path.normalize(path.join(SITE, decodeURIComponent(q.url.split('?')[0]))); if (!f.startsWith(SITE)) { r.writeHead(403); r.end(); return; }
+    if (f.endsWith(path.sep)) f = path.join(f, 'index.html');
+    fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }); r.end(d); } });
+  }).listen(0, '127.0.0.1', () => res(srv));
+});
+// The stage at 1800 x 945 (the desktop hero), a ball flown to FLIGHT_K, everything but the hole, its dots and the flight hidden;
+// returns the picture of the area around the hole (900 x 808 px of that page, set at 0.78 in the card).
+const FLIGHT_K = 'slice';
+const stageShot = async (b, base) => {
+  const c = await b.newContext({ viewport: { width: 1800, height: 945 }, colorScheme: 'dark', reducedMotion: 'no-preference' });
+  try {
+    const pg = await c.newPage();
+    await pg.route(u => !u.href.startsWith(base), r => r.abort());  // nothing leaves the machine (analytics, video embeds)
+    // the stage gives up by itself if it is not live 4 s after the page starts (a slow software GL can miss that): load again
+    for (let i = 1; ; i++) {
+      await pg.goto(base, { waitUntil: 'load' });
+      try { await pg.waitForFunction(() => window.gvStage && window.gvStage.on, null, { timeout: 8000 }); break; }
+      catch (e) { if (i >= 3) throw new Error('The stage did not start on the home page (is WebGL 2 available?)'); }
+    }
+    await pg.waitForTimeout(1500);
+    await pg.click(`.bfd[data-k="${FLIGHT_K}"]`);
+    await pg.waitForFunction(() => document.querySelector('.welcome').classList.contains('ans'), null, { timeout: 20000 });
+    await pg.waitForTimeout(5000);  // the camera eases back after the landing
+    await pg.addStyleTag({ content: '#top,.fh,.bfr>.bfp,.bfq,.bfis,.bfh,.pickb,.bfr>.bf0{visibility:hidden!important}' });
+    await pg.waitForTimeout(600);
+    return await pg.screenshot({ clip: { x: 850, y: 80, width: 900, height: 808 } });
+  } finally { await c.close(); }
+};
+const stage = (title, sub, png) =>   // title and sub are put in as HTML: pass only text that is escaped or written here
+  `<!doctype html><html><head><meta charset="utf-8"><style>
 html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0f0f0f;color:#f1f1f1;font-family:Inter,sans-serif}
-.card{display:grid;grid-template-columns:minmax(0,1fr) 488px;column-gap:36px;align-items:center;height:630px;padding:52px 40px 52px 56px}
-.cl{display:flex;flex-direction:column;min-width:0;height:100%}
+.card{position:relative;height:630px}
+.pic{position:absolute;right:0;top:0;width:702px;height:630px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%);mask-image:linear-gradient(90deg,transparent,#000 6%)}
+.pic img{width:702px;height:630px;display:block}
+.cl{position:absolute;left:56px;top:52px;bottom:52px;width:470px;display:flex;flex-direction:column}
 .cw{height:34px}.cw svg{height:34px;width:auto;display:block;color:#f1f1f1}.cw .wmc{fill:#3ecf8e}
-.card h1{margin:auto 0 0;font:800 74px/1.02 Inter,sans-serif;letter-spacing:-.04em;word-spacing:.04em;color:#f1f1f1;max-width:none}
-.cs{margin:22px 0 0;font:500 24px/1.3 Inter,sans-serif;color:#aaa}.cs b{color:#f1f1f1;font-weight:700}
+.card h1{margin:auto 0 0;font:800 60px/1.04 Inter,sans-serif;letter-spacing:-.04em;word-spacing:.04em;color:#f1f1f1}
+.cs{margin:22px 0 0;font:500 23px/1.3 Inter,sans-serif;color:#aaa}.cs b{color:#f1f1f1;font-weight:700}
 .cu{margin-top:auto;font:700 16px/20px Inter,sans-serif;letter-spacing:2.2px;text-transform:uppercase;color:#aaa}
-.card #bf{display:block;margin:0}.card #bf>div{grid-column:auto;grid-row:auto;margin:0;max-width:none}   /* the page's own hero rules for .bf do not apply to the card */
-.card #bf .bfd span{display:none}.card #bf .bfd.on span{display:block}
-.card #bf .bfl.on{stroke-dashoffset:0}
-</style></head><body><div class="card"><div class="cl">
-<div class="cw">${word}</div><h1>${title}</h1><p class="cs">${sub}</p><div class="cu">golfvotes.com</div></div>
-<div class="bf used" id="bf"><div><div class="bfc"><svg viewBox="0 0 320 360" aria-hidden="true">${course}
-<ellipse class="bfcup" cx="160" cy="46.5" rx="3.2" ry="1.4"/><path class="bffp" d="M160 46V16"/><path class="bfff" d="M160.8 17c6-3 9 3 17-1v11c-8 4-11-2-17 1z"/>
-<text class="bftx" x="160" y="12" text-anchor="middle">TARGET</text><path class="bfl on" d="${FLIGHT}" pathLength="1"/><circle class="bfball" cx="160" cy="326" r="6"/><text class="bftx" x="160" y="352" text-anchor="middle">YOU</text></svg>
-${SPOTS.map(([x, y], i) => `<a class="bfd${i ? '' : ' on'}" style="--x:${(x / 3.2).toFixed(1)}%;--y:${(y / 3.6).toFixed(1)}%">${i ? '' : `<span>${FLIGHT_NAME}</span>`}</a>`).join('')}</div></div></div>
-</div></body></html>`;
+</style></head><body><div class="card"><div class="pic"><img src="data:image/png;base64,${png.toString('base64')}"></div><div class="cl">
+<div class="cw">${word}</div><h1>${title}</h1><p class="cs">${sub}</p><div class="cu">golfvotes.com</div></div></div></body></html>`;
+
 
 (async () => {
   const out = path.join(root, 'static', OUT); fs.mkdirSync(out, { recursive: true });
   const hashFile = path.join(root, 'build/og-hashes.json');
   const old = fs.existsSync(hashFile) && !process.argv.includes('--all') ? JSON.parse(fs.readFileSync(hashFile)) : {};
   const hashes = {}; let drawn = 0;
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
+  const b = await chromium.launch({ channel: process.env.OG_CHANNEL || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
   await p.setContent('<body style="font:800 20px Inter">x</body>'); await p.evaluate(() => document.fonts.ready);
   if (!(await p.evaluate(() => document.fonts.check('800 20px Inter') && document.fonts.check('500 20px Inter')))) {
     console.error('The Inter font is not installed: the images would be drawn in a fallback font. Nothing written.'); await b.close(); process.exit(1);
@@ -129,8 +153,33 @@ ${SPOTS.map(([x, y], i) => `<a class="bfd${i ? '' : ' on'}" style="--x:${(x / 3.
   const all = top.map(v => ({ v, n: v.recs, ok: v.success || 0 }));
   // 'home' is the home page's card and the fallback for pages without one (build.py). It replaced default.png, which
   // stays in the folder for links that were shared before, because networks keep preview images by URL.
-  await shot('home', stage('Fix your miss with the lesson other golfers recommend.',
-    `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`), true);
+  // The stage is drawn by software GL and every run flies the ball again, so two runs differ in a few pixels: the new card
+  // replaces the file only when it differs from it visibly (mean difference per colour channel above 0.4 of 255).
+  const sameLook = async (a, c) => p.evaluate(async ([x, y]) => {
+    const load = s => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = 'data:image/png;base64,' + s; });
+    const [i1, i2] = await Promise.all([load(x), load(y)]); if (i1.width !== i2.width || i1.height !== i2.height) return false;
+    const px = i => { const k = document.createElement('canvas'); k.width = i.width; k.height = i.height; const g = k.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; };
+    const d1 = px(i1), d2 = px(i2); let s = 0; for (let j = 0; j < d1.length; j += 4) s += Math.abs(d1[j] - d2[j]) + Math.abs(d1[j + 1] - d2[j + 1]) + Math.abs(d1[j + 2] - d2[j + 2]);
+    return s / (d1.length / 4 * 3) < 0.4;
+  }, [a.toString('base64'), c.toString('base64')]);
+  {
+    const key = crypto.createHash('sha1').update(STAGE_KEY()).update(String(totalRecs) + site.stats.comments_scanned).digest('hex'), file = path.join(out, 'home.png');
+    hashes.home = key;
+    if (!(old.home === key && fs.existsSync(file))) {
+      const srv = await serveSite();
+      try {
+        const pic = await stageShot(b, `http://127.0.0.1:${srv.address().port}/`);
+        await p.setContent(stage('Fix your miss with the lesson other golfers recommend.',
+          `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`, pic), { waitUntil: 'load' });
+        await p.evaluate(() => document.fonts.ready);
+        const png = await p.screenshot();
+        if (old.home && fs.existsSync(file) && await sameLook(fs.readFileSync(file), png)) hashes.home = old.home;
+        else { fs.writeFileSync(file, png); drawn++; }
+      } catch (e) {  // the stage did not run (no WebGL 2, a timeout): the other cards must still be drawn; the home card stays as it is
+        console.error('WARNING: the home card was not redrawn: ' + e.message); if (old.home) hashes.home = old.home; else delete hashes.home;
+      } finally { srv.close(); }
+    }
+  }
   await shot('report', tpl('The data', 'What golfers recommend to each other', `${site.stats.comments_scanned} comments read. ${n(totalRecs)} recommendations counted.`, all));
   for (const pr of problems) {
     const r = rankFor(pr.key); if (!r.length) continue;
