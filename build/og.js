@@ -5,8 +5,7 @@
 // when the design changes, because networks cache preview images by URL.
 // Only images whose content changed are drawn again (build/og-hashes.json remembers what each one was drawn from), so a
 // data update commits the few images whose numbers moved, not all fifty. `node build/og.js --all` draws everything.
-// The home page's card is the exception: it is compared by its picture, and while the picture stays the same its recorded
-// hash stays the old one (so that hash can name an earlier stylesheet than the current one).
+// The home page's card is the exception: it is drawn on every run and compared by its picture (see below).
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const root = path.join(__dirname, '..');
@@ -77,10 +76,6 @@ ${kicker ? `<div class="k">${esc(kicker)}</div>` : '<div class="k" style="visibi
 // (python3 build/build.py) and the stage's files; the share-images workflow runs again when any of them changes.
 // OG_CHANNEL=chrome draws it with an installed Chrome instead of Playwright's Chromium (for a machine without the latter).
 const SITE = path.join(root, '_site');
-const STAGE_KEY = () => crypto.createHash('sha1').update([
-  path.join(root, 'build/build.py'), path.join(root, 'build/course.svg'), path.join(root, 'static/style.css'), path.join(root, 'static/app.js'), path.join(root, 'static/stage.js'),
-  ...fs.readdirSync(path.join(root, 'static/stage')).sort().map(f => path.join(root, 'static/stage', f))
-].map(f => fs.readFileSync(f)).reduce((a, x) => Buffer.concat([a, x]), Buffer.alloc(0))).digest('hex');
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json', '.jpg': 'image/jpeg' };
 const serveSite = () => new Promise(res => {
   const srv = require('http').createServer((q, r) => {
@@ -106,10 +101,19 @@ const stageShot = async (b, base) => {
     await pg.waitForTimeout(1500);
     await pg.click(`.bfd[data-k="${FLIGHT_K}"]`);
     await pg.waitForFunction(() => document.querySelector('.welcome').classList.contains('ans'), null, { timeout: 20000 });
-    await pg.waitForTimeout(5000);  // the camera eases back after the landing
     await pg.addStyleTag({ content: '#top,.fh,.bfr>.bfp,.bfq,.bfis,.bfh,.pickb,.bfr>.bf0{visibility:hidden!important}' });
-    await pg.waitForTimeout(600);
-    return await pg.screenshot({ clip: { x: 850, y: 80, width: 900, height: 808 } });
+    // The camera and the light ease back after the landing, a step per frame, so on a slow software GL the end comes late and
+    // at a different time on every machine: take the picture once two shots in a row are the same (the stage has stopped
+    // drawing), so every run ends at the same picture.
+    const clip = { x: 850, y: 80, width: 900, height: 808 };
+    let prev = null;
+    for (let i = 0; i < 60; i++) {
+      await pg.waitForTimeout(800);
+      const cur = await pg.screenshot({ clip });
+      if (prev && cur.equals(prev)) return cur;
+      prev = cur;
+    }
+    return prev;
   } finally { await c.close(); }
 };
 const stage = (title, sub, png) =>   // title and sub are put in as HTML: pass only text that is escaped or written here
@@ -163,9 +167,11 @@ html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0f0f0f;
     return s / (d1.length / 4 * 3) < 0.4;
   }, [a.toString('base64'), c.toString('base64')]);
   {
-    const key = crypto.createHash('sha1').update(STAGE_KEY()).update(String(totalRecs) + site.stats.comments_scanned).digest('hex'), file = path.join(out, 'home.png');
-    hashes.home = key;
-    if (!(old.home === key && fs.existsSync(file))) {
+    // Drawn on every run: whatever on the page changes the picture (a font, a model, the CSS, the data) is found by comparing
+    // the picture, not by a list of files that could be forgotten. The recorded value is only a marker.
+    const file = path.join(out, 'home.png');
+    hashes.home = 'by-picture';
+    {
       const srv = await serveSite();
       try {
         const pic = await stageShot(b, `http://127.0.0.1:${srv.address().port}/`);
@@ -173,10 +179,9 @@ html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0f0f0f;
           `Ranked by <b>${n(totalRecs)}</b> recommendations in <b>${esc(site.stats.comments_scanned)}</b> Reddit comments.`, pic), { waitUntil: 'load' });
         await p.evaluate(() => document.fonts.ready);
         const png = await p.screenshot();
-        if (old.home && fs.existsSync(file) && await sameLook(fs.readFileSync(file), png)) hashes.home = old.home;
-        else { fs.writeFileSync(file, png); drawn++; }
+        if (!(fs.existsSync(file) && await sameLook(fs.readFileSync(file), png))) { fs.writeFileSync(file, png); drawn++; }
       } catch (e) {  // the stage did not run (no WebGL 2, a timeout): the other cards must still be drawn; the home card stays as it is
-        console.error('WARNING: the home card was not redrawn: ' + e.message); if (old.home) hashes.home = old.home; else delete hashes.home;
+        console.error('WARNING: the home card was not redrawn: ' + e.message);
       } finally { srv.close(); }
     }
   }
