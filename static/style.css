@@ -1904,7 +1904,6 @@ h2.row{font-size:24px;line-height:28px;font-weight:800;letter-spacing:-.02em;wor
   .bfp.out{opacity:0;transition:opacity .25s ease}
   @media (min-width:1200px){
     body.home .welcome>.fh{transition:opacity .3s ease}
-    body.home .welcome:has(>.bf.used):not(.ans)>.fh{opacity:0}
   }
 }
 @keyframes gvdot{from{opacity:0}}
