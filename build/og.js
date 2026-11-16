@@ -88,7 +88,9 @@ const serveSite = () => new Promise(res => {
 // returns the picture of the area around the hole (900 x 808 px of that page, set at 0.78 in the card).
 const FLIGHT_K = 'slice';
 const stageShot = async (b, base) => {
-  const c = await b.newContext({ viewport: { width: 1800, height: 945 }, colorScheme: 'dark', reducedMotion: 'no-preference' });
+  // reduced motion: the ball lands at once and the camera jumps to its place, so a slow software GL (GitHub's runner) has
+  // only a few frames to draw instead of a whole flight and the easing after it
+  const c = await b.newContext({ viewport: { width: 1800, height: 945 }, colorScheme: 'dark', reducedMotion: 'reduce' });
   try {
     const pg = await c.newPage();
     await pg.route(u => !u.href.startsWith(base), r => r.abort());  // nothing leaves the machine (analytics, video embeds)
@@ -109,7 +111,7 @@ const stageShot = async (b, base) => {
     let prev = null;
     for (let i = 0; i < 60; i++) {
       await pg.waitForTimeout(800);
-      const cur = await pg.screenshot({ clip });
+      const cur = await pg.screenshot({ clip, timeout: 120000 });
       if (prev && cur.equals(prev)) return cur;
       prev = cur;
     }
