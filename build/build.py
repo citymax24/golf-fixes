@@ -45,7 +45,10 @@ _STAGE = [os.path.join(ROOT, "static", "stage.js")] + sorted(glob.glob(os.path.j
 ASSET_V["stage"] = hashlib.md5(b"".join(open(f, "rb").read() for f in _STAGE)).hexdigest()[:8]
 # The home page's share image, also the fallback for pages without their own: home.png once the share-images workflow has
 # drawn it (build/og.js), default.png until then.
-OG_HOME = "/static/og4/" + ("home.png" if os.path.exists(os.path.join(ROOT, "static", "og4", "home.png")) else "default.png")
+# The home card carries a version (a hash of its picture): link previews keep an image by its address, so a redrawn card
+# only shows up where the address changed.
+_HOME_PNG = os.path.join(ROOT, "static", "og4", "home.png")
+OG_HOME = "/static/og4/" + (("home.png?v=" + hashlib.md5(open(_HOME_PNG, "rb").read()).hexdigest()[:8]) if os.path.exists(_HOME_PNG) else "default.png")
 # The one inline script (the theme, before first paint) is allowed by its hash; everything else a page may load is named
 # here. GitHub Pages cannot send headers, so the policy is a meta tag. static/count.js is GoatCounter's own script
 # (ISC licence, release 2.5.0), served from here so that no code from another host runs on the site.
