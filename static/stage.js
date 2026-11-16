@@ -438,17 +438,68 @@
   }
   document.addEventListener("visibilitychange", function () { if (document.hidden && flight) land(); });
   var trx = trc.getContext("2d");
+  // The tracer lies above every model and the ball, and each part of it is cut out where a model that stands nearer to
+  // the camera than that part covers it (the model's own picture, with its opacity and blur, erases it). So trees in the
+  // background no longer hide the flight, and those in front still do. Parts with the same models in front form one run;
+  // the runs go from the fewest models in front to the most, so the cut-out grows by each model once per frame. Each
+  // stroke width is gathered opaque on its own canvas, so runs meet without a darker bead, then laid down once. The
+  // helper canvases only cover the trail's box and are dropped when the trail is gone. (Safari has no canvas filter:
+  // there a blurred model cuts along its sharp outline.)
+  var cvFilter = "filter" in trx, aux = null;
+  function auxCv() { var c = document.createElement("canvas"); return { c: c, x: c.getContext("2d") }; }
+  function cutOut(c, e) {
+    c.globalAlpha = e._o; if (cvFilter) c.filter = e._bl > .4 ? "blur(" + (e._bl * dpr).toFixed(2) + "px)" : "none";
+    c.drawImage(e, e._x, e._y, e._w, e._h); c.globalAlpha = 1; if (cvFilter) c.filter = "none";
+  }
+  var WIDTHS = [[9, .10], [4, .22], [1.8, .95]];
   function drawTrail() {
-    trx.setTransform(1, 0, 0, 1, 0, 0); trx.clearRect(0, 0, trc.width, trc.height); if (trailA <= 0 || trail.length < 2) return;
+    trx.setTransform(1, 0, 0, 1, 0, 0); trx.clearRect(0, 0, trc.width, trc.height);
+    if (trailA <= 0 || trail.length < 2) { if (aux) { aux.forEach(function (a) { a.c.width = a.c.height = 0; }); aux = null; } return; }
     trx.setTransform(dpr, 0, 0, dpr, 0, 0); var col = mode === "dark" ? "62,207,142" : "11,122,75"; trx.lineCap = "round"; trx.lineJoin = "round";
-    var pts = trail.map(function (p) { return proj(Wd([p[0], p[1]], p[2] + .13)); });
-    [[9, .10], [4, .22], [1.8, .95]].forEach(function (w) {
-      trx.beginPath(); pts.forEach(function (p, i) { if (i) trx.lineTo(p.x, p.y); else trx.moveTo(p.x, p.y); });
-      trx.lineWidth = w[0]; trx.strokeStyle = "rgba(" + col + "," + (w[1] * trailA) + ")"; trx.stroke();
-    });
+    var pts = trail.map(function (p) { return proj(Wd([p[0], p[1]], p[2] + .13)); }), last = pts.length - 1;
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    pts.forEach(function (p) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
+    x0 -= 8; y0 -= 8; x1 += 8; y1 += 8;
+    var occ = models.map(function (t) { return t.el; }).concat([flag]).filter(function (e) {
+      var g = 2 * (e._bl || 0);  // a blurred model reaches a little past its box
+      return e._w && e._o > .01 && e.naturalWidth && e._x - g < x1 && e._x + e._w + g > x0 && e._y - g < y1 && e._y + e._h + g > y0;
+    }).sort(function (a, b) { return a._z - b._z; });
+    var runs = [], cur = null;
+    for (var i = 1; i <= last; i++) {
+      var d = (pts[i - 1].z + pts[i].z) / 2, k = 0; while (k < occ.length && occ[k]._z < d) k++;
+      if (cur && cur.k === k) cur.b = i; else { cur = { k: k, a: i - 1, b: i }; runs.push(cur); }
+    }
+    function path(c, a, b) { c.beginPath(); for (var j = a; j <= b; j++) { if (j > a) c.lineTo(pts[j].x, pts[j].y); else c.moveTo(pts[j].x, pts[j].y); } }
+    if (runs.length === 1 && runs[0].k === 0) {
+      WIDTHS.forEach(function (w) { path(trx, 0, last); trx.lineWidth = w[0]; trx.strokeStyle = "rgba(" + col + "," + (w[1] * trailA) + ")"; trx.stroke(); });
+    } else {
+      var X0 = Math.max(0, Math.floor(x0 * dpr)), Y0 = Math.max(0, Math.floor(y0 * dpr)), XW = Math.min(trc.width, Math.ceil(x1 * dpr)) - X0, YH = Math.min(trc.height, Math.ceil(y1 * dpr)) - Y0;
+      if (XW > 0 && YH > 0) {
+        if (!aux) aux = [auxCv(), auxCv(), auxCv(), auxCv(), auxCv()];  // the run, the models in front, one per width
+        aux.forEach(function (a) { if (a.c.width !== XW || a.c.height !== YH) { a.c.width = XW; a.c.height = YH; } else { a.x.setTransform(1, 0, 0, 1, 0, 0); a.x.clearRect(0, 0, XW, YH); } a.x.setTransform(dpr, 0, 0, dpr, -X0, -Y0); });
+        var rn = aux[0].x, om = aux[1].x, done = 0;
+        runs.sort(function (a, b) { return a.k - b.k; }).forEach(function (r) {
+          while (done < r.k) cutOut(om, occ[done++]);
+          // interior run ends are flat, so the run beside a model does not reach into it with its round cap
+          WIDTHS.forEach(function (w, wi) {
+            rn.setTransform(1, 0, 0, 1, 0, 0); rn.clearRect(0, 0, XW, YH); rn.setTransform(dpr, 0, 0, dpr, -X0, -Y0);
+            rn.fillStyle = rn.strokeStyle = "rgb(" + col + ")"; rn.lineCap = "butt"; rn.lineJoin = "round"; rn.lineWidth = w[0]; path(rn, r.a, r.b); rn.stroke();
+            [r.a === 0 ? 0 : -1, r.b === last ? last : -1].forEach(function (e) { if (e >= 0) { rn.beginPath(); rn.arc(pts[e].x, pts[e].y, w[0] / 2, 0, 7); rn.fill(); } });
+            if (r.k) { rn.setTransform(1, 0, 0, 1, 0, 0); rn.globalCompositeOperation = "destination-out"; rn.drawImage(aux[1].c, 0, 0); rn.globalCompositeOperation = "source-over"; }
+            var m = aux[2 + wi].x; m.setTransform(1, 0, 0, 1, 0, 0); m.drawImage(aux[0].c, 0, 0);
+          });
+        });
+        trx.setTransform(1, 0, 0, 1, 0, 0);
+        WIDTHS.forEach(function (w, wi) { trx.globalAlpha = w[1] * trailA; trx.drawImage(aux[2 + wi].c, X0, Y0); });
+        trx.globalAlpha = 1; trx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+    }
+    // the ball itself stays in front of its own tracer (a little inside its edge, which is soft while it flies)
+    if (ball._r) { trx.globalCompositeOperation = "destination-out"; trx.beginPath(); trx.arc(ball._x, ball._y, ball._r * .85, 0, 7); trx.fill(); trx.globalCompositeOperation = "source-over"; }
   }
   function stand(e, s, h, ax, sink) {
     var b = proj(Wd(s)), top = proj(Wd(s, h)), ph = b.y - top.y, r = e.naturalWidth ? e.naturalHeight / e.naturalWidth : 1.3, pw = ph / r, bl = Math.round(coc(proj(Wd(s, h * .5)).z) * 4) / 4;
+    e._x = b.x - pw * ax; e._y = b.y - ph * (1 - sink); e._w = pw; e._h = ph; e._z = b.z; e._bl = bl;  // for the tracer's occlusion
     e.style.width = pw.toFixed(1) + "px"; e.style.transform = "translate(" + (b.x - pw * ax).toFixed(1) + "px," + (b.y - ph * (1 - sink)).toFixed(1) + "px)";
     var fl = (bl > .4 ? "blur(" + bl + "px)" : "") + lit(s) || "none"; if (e._fl !== fl) { e._fl = fl; e.style.filter = fl; } e.style.zIndex = Math.round(2000 - b.z * 20);
     // like the paper, a model fades out towards the stage's edges instead of being cut off
@@ -467,6 +518,7 @@
     models.forEach(function (t) { stand(t.el, t.s, t.h, .5, t.k >= 5 && t.k <= 6 ? .07 : t.k >= 7 ? .05 : .015); });
     stand(flag, S(CUP[0], CUP[1]), FLAG_H, .06, .01);
     var bp = proj(Wd(ballS, .13 + ballH)), br = .13 * bp.s, bl = Math.round((flight ? coc(bp.z) : Math.min(coc(bp.z), 1.5)) * 4) / 4;
+    ball._x = bp.x; ball._y = bp.y; ball._r = br;
     ball.style.width = ball.style.height = (2 * br).toFixed(1) + "px";
     ball.style.transform = "translate(" + (bp.x - br).toFixed(1) + "px," + (bp.y - br).toFixed(1) + "px)";
     var bfl = (bl > .4 ? "blur(" + bl + "px)" : "") + lit(ballS) || "none"; if (ball._fl !== bfl) { ball._fl = bfl; ball.style.filter = bfl; } ball.style.zIndex = Math.round(2000 - bp.z * 20) + 1;
