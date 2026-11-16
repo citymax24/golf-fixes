@@ -443,7 +443,7 @@
         bff.classList.add("used");
         liftStop();  // a new tap: an earlier landing no longer moves the page
         if (lifting) { clearTimeout(lifting); lifting = 0; try { window.scrollTo({ top: window.scrollY, behavior: "instant" }); } catch (e) { window.scrollTo(0, window.scrollY); } }  // and a move already under way stops where it is
-        $$(".bfp.in:not(.bf0)", bff).forEach(function (p) { p.classList.remove("in"); p.classList.add("out"); });  // the old answer fades while the ball flies
+        // the old answer (and, before the first tap, the headline) stays while the ball flies and is swapped on landing: the left column never goes empty
         ambStop("cut");  // another miss: the old light goes at once
         var nim = $("#bf-" + k + " .bfv img", bff); if (nim) { nim.loading = "eager"; if (nim.decode) nim.decode().catch(function () {}); }  // the answer's picture is ready when the ball lands
         $$(".bfd", bff).forEach(function (x) { x.classList.toggle("on", x === a); x.classList.remove("hit"); x.setAttribute("aria-pressed", String(x === a)); });
